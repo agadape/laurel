@@ -1,0 +1,7 @@
+# keep shell/python scripts LF so they run under WSL/Linux even after a Windows checkout
+*.sh text eol=lf
+*.py text eol=lf
+*.wit text eol=lf
+*.wasm binary
+*.bin binary
+*.zst binary
