@@ -1,0 +1,40 @@
+# Checklist submit (D-6) — target Sabtu 14 Nov 2026 12:00 UTC (19:00 WIB)
+
+Aturan di [HACKATHON.md](../HACKATHON.md): submit **sekali** per repo, tidak bisa diedit, hanya 1–14 Nov. Ambil ulang versi live https://nearhackathon.com/HACKATHON.md pada hari H.
+
+## Sebelum hari H (manusia)
+- [ ] Nama project final (lihat `docs/NAMING.md`) dan rename selesai.
+- [ ] Akun NEAR **mainnet** tim untuk payout (buat di wallet mana pun; jangan pernah dibuat oleh agent).
+- [ ] Akun testnet tim terisi ≥ 15 NEAR (faucet) → deploy kontrak demo final `bursa.<tim>.testnet`, `set_evaluator`, buat tugas `german-credit` dengan deadline **sebelum** 13 Nov supaya sudah tertutup saat penjurian, submit 2 model, `close_task`, beberapa `predict_task`.
+- [ ] `VITE_BURSA_CONTRACT` di Vercel (atau default di `web/src/rpc.js`) diarahkan ke kontrak final; deploy ulang web.
+- [ ] README Undo menyebut project ini, dan README ini menyebut Undo dengan tautan repo (Q-015).
+- [ ] Video ≤ 3 menit sesuai `DEMO.md` direkam, diunggah.
+- [ ] Repo GitHub dibuat publik (manusia), `git push`.
+- [ ] Post X oleh manusia: menyebut "built at NEAR HACKATHON", tag @NEARProtocol dan #NEARHackathon, lampirkan video. Simpan URL post.
+
+## 13 Nov (agent, dengan persetujuan)
+- [ ] `bash build.sh test` hijau; `node tools/e2e.mjs --funder TEAM --cleanup` hijau → `docs/E2E.md` diperbarui (D-5).
+- [ ] `docs/GAS.md`, `docs/AGENT.md`, `docs/CONSUMER.md` merujuk kontrak final atau jelas menyebut kontrak dev.
+- [ ] `CLAIMS.md` nomor baris dicek ulang (`grep -n "pub fn"`).
+- [ ] Tidak ada secret di repo: `git ls-files | xargs grep -lE "PRIVATE_KEY=ed25519"` kosong; `.env`, `private_*.json`, `tools/out/`, `*.pkl` tetap di-ignore.
+
+## Payload (diisi manusia, dicetak agent, dikirim setelah "ya")
+```json
+{
+  "requestId": "<uuid dibuat sekali: node -e \"console.log(crypto.randomUUID())\">",
+  "projectName": "<2–80 karakter, unik>",
+  "leadName": "<nama ketua tim>",
+  "email": "<email kontak; maks 2 submission per email>",
+  "size": "<1 | 2 - 4 | 4 - 6 | 6 - 8 | 8+>",
+  "tracks": ["agents", "privacy", "open"],
+  "nearAddress": "<akun mainnet payout, huruf kecil>",
+  "projectUrl": "https://github.com/<owner>/<repo>",
+  "demoUrl": "https://x.com/<akun>/status/<id>",
+  "idea": "<20–2000 karakter: masalah, produk, peran NEAR>",
+  "consent": true
+}
+```
+Jangan tambahkan field lain (`website` adalah jebakan spam). Kirim: `curl -sS -X POST https://nearhackathon.com/api/applications -H 'Content-Type: application/json' -d @payload.json` → **201** = tersimpan. 400 → perbaiki field, kirim ulang dengan `requestId` sama. 503 → tunggu 1 menit, kirim ulang dengan `requestId` sama. Jangan commit `payload.json` (sudah di-ignore oleh pola `submission*.json`; beri nama `submission_payload.json`).
+
+Draf `idea` (≤ 2000 karakter, Inggris, untuk disetujui manusia):
+> Small ML models are stuck on someone else's server, and nobody can verify how good they are. Bursa Model turns a decision model into on-chain infrastructure on NEAR: a registry contract where anyone publishes a task with a private test set, anyone submits a gradient-boosted-tree model, an OutLayer TEE worker scores it against the secret test set (bound to the pinned evaluator hash), the score is written back on-chain, and the winning model becomes `predict_task(task_id, features)` — called by AI agents holding a function-call key limited to that method, and by other contracts through a promise, for ~4 Tgas per prediction with fees flowing to the model owner. Demo task: credit-risk classification on UCI German Credit (simulation). Everything is reproducible from a fresh testnet account with one script (`tools/e2e.mjs`): 23 steps, 17 negative paths rejected, TEE scores equal to local ones, all transaction hashes in the repo.

@@ -116,7 +116,11 @@ function Task({ id }) {
           {rows.length === 0 && !lb.loading && <tr><td colSpan={10} className="muted">belum ada submission</td></tr>}
         </tbody>
       </table>
-      <h3>Ikut (CLI)</h3>
+      <h3>Buat tugas seperti ini (CLI, pembuat tugas)</h3>
+      <Cmd>{`python tasks/${task.slug}/split.py                                   # data publik + split privat + manifest sha256
+bash tools/secrets.sh ${task.slug} ${task.secrets_profile} <hash evaluator>   # (WSL) simpan test set privat, terikat ke hash evaluator
+node tools/create_task.mjs ${task.slug} --minutes 1440 --as TEAM`}</Cmd>
+      <h3>Ikut (CLI, peserta)</h3>
       <p className="sub">Semua aksi tulis lewat skrip di repo (tanpa wallet di browser). Latih di <code>tasks/{task.slug}/public_train.csv</code>, ekspor, lalu kirim:</p>
       <Cmd>{`python tasks/${task.slug}/train.py --trees 50 --depth 4
 python tools/export.py --task ${task.slug} --model tasks/${task.slug}/model_baseline.pkl --out tasks/${task.slug}/out/mine
@@ -177,6 +181,8 @@ function Costs() {
           <tr><td><code>submit_model</code> (validasi + storage)</td><td>33 KB</td><td className="num">10,20</td><td><a href={EXPLORER_TX("14BSwbzAViKnu7esMQTf9bN1L3vQiywjMQGqAEX5Tcmv")} target="_blank" rel="noreferrer">tx</a></td></tr>
           <tr><td><code>request_score</code> → OutLayer → callback</td><td>33 KB, 2×150 baris</td><td className="num">12,5 total · ~10 s</td><td><a href={EXPLORER_TX("593SvaUAZLXjrQ2f5XkCnpKTnW8EkYT7h1o1Xmski3oq")} target="_blank" rel="noreferrer">tx</a></td></tr>
           <tr><td><code>close_task</code></td><td>—</td><td className="num">2,23</td><td><a href={EXPLORER_TX("2VLWMbGvyKTJgtekf5Bd4q1F73oSyFpbsM61LAum2cZP")} target="_blank" rel="noreferrer">tx</a></td></tr>
+          <tr><td>kontrak lain → <code>predict_task</code> → callback (<code>credit-desk</code>)</td><td>German Credit 50×4</td><td className="num">8,85 total</td><td><a href={EXPLORER_TX("BNR63PPUcD6RgjQyN8nQ1i2iP9uJQfGPcLrozsHAcGz6")} target="_blank" rel="noreferrer">tx</a></td></tr>
+          <tr><td>e2e dari nol (23 langkah, 17 uji negatif)</td><td>—</td><td className="num">228 s</td><td><a href="https://github.com/" target="_blank" rel="noreferrer">docs/E2E.md</a></td></tr>
         </tbody>
       </table>
       <h3>Alur</h3>
