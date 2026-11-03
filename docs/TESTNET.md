@@ -34,6 +34,15 @@ Sisa akun spike (kunci ada di `.env`): `nh-ft-mvp6pidf.testnet` ≈ 8,4 NEAR beb
 ## Dana yang hilang (catatan jujur)
 - 3 Nov, run e2e pertama (tag `mw0kfrrl`, funder `nh-nft`) berhenti di tengah sebelum cleanup dan kunci akun segar belum disimpan: ±5,6 NEAR testnet terkunci di `own-/bursa-/p1-/p2-/agent-mw0kfrrl.nh-nft-mvp6py9i.testnet` dan tidak bisa diambil. `nh-nft` tersisa ±0,4 NEAR. Sejak itu `tools/e2e.mjs` menyimpan kunci ke `tools/out/e2e-keys.json`, membersihkan di `finally`, dan punya `--cleanup-only <tag>`.
 
+## Deploy akhir (satu perintah, setelah akun tim terisi)
+```bash
+node tools/deploy_final.mjs --name laurel --minutes 60          # buat laurel.<tim>.testnet + p1/p2/agent, deploy, pin evaluator, tugas, 2 model + skor
+node tools/deploy_final.mjs --name laurel --close               # setelah deadline: close_task + 5 predict_task oleh agent (FC key)
+```
+Akun dan kunci yang dibuat disimpan ke `.env` sebagai `FINAL_*`; `BURSA_CONTRACT_ID` ikut diarahkan ke kontrak baru sehingga `tools/agent.mjs`, `tools/consumer.mjs`, `tools/submit.mjs` langsung memakainya. Kebutuhan dana ≈ 6 NEAR (3,4 kontrak + 2,2 akun lain), plus ±2 NEAR untuk `consumer.mjs` dan 1 NEAR cadangan.
+
+FastFS testnet (`test.fastfs.io`) masih 502 pada 3 Nov malam; evaluator tetap di Vercel.
+
 ## Hal yang sudah ada dan tetap dipakai
 
 - OutLayer: login CLI dengan `nh-spike-mvp62mw4.testnet` (lihat `spikes/s31/s30_outlayer.sh login`); evaluator spike hash `dcc4aa66…` tersimpan di Vercel `nh-spike-wasm`.

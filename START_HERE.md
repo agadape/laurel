@@ -1,6 +1,8 @@
-# START HERE — NEAR HACKATHON, project ke-2
+# START HERE — NEAR HACKATHON, project ke-2: **Laurel**
 
-Folder ini adalah titik mulai **project kedua** tim untuk NEAR HACKATHON. Isinya hasil spike dan riset dari project pertama, tanpa rencana produk project pertama. Ide dan nama project ini belum ditentukan.
+> **Status 3 Nov 2026:** ide dipilih (**Laurel**, nama kerja Bursa Model; `docs/NAMING.md`), kontrak + evaluator + tools + web sudah jadi dan terbukti end-to-end di testnet (`docs/E2E.md`). Baca [README.md](README.md) (produk, cara coba), [PLAN.md](PLAN.md) (status per milestone), [CLAUDE.md](CLAUDE.md) (aturan kerja). Yang tersisa: akun tim + faucet → `node tools/deploy_final.mjs`, video (`DEMO.md`), repo publik, submit (`docs/SUBMISSION.md`). Dokumen di bawah ini adalah konteks awal (riset + spike) dan tetap berlaku.
+
+Folder ini adalah titik mulai **project kedua** tim untuk NEAR HACKATHON. Isinya hasil spike dan riset dari project pertama, tanpa rencana produk project pertama.
 
 - **Project 1 (Undo, "Ctrl+Z untuk uang kripto")** ada di `C:\Project_Dave\NEAR_Hackathon` — track `privacy` + `realworld`. Jangan diubah dari sini.
 - **Deadline:** Sabtu 14 Nov 2026 23:59 UTC (= Minggu 15 Nov 06:59 WIB). Repo harus publik sebelum itu. Penjurian mulai 16 Nov.
