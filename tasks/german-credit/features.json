@@ -1,0 +1,62 @@
+{
+  "slug": "german-credit",
+  "title": "Risiko kredit (UCI German Credit) — simulasi",
+  "source": {
+    "name": "Statlog (German Credit Data)",
+    "url": "https://archive.ics.uci.edu/dataset/144/statlog+german+credit+data",
+    "file": "german.data",
+    "license": "CC BY 4.0 (dinyatakan di halaman UCI, dicek 2 Nov 2026)",
+    "donor": "Hans Hofmann, 1994",
+    "rows": 1000
+  },
+  "label": {
+    "column_index_in_german_data": 20,
+    "mapping": { "1": 0, "2": 1 },
+    "meaning": { "0": "good credit risk", "1": "bad credit risk (positive class)" },
+    "class_counts_uci": { "good": 700, "bad": 300 }
+  },
+  "feature_scale": 1,
+  "out_scale": 1000000,
+  "positive_if_raw_score_gt": 0,
+  "n_features": 18,
+  "dropped_columns": [
+    { "index": 8, "uci_attribute": 9, "name": "personal_status_sex", "codes": "A91-A95", "reason": "atribut sensitif (jenis kelamin / status perkawinan)" },
+    { "index": 19, "uci_attribute": 20, "name": "foreign_worker", "codes": "A201-A202", "reason": "atribut sensitif (kewarganegaraan)" }
+  ],
+  "features": [
+    { "pos": 0, "uci_attribute": 1, "index_in_german_data": 0, "name": "checking_status", "type": "ordinal", "codes": { "A11": 0, "A12": 1, "A13": 2, "A14": 3 }, "meaning": { "A11": "< 0 DM", "A12": "0 ≤ … < 200 DM", "A13": "≥ 200 DM / salary assignments ≥ 1 year", "A14": "no checking account" } },
+    { "pos": 1, "uci_attribute": 2, "index_in_german_data": 1, "name": "duration_months", "type": "integer", "range": [4, 72] },
+    { "pos": 2, "uci_attribute": 3, "index_in_german_data": 2, "name": "credit_history", "type": "ordinal", "codes": { "A30": 0, "A31": 1, "A32": 2, "A33": 3, "A34": 4 }, "meaning": { "A30": "no credits taken / all paid back duly", "A31": "all credits at this bank paid back duly", "A32": "existing credits paid back duly till now", "A33": "delay in paying off in the past", "A34": "critical account / other credits existing (not at this bank)" } },
+    { "pos": 3, "uci_attribute": 4, "index_in_german_data": 3, "name": "purpose", "type": "nominal_as_code", "codes": { "A40": 0, "A41": 1, "A42": 2, "A43": 3, "A44": 4, "A45": 5, "A46": 6, "A47": 7, "A48": 8, "A49": 9, "A410": 10 }, "meaning": { "A40": "car (new)", "A41": "car (used)", "A42": "furniture/equipment", "A43": "radio/television", "A44": "domestic appliances", "A45": "repairs", "A46": "education", "A47": "vacation (UCI: does not exist?)", "A48": "retraining", "A49": "business", "A410": "others" } },
+    { "pos": 4, "uci_attribute": 5, "index_in_german_data": 4, "name": "credit_amount_dm", "type": "integer", "range": [250, 18424] },
+    { "pos": 5, "uci_attribute": 6, "index_in_german_data": 5, "name": "savings", "type": "ordinal", "codes": { "A61": 0, "A62": 1, "A63": 2, "A64": 3, "A65": 4 }, "meaning": { "A61": "< 100 DM", "A62": "100 ≤ … < 500 DM", "A63": "500 ≤ … < 1000 DM", "A64": "≥ 1000 DM", "A65": "unknown / no savings account" } },
+    { "pos": 6, "uci_attribute": 7, "index_in_german_data": 6, "name": "employment_since", "type": "ordinal", "codes": { "A71": 0, "A72": 1, "A73": 2, "A74": 3, "A75": 4 }, "meaning": { "A71": "unemployed", "A72": "< 1 year", "A73": "1 ≤ … < 4 years", "A74": "4 ≤ … < 7 years", "A75": "≥ 7 years" } },
+    { "pos": 7, "uci_attribute": 8, "index_in_german_data": 7, "name": "installment_rate_pct", "type": "integer", "range": [1, 4] },
+    { "pos": 8, "uci_attribute": 10, "index_in_german_data": 9, "name": "other_debtors", "type": "nominal_as_code", "codes": { "A101": 0, "A102": 1, "A103": 2 }, "meaning": { "A101": "none", "A102": "co-applicant", "A103": "guarantor" } },
+    { "pos": 9, "uci_attribute": 11, "index_in_german_data": 10, "name": "residence_since_years", "type": "integer", "range": [1, 4] },
+    { "pos": 10, "uci_attribute": 12, "index_in_german_data": 11, "name": "property", "type": "ordinal", "codes": { "A121": 0, "A122": 1, "A123": 2, "A124": 3 }, "meaning": { "A121": "real estate", "A122": "building society savings agreement / life insurance", "A123": "car or other (not in savings)", "A124": "unknown / no property" } },
+    { "pos": 11, "uci_attribute": 13, "index_in_german_data": 12, "name": "age_years", "type": "integer", "range": [19, 75], "note": "atribut usia tetap dipakai; diakui sebagai risiko bias usia" },
+    { "pos": 12, "uci_attribute": 14, "index_in_german_data": 13, "name": "other_installment_plans", "type": "nominal_as_code", "codes": { "A141": 0, "A142": 1, "A143": 2 }, "meaning": { "A141": "bank", "A142": "stores", "A143": "none" } },
+    { "pos": 13, "uci_attribute": 15, "index_in_german_data": 14, "name": "housing", "type": "nominal_as_code", "codes": { "A151": 0, "A152": 1, "A153": 2 }, "meaning": { "A151": "rent", "A152": "own", "A153": "for free" } },
+    { "pos": 14, "uci_attribute": 16, "index_in_german_data": 15, "name": "existing_credits", "type": "integer", "range": [1, 4] },
+    { "pos": 15, "uci_attribute": 17, "index_in_german_data": 16, "name": "job", "type": "ordinal", "codes": { "A171": 0, "A172": 1, "A173": 2, "A174": 3 }, "meaning": { "A171": "unemployed / unskilled, non-resident", "A172": "unskilled, resident", "A173": "skilled employee / official", "A174": "management / self-employed / highly qualified employee / officer" } },
+    { "pos": 16, "uci_attribute": 18, "index_in_german_data": 17, "name": "num_dependents", "type": "integer", "range": [1, 2] },
+    { "pos": 17, "uci_attribute": 19, "index_in_german_data": 18, "name": "telephone", "type": "binary", "codes": { "A191": 0, "A192": 1 }, "meaning": { "A191": "none", "A192": "yes, registered under the customer's name" } }
+  ],
+  "split": {
+    "method": "two-stage stratified train_test_split on label",
+    "random_state": 144,
+    "public_train": 600,
+    "public_holdout": 100,
+    "private_a": 150,
+    "private_b": 150,
+    "private_files_gitignored": ["private_a.json", "private_b.json"],
+    "commitment_file": "private_manifest.json"
+  },
+  "metric": {
+    "primary": "balanced_accuracy_bps = (TPR_bps + TNR_bps) / 2, integer division, positive class = bad",
+    "secondary": "f1_bps = 2*TP*10000 / (2*TP + FP + FN)",
+    "rounding_bps": 50
+  },
+  "mvp_limits": { "max_model_bytes_demo": 61440, "max_trees": 500, "max_model_bytes_contract": 256000 }
+}

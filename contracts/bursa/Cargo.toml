@@ -1,0 +1,15 @@
+[package]
+name = "bursa"
+version = "0.1.0"
+edition = "2021"
+description = "Bursa Model: tasks, model submissions, private-benchmark scores via OutLayer, and on-chain inference."
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+near-sdk = { workspace = true }
+gbdt-core = { path = "../../crates/gbdt-core" }
+
+[dev-dependencies]
+near-sdk = { version = "5.30", features = ["unit-testing"] }

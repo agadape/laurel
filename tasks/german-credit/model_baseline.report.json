@@ -1,0 +1,11 @@
+{
+  "trees": 50,
+  "depth": 4,
+  "lr": 0.1,
+  "pos_weight": 2.333,
+  "nodes": 1490,
+  "holdout_balanced_accuracy": 0.6881,
+  "holdout_f1_bad": 0.5672,
+  "holdout_accuracy": 0.71,
+  "train_balanced_accuracy": 0.9325
+}

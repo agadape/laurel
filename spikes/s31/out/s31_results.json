@@ -1,0 +1,44 @@
+{
+  "steps": [
+    {
+      "step": "deploy+new",
+      "hash": "jr9PJG51mitqiP3ZWyb6WmyX8oswcvRYpnWVS7o62CW",
+      "tgas": 14.47,
+      "wasm_bytes": 175736
+    },
+    {
+      "step": "upload_model",
+      "hash": "8WT9fo28EVXedA9a1kraobfdivsdjL2hidMmwyKgf5Xt",
+      "tgas": 32.384,
+      "model_bytes": 197551,
+      "model_id": 1,
+      "logs": [
+        "model 1: 100 trees, 8960 nodes, 197600 bytes, storage 1976000000000000000000000 yN"
+      ]
+    },
+    {
+      "step": "predict x1",
+      "hash": "GEEqCAwFhaFdzf1QbRUyV5xZhzjroV37PAm3327F1JnY",
+      "tgas_total": 12.354,
+      "tgas_fn_receipt": 12.042,
+      "result": "-2778475"
+    },
+    {
+      "step": "predict_batch x10",
+      "hash": "8rqeDEq5a6hr7y7dMQKnfwe1eTqbCQete4hyiTvoLzaF",
+      "tgas_total": 12.699,
+      "tgas_fn_receipt": 12.358,
+      "result": "[0,1,1,0,1,0,1,1,1,1]"
+    },
+    {
+      "step": "predict_batch x50",
+      "hash": "7fsBdrr4CW4uzMgnra5dEjhjFf7Y8jmuMRJFkXAaz56X",
+      "tgas_total": 14.21,
+      "tgas_fn_receipt": 13.745,
+      "result": "[0,1,1,0,1,0,1,1,1,1,0,0,0,1,1,0,0,0,1,0,1,1,1,0,1,0,0,0,1,0,1,0,1,1,0,1,0,1,0,1,1,1,0,0,0,0,1,0,0,0]"
+    }
+  ],
+  "view_agreement": "50/50",
+  "contract": "s31.nh-mt-mvp6qbyw.testnet",
+  "model_id": 1
+}

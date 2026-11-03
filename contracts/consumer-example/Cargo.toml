@@ -1,0 +1,14 @@
+[package]
+name = "credit-desk"
+version = "0.1.0"
+edition = "2021"
+description = "Example consumer contract: screens applicants by calling bursa.predict_task through a cross-contract promise."
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+near-sdk = { workspace = true }
+
+[dev-dependencies]
+near-sdk = { version = "5.30", features = ["unit-testing"] }

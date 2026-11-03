@@ -1,0 +1,96 @@
+{
+  "runs": [
+    {
+      "when": "2026-11-02T10:15:28.380Z",
+      "contract": "s31.nh-mt-mvp6qbyw.testnet",
+      "model_id": 1,
+      "secrets_account": null,
+      "wasm_hash": "dcc4aa66c31fc634e43514accf2b46e111fa5243b3288f7a951d48268b9456c6",
+      "hash": "vcHbSoU19TTNQ66zS3DW2PGcXZLvnNJR3CPQXFXn5Jo",
+      "explorer": "https://testnet.nearblocks.io/txns/vcHbSoU19TTNQ66zS3DW2PGcXZLvnNJR3CPQXFXn5Jo",
+      "latency_ms": 9680,
+      "net_cost_near": "0.002071",
+      "ok": true,
+      "callback_result": "{\"ok\":false,\"raw\":\"empty output\",\"block_height\":275884901}",
+      "outlayer_logs": [
+        "[[yNEAR charged: \"1000000000000000000000\"]]",
+        "EVENT_JSON:{\"standard\":\"near-outlayer\",\"version\":\"1.0.0\",\"event\":\"execution_completed\",\"data\":[{\"sender_id\":\"nh-spike-mvp62mw4.testnet\",\"code_source\":{\"WasmUrl\":{\"url\":\"https://test.fastfs.io/nh-spike-mvp62mw4.testnet/outlayer.testnet/dcc4aa66c31fc634e43514accf2b46e111fa5243b3288f7a951d48268b9456c6.wasm\",\"hash\":\"dcc4aa66c31fc634e43514accf2b46e111fa5243b3288f7a951d48268b9456c6\",\"build_target\":\"wasm32-wasip2\"}},\"resources_used\":{\"instructions\":0,\"time_ms\":0,\"compile_time_ms\":null},\"success\":false,\"error_message\":\"wasm_url could not be fetched\",\"payment_charged\":\"1000000000000000000000\",\"payment_refunded\":\"99000000000000000000000\",\"compilation_note\":\"Compilation failed\",\"timestamp\":1793614525326699792}]}",
+        "score model 1: ok=false raw=empty output"
+      ],
+      "get_score": {
+        "ok": false,
+        "raw": "empty output",
+        "block_height": 275884901
+      }
+    },
+    {
+      "when": "2026-11-02T10:29:50.121Z",
+      "contract": "s31.nh-mt-mvp6qbyw.testnet",
+      "model_id": 1,
+      "secrets_account": "nh-spike-mvp62mw4.testnet",
+      "wasm_hash": "dcc4aa66c31fc634e43514accf2b46e111fa5243b3288f7a951d48268b9456c6",
+      "hash": "ZE7mnNaNt1KiZoa8bRQpxCqKGj7ejPWn2Vcb6C3Dnd3",
+      "explorer": "https://testnet.nearblocks.io/txns/ZE7mnNaNt1KiZoa8bRQpxCqKGj7ejPWn2Vcb6C3Dnd3",
+      "latency_ms": 13446,
+      "net_cost_near": "0.002221",
+      "ok": true,
+      "callback_result": "{\"ok\":true,\"raw\":\"{\\\"a\\\":{\\\"correct\\\":40,\\\"n\\\":45,\\\"score_bps\\\":8850},\\\"b\\\":{\\\"correct\\\":41,\\\"n\\\":45,\\\"score_bps\\\":9100},\\\"block\\\":\\\"275886249\\\",\\\"model_bytes\\\":197551,\\\"model_id\\\":1,\\\"ok\\\":true,\\\"sender\\\":\\\"nh-spike-mvp62mw4.testnet\\\",\\\"trees\\\":100}\",\"block_height\":275886263}",
+      "outlayer_logs": [
+        "[[yNEAR charged: \"1127602100000000000000\"]]",
+        "EVENT_JSON:{\"standard\":\"near-outlayer\",\"version\":\"1.0.0\",\"event\":\"execution_completed\",\"data\":[{\"sender_id\":\"nh-spike-mvp62mw4.testnet\",\"code_source\":{\"WasmUrl\":{\"url\":\"https://nh-spike-wasm.vercel.app/dcc4aa66c31fc634e43514accf2b46e111fa5243b3288f7a951d48268b9456c6.wasm\",\"hash\":\"dcc4aa66c31fc634e43514accf2b46e111fa5243b3288f7a951d48268b9456c6\",\"build_target\":\"wasm32-wasip2\"}},\"resources_used\":{\"instructions\":21360045,\"time_ms\":550,\"compile_time_ms\":726},\"success\":true,\"error_message\":null,\"payment_charged\":\"1127602100000000000000\",\"payment_refunded\":\"98872397900000000000000\",\"compilation_note\":\"Freshly compiled\",\"timestamp\":1793615387014817287}]}",
+        "score model 1: ok=true raw={\"a\":{\"correct\":40,\"n\":45,\"score_bps\":8850},\"b\":{\"correct\":41,\"n\":45,\"score_bps\":9100},\"block\":\"275886249\",\"model_bytes\":197551,\"model_id\":1,\"ok\":true,\"sender\":\"nh-spike-mvp62mw4.testnet\",\"trees\":100}"
+      ],
+      "get_score": {
+        "ok": true,
+        "raw": "{\"a\":{\"correct\":40,\"n\":45,\"score_bps\":8850},\"b\":{\"correct\":41,\"n\":45,\"score_bps\":9100},\"block\":\"275886249\",\"model_bytes\":197551,\"model_id\":1,\"ok\":true,\"sender\":\"nh-spike-mvp62mw4.testnet\",\"trees\":100}",
+        "block_height": 275886263
+      }
+    },
+    {
+      "when": "2026-11-02T10:30:02.535Z",
+      "contract": "s31.nh-mt-mvp6qbyw.testnet",
+      "model_id": 1,
+      "secrets_account": null,
+      "wasm_hash": "dcc4aa66c31fc634e43514accf2b46e111fa5243b3288f7a951d48268b9456c6",
+      "hash": "5v5TvhSk6LVrRPLRpYQtrjgxvWQpuTACsbATn57SXXbw",
+      "explorer": "https://testnet.nearblocks.io/txns/5v5TvhSk6LVrRPLRpYQtrjgxvWQpuTACsbATn57SXXbw",
+      "latency_ms": 9154,
+      "net_cost_near": "0.002138",
+      "ok": true,
+      "callback_result": "{\"ok\":true,\"raw\":\"{\\\"error\\\":\\\"secret TEST_SET_A missing\\\",\\\"model_id\\\":1,\\\"ok\\\":false}\",\"block_height\":275886283}",
+      "outlayer_logs": [
+        "[[yNEAR charged: \"1060001700000000000000\"]]",
+        "EVENT_JSON:{\"standard\":\"near-outlayer\",\"version\":\"1.0.0\",\"event\":\"execution_completed\",\"data\":[{\"sender_id\":\"nh-spike-mvp62mw4.testnet\",\"code_source\":{\"WasmUrl\":{\"url\":\"https://nh-spike-wasm.vercel.app/dcc4aa66c31fc634e43514accf2b46e111fa5243b3288f7a951d48268b9456c6.wasm\",\"hash\":\"dcc4aa66c31fc634e43514accf2b46e111fa5243b3288f7a951d48268b9456c6\",\"build_target\":\"wasm32-wasip2\"}},\"resources_used\":{\"instructions\":17579912,\"time_ms\":600,\"compile_time_ms\":null},\"success\":true,\"error_message\":null,\"payment_charged\":\"1060001700000000000000\",\"payment_refunded\":\"98939998300000000000000\",\"compilation_note\":\"Cached WASM from 2026-11-02T10:29:43.115327+00:00\",\"timestamp\":1793615399141695553}]}",
+        "score model 1: ok=true raw={\"error\":\"secret TEST_SET_A missing\",\"model_id\":1,\"ok\":false}"
+      ],
+      "get_score": {
+        "ok": true,
+        "raw": "{\"error\":\"secret TEST_SET_A missing\",\"model_id\":1,\"ok\":false}",
+        "block_height": 275886283
+      }
+    },
+    {
+      "when": "2026-11-02T10:32:19.388Z",
+      "contract": "s31.nh-mt-mvp6qbyw.testnet",
+      "model_id": 1,
+      "secrets_account": "nh-spike-mvp62mw4.testnet",
+      "wasm_hash": "75f06a7d95854ee362055668895f9082ac5a5a988a7ffce12f4967a37736e54c",
+      "hash": "9gVVnorFnNR9jSe2Vc9ipDhfJuSJ2FKZpKMgd2zXP8hU",
+      "explorer": "https://testnet.nearblocks.io/txns/9gVVnorFnNR9jSe2Vc9ipDhfJuSJ2FKZpKMgd2zXP8hU",
+      "latency_ms": 11523,
+      "net_cost_near": "0.002243",
+      "ok": true,
+      "callback_result": "{\"ok\":true,\"raw\":\"{\\\"error\\\":\\\"secret TEST_SET_A missing\\\",\\\"model_id\\\":1,\\\"ok\\\":false}\",\"block_height\":275886514}",
+      "outlayer_logs": [
+        "[[yNEAR charged: \"1160001700000000000000\"]]",
+        "EVENT_JSON:{\"standard\":\"near-outlayer\",\"version\":\"1.0.0\",\"event\":\"execution_completed\",\"data\":[{\"sender_id\":\"nh-spike-mvp62mw4.testnet\",\"code_source\":{\"WasmUrl\":{\"url\":\"https://nh-spike-wasm.vercel.app/75f06a7d95854ee362055668895f9082ac5a5a988a7ffce12f4967a37736e54c.wasm\",\"hash\":\"75f06a7d95854ee362055668895f9082ac5a5a988a7ffce12f4967a37736e54c\",\"build_target\":\"wasm32-wasip2\"}},\"resources_used\":{\"instructions\":17579824,\"time_ms\":638,\"compile_time_ms\":962},\"success\":true,\"error_message\":null,\"payment_charged\":\"1160001700000000000000\",\"payment_refunded\":\"98839998300000000000000\",\"compilation_note\":\"Freshly compiled\",\"timestamp\":1793615536666806886}]}",
+        "score model 1: ok=true raw={\"error\":\"secret TEST_SET_A missing\",\"model_id\":1,\"ok\":false}"
+      ],
+      "get_score": {
+        "ok": true,
+        "raw": "{\"error\":\"secret TEST_SET_A missing\",\"model_id\":1,\"ok\":false}",
+        "block_height": 275886514
+      }
+    }
+  ]
+}

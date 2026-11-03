@@ -1,0 +1,10 @@
+{
+  "name": "bursa-tools",
+  "private": true,
+  "type": "module",
+  "description": "Deploy, submit, score, agent and e2e scripts for the Bursa Model contract (testnet).",
+  "dependencies": {
+    "dotenv": "^18.0.9",
+    "near-api-js": "^7.4.0"
+  }
+}

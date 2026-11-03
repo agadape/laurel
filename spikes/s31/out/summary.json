@@ -1,0 +1,14 @@
+{
+  "trees": 100,
+  "depth": 6,
+  "features": 8,
+  "nodes": 8960,
+  "model_bytes": 197551,
+  "acc_sklearn_float": 0.9053333333333333,
+  "acc_integer_model": 0.9053333333333333,
+  "label_agreement": 1.0,
+  "test_set_a_bytes": 3038,
+  "test_set_b_bytes": 3045,
+  "expected_score_a_bps": 8888,
+  "expected_score_b_bps": 9111
+}

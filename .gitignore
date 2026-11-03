@@ -1,0 +1,27 @@
+# secrets
+.env
+.env.*
+!.env.example
+*.key
+credentials/
+.near-credentials/
+
+# deps / build
+node_modules/
+.next/
+dist/
+target/
+__pycache__/
+.venv/
+
+# submission payload contains personal data
+submission*.json
+
+# product
+tasks/*/private_*.json
+web/.next/
+web/node_modules/
+*.wasm.sha256
+tools/out/
+tasks/german-credit/german.data
+*.pkl

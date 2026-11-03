@@ -1,0 +1,18 @@
+Uploading to FastFS...
+  File: wasm/evaluator.wasm
+  Size: 178433 bytes
+  SHA256: dcc4aa66c31fc634e43514accf2b46e111fa5243b3288f7a951d48268b9456c6
+  Sender: nh-spike-mvp62mw4.testnet
+  Receiver: outlayer.testnet
+
+  Uploading... tx: 4jLwYchHygviGFB1qp7Mr5xcKa7mBKp9LYMQXh7keKRC
+
+Upload complete!
+
+FastFS URL: https://test.fastfs.io/nh-spike-mvp62mw4.testnet/outlayer.testnet/dcc4aa66c31fc634e43514accf2b46e111fa5243b3288f7a951d48268b9456c6.wasm
+
+Run directly:
+  outlayer run --wasm https://test.fastfs.io/nh-spike-mvp62mw4.testnet/outlayer.testnet/dcc4aa66c31fc634e43514accf2b46e111fa5243b3288f7a951d48268b9456c6.wasm '{}' 
+
+Or deploy as project version:
+  outlayer deploy <name> --wasm-url https://test.fastfs.io/nh-spike-mvp62mw4.testnet/outlayer.testnet/dcc4aa66c31fc634e43514accf2b46e111fa5243b3288f7a951d48268b9456c6.wasm
