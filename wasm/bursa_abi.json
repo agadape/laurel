@@ -7,7 +7,7 @@
       "compiler": "rustc 1.99.0",
       "builder": "cargo-near cargo-near-build 0.11.5"
     },
-    "wasm_hash": "W9LA4HPAEBTiWHiBk7Sfhf2t6QZGSNpVzuNpfrmsS55"
+    "wasm_hash": "FsZKH5v8Vw64fuS8JLvzXLvQWrSA6VJCxnuMMLJJ4UV4"
   },
   "body": {
     "functions": [
@@ -481,7 +481,7 @@
       },
       {
         "name": "on_score",
-        "doc": " Settles a score request. Idempotent: only a `Pending` submission changes state.",
+        "doc": " Settles a score request. Idempotent: only a `Pending` submission changes state.\n `payer`/`deposit`: when the OutLayer call itself fails (promise error), the deposit bounced back to this\n contract, so it is returned to the payer here. Worker-level failures are refunded by OutLayer itself.",
         "kind": "call",
         "modifiers": [
           "private"
@@ -495,6 +495,19 @@
                 "type": "integer",
                 "format": "uint32",
                 "minimum": 0.0
+              }
+            },
+            {
+              "name": "payer",
+              "type_schema": {
+                "description": "NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = \"alice.near\".parse().unwrap();\n\nassert!(\"ƒelicia.near\".parse::<AccountId>().is_err()); // (ƒ is not f) ```",
+                "type": "string"
+              }
+            },
+            {
+              "name": "deposit",
+              "type_schema": {
+                "type": "string"
               }
             }
           ]
@@ -1009,6 +1022,13 @@
               ],
               "format": "uint32",
               "minimum": 0.0
+            },
+            "scored_by": {
+              "description": "sha256 of the evaluator wasm that produced the stored scores (set on `Scored`).",
+              "type": [
+                "string",
+                "null"
+              ]
             },
             "status": {
               "$ref": "#/definitions/Status"

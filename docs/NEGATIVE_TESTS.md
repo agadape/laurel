@@ -59,4 +59,4 @@ Setiap baris adalah sesuatu yang **harus gagal** dan memang gagal, dengan bukti 
 - Kehilangan kunci akun segar: run e2e tanpa `--cleanup` meninggalkan akun; e2e kini menyimpan kunci ke `tools/out/e2e-keys.json` dan mendukung `--cleanup-only <tag>`.
 - Evaluator di Vercel adalah hosting sementara (FastFS testnet 502 sejak 2 Nov); integritasnya tetap dijamin oleh sha256 yang dipin, bukan oleh host.
 
-Menjalankan ulang semua unit test: `bash build.sh test` (WSL) — 49 kontrak `bursa`, 3 `credit-desk`, 4 `gbdt-core`, 1 evaluator.
+Menjalankan ulang semua unit test: `bash build.sh test` (WSL) — 50 kontrak `bursa`, 3 `credit-desk`, 4 `gbdt-core`, 1 evaluator.

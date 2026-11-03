@@ -21,15 +21,22 @@ const save = () => fs.writeFileSync(path.join(here, "out", "consumer.json"), jso
 const task = await view(C, "get_task", { task_id: taskId });
 if (!task?.closed) throw new Error(`task ${taskId} must be closed (winner needed)`);
 
-// 1) desk account + deploy
-let desk;
+// 1) desk account + deploy. A desk is bound at `new` to one bursa contract + task, so reuse the saved one only
+//    when it points at THIS contract and task; otherwise create a fresh desk (desk<taskId>.<funder>).
+let desk = null;
 if (process.env.DESK_ACCOUNT_ID) {
-  desk = accountFromEnv("DESK_ACCOUNT_ID", "DESK_PRIVATE_KEY");
-} else {
+  try {
+    const cfg = await view(process.env.DESK_ACCOUNT_ID, "get_config");
+    if (cfg[1] === C && cfg[2] === taskId) desk = accountFromEnv("DESK_ACCOUNT_ID", "DESK_PRIVATE_KEY");
+    else console.log(`saved desk ${process.env.DESK_ACCOUNT_ID} is bound to ${cfg[1]} task ${cfg[2]}; creating a new one for ${C} task ${taskId}`);
+  } catch { console.log("saved desk not readable; creating a new one"); }
+}
+if (!desk) {
   const kp = KeyPair.fromRandom("ed25519");
-  const id = `desk.${funder.accountId}`;
-  summary("create desk account", await funder.createSubAccount({ accountOrPrefix: "desk", publicKey: kp.getPublicKey(), nearToTransfer: nearToYocto("1.8") }));
-  saveEnv({ DESK_ACCOUNT_ID: id, DESK_PRIVATE_KEY: kp.toString() });
+  const prefix = `desk${taskId}`;
+  const id = `${prefix}.${funder.accountId}`;
+  saveEnv({ DESK_ACCOUNT_ID: id, DESK_PRIVATE_KEY: kp.toString() }); // save before the tx
+  summary("create desk account", await funder.createSubAccount({ accountOrPrefix: prefix, publicKey: kp.getPublicKey(), nearToTransfer: nearToYocto("1.8") }));
   for (let i = 0; i < 10; i++) { try { await provider.viewAccount({ accountId: id }); break; } catch { await sleep(1500); } }
   desk = new Account(id, provider, kp.toString());
 }

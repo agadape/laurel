@@ -53,7 +53,13 @@ pub enum Error {
     FeatureOutOfRange(usize, usize),
     UnsupportedVersion(u8),
     BadScale,
+    /// `bias` or a leaf value outside ±MAX_ABS_VALUE (keeps `raw_score` sums far from i64 overflow).
+    ValueOutOfRange(usize, usize),
 }
+
+/// Largest |bias| / |leaf value| accepted by `validate`: 2^40 ≈ 1.1e12 (= 1.1e6 in out_scale 1e6 units).
+/// 501 such terms stay below 2^49, far from i64::MAX, so a validated model can never overflow `raw_score`.
+pub const MAX_ABS_VALUE: i64 = 1 << 40;
 
 /// Facts about a validated model, for logs and the registry record.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -81,6 +87,9 @@ impl Model {
         if self.feature_scale <= 0 || self.out_scale <= 0 {
             return Err(Error::BadScale);
         }
+        if self.bias.abs() > MAX_ABS_VALUE {
+            return Err(Error::ValueOutOfRange(usize::MAX, 0));
+        }
         let mut nodes = 0usize;
         let mut max_depth = 0usize;
         for (t, tree) in self.trees.iter().enumerate() {
@@ -92,6 +101,9 @@ impl Model {
             let mut depth: Vec<usize> = alloc::vec![0; len];
             for (i, n) in tree.nodes.iter().enumerate() {
                 if n.left == LEAF {
+                    if n.value.abs() > MAX_ABS_VALUE {
+                        return Err(Error::ValueOutOfRange(t, i));
+                    }
                     continue;
                 }
                 let (l, r) = (n.left as usize, n.right as usize);
@@ -314,6 +326,12 @@ mod tests {
         let mut m = mk(vec![leaf(1)]);
         m.version = 2;
         assert_eq!(m.validate(2), Err(Error::UnsupportedVersion(2)));
+        // adversarial magnitudes: a leaf or bias beyond ±2^40 is rejected (would risk raw_score overflow)
+        assert_eq!(mk(vec![leaf(MAX_ABS_VALUE + 1)]).validate(2), Err(Error::ValueOutOfRange(0, 0)));
+        let mut m = mk(vec![leaf(1)]);
+        m.bias = -(MAX_ABS_VALUE + 1);
+        assert_eq!(m.validate(2), Err(Error::ValueOutOfRange(usize::MAX, 0)));
+        assert!(mk(vec![leaf(MAX_ABS_VALUE)]).validate(2).is_ok());
     }
 
     /// Vectors produced by export.py (Python reimplementation on the quantized model).

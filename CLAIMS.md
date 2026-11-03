@@ -23,7 +23,7 @@ Line numbers refer to the files at the hackathon submission commit. Transactions
 | 15 | Whole journey reproducible from fresh accounts with 17/17 negative paths rejected | `tools/e2e.mjs` | docs/E2E.md (run `mw0kvxh3`, 23 steps, 228 s, `scores_match_local: true`) |
 | 16 | Read-only explorer shows live contract data | `web/src/rpc.js` (`call_function` view), `web/src/App.jsx` | https://bursa-model.vercel.app (default contract `bursa-dev.nh-ft-mvp6pidf.testnet`, `?contract=` override) |
 | 17 | Dataset split is reproducible and private rows do not appear in public files | `tasks/german-credit/split.py` (seed 144, row-hash check) | `tasks/german-credit/private_manifest.json` (`identical_rows_between_private_and_public: 0`, sha256 of private files) |
-| 18 | Integer model agrees with the float sklearn model | `tools/export.py` `export_task` asserts agreement ≥ 99.5 % | `tasks/german-credit/out/*/report.json` (`label agreement … 1.0000` printed on export) |
-| 19 | Unit test counts | `#[test]` in `contracts/bursa` (49), `contracts/consumer-example` (3), `crates/gbdt-core` (4), `evaluator` (1) | `bash build.sh test` |
+| 18 | Integer model agrees with the float sklearn model | `tools/export.py` `export_task` asserts agreement ≥ 99.5 % and prints `label agreement integer vs sklearn float on holdout: 1.0000` | run `python tools/export.py --task german-credit --model <pkl> --out <dir>` (README D); the assert aborts the export otherwise |
+| 19 | Unit test counts | `#[test]` in `contracts/bursa` (50), `contracts/consumer-example` (3), `crates/gbdt-core` (4), `evaluator` (1) | `bash build.sh test` |
 
 Not claimed (see README "Limits"): Sybil resistance, secrecy of split-B scores from OutLayer logs, secrecy of a public dataset, mainnet, audit, NFT ownership, sub-account per model, automatic royalties.

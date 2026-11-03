@@ -50,18 +50,26 @@ if (process.env.AGENT_ACCOUNT_ID) {
 const A = agentOwner.accountId;
 out.agent = A;
 
-// 2) function-call key: only Bursa, only predict_task/predict, 0.1 NEAR gas allowance
-let fcKey;
+// 2) function-call key: only THIS Bursa contract, only predict_task/predict, 1 NEAR gas allowance.
+//    A saved key is reused only if it exists on the account and is bound to this contract (a key made for
+//    bursa-dev would be rejected with AccessKeyReceiverMismatch on the final contract).
+let fcKey = null;
 if (process.env.AGENT_FC_PRIVATE_KEY) {
-  fcKey = KeyPair.fromString(process.env.AGENT_FC_PRIVATE_KEY);
-} else {
+  const k = KeyPair.fromString(process.env.AGENT_FC_PRIVATE_KEY);
+  try {
+    const info = await provider.viewAccessKey({ accountId: A, publicKey: k.getPublicKey().toString() });
+    if (info.permission?.FunctionCall?.receiver_id === C) fcKey = k;
+    else console.log(`saved FC key is bound to ${info.permission?.FunctionCall?.receiver_id}; adding a new key for ${C}`);
+  } catch { console.log("saved FC key not found on", A, "; adding a new one"); }
+}
+if (!fcKey) {
   fcKey = KeyPair.fromRandom("ed25519");
+  saveEnv({ AGENT_FC_PRIVATE_KEY: fcKey.toString() });
   const s = summary("add function-call key", await agentOwner.signAndSendTransaction({
     receiverId: A,
-    actions: [actions.addFunctionCallAccessKey(fcKey.getPublicKey(), C, ["predict_task", "predict"], nearToYocto("0.1"))],
+    actions: [actions.addFunctionCallAccessKey(fcKey.getPublicKey(), C, ["predict_task", "predict"], nearToYocto("1"))],
   }));
   out.add_key_tx = s.hash;
-  saveEnv({ AGENT_FC_PRIVATE_KEY: fcKey.toString() });
   await sleep(1500);
 }
 const keyInfo = await provider.viewAccessKey({ accountId: A, publicKey: fcKey.getPublicKey().toString() });

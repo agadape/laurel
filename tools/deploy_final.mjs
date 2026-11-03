@@ -2,26 +2,32 @@
 // contract, pins the evaluator, publishes the German Credit task, submits the two reference models, scores them,
 // and (optionally) waits for the deadline, closes the task and lets the agent call the winner.
 //
-//   node tools/deploy_final.mjs --name laurel [--minutes 60] [--close] [--consumer]
+//   node tools/deploy_final.mjs --name laurel [--minutes 60] [--open-until 2026-11-25T23:59:00Z] [--close]
 //
-// Needs in .env: TEAM_ACCOUNT_ID / TEAM_PRIVATE_KEY (≥ 12 NEAR free), and the OutLayer secret owner for the task
+// Creates TWO tasks: `german-credit` (demo; closed with --close so predict_task works) and `german-credit-open`
+// (same spec, deadline --open-until) so judges can still submit models and get them scored.
+// Needs in .env: TEAM_ACCOUNT_ID / TEAM_PRIVATE_KEY (≥ 8 NEAR free), and the OutLayer secret owner for the task
 // (SECRETS_ACCOUNT, default NEAR_ACCOUNT_ID, profile `german-credit`, bound to EVALUATOR_HASH).
-// Idempotent: accounts and deployment recorded in .env (FINAL_*) are reused on re-runs.
+// Idempotent: accounts and deployment recorded in .env (FINAL_*) are reused on re-runs; keys are saved BEFORE
+// the create transaction so a crash can never strand an account.
 import fs from "node:fs";
 import path from "node:path";
-import { accountFromEnv, saveEnv, provider, view, call, summary, json, sleep, errMsg, root, here, Account, KeyPair, actions, teraToGas, nearToYocto, yoctoToNear, OUTLAYER } from "./lib.mjs";
+import { saveEnv, provider, view, call, summary, json, sleep, errMsg, root, here, Account, KeyPair, actions, teraToGas, nearToYocto, yoctoToNear, OUTLAYER } from "./lib.mjs";
 
 const args = process.argv.slice(2);
 const opt = (k, d) => { const i = args.indexOf(`--${k}`); return i >= 0 ? args[i + 1] : d; };
 const NAME = opt("name", "laurel");
 const MINUTES = Number(opt("minutes", "60"));
-const team = accountFromEnv("TEAM_ACCOUNT_ID", "TEAM_PRIVATE_KEY");
+const OPEN_UNTIL = Date.parse(opt("open-until", "2026-11-25T23:59:00Z"));
+if (!process.env.TEAM_ACCOUNT_ID || !process.env.TEAM_PRIVATE_KEY) throw new Error("TEAM_ACCOUNT_ID/TEAM_PRIVATE_KEY missing in .env");
 const EVALUATOR_URL = process.env.EVALUATOR_URL || "https://nh-spike-wasm.vercel.app/8b80010fc79259c9f5d95183a660e79ad7a450fdfceed3e8ce0924f296b60ac3.wasm";
 const EVALUATOR_HASH = process.env.EVALUATOR_HASH || "8b80010fc79259c9f5d95183a660e79ad7a450fdfceed3e8ce0924f296b60ac3";
 const SECRETS_ACCOUNT = process.env.SECRETS_ACCOUNT || process.env.NEAR_ACCOUNT_ID;
 const { JsonRpcProvider } = await import("near-api-js");
-const single = new JsonRpcProvider({ url: "https://rpc.testnet.fastnear.com" });
+const single = new JsonRpcProvider({ url: "https://rpc.testnet.fastnear.com" }); // writes: one provider, typed errors
+const team = new Account(process.env.TEAM_ACCOUNT_ID, single, process.env.TEAM_PRIVATE_KEY);
 const out = { when: new Date().toISOString(), team: team.accountId, steps: [] };
+const EXPECTED = { deep: { a: 7100, b: 6650 }, shallow: { a: 7550, b: 6150 } }; // docs/EVALUATOR.md
 const save = () => fs.writeFileSync(path.join(here, "out", "deploy_final.json"), json(out) + "\n");
 const spec = JSON.parse(fs.readFileSync(path.join(root, "tasks", "german-credit", "features.json"), "utf8"));
 const holdout = fs.readFileSync(path.join(root, "tasks", "german-credit", "public_holdout.csv"), "utf8").trim().split("\n").slice(1).map((l) => l.split(",").map(Number));
@@ -47,10 +53,39 @@ async function named(prefix, near, envKey) {
   if (process.env[`FINAL_${envKey}_ID`]) return new Account(process.env[`FINAL_${envKey}_ID`], single, process.env[`FINAL_${envKey}_PRIVATE_KEY`]);
   const kp = KeyPair.fromRandom("ed25519");
   const id = `${prefix}.${team.accountId}`;
+  saveEnv({ [`FINAL_${envKey}_ID`]: id, [`FINAL_${envKey}_PRIVATE_KEY`]: kp.toString() }); // before the tx: never strand an account
   await step(`create ${id}`, () => team.createSubAccount({ accountOrPrefix: prefix, publicKey: kp.getPublicKey(), nearToTransfer: nearToYocto(near) }));
-  saveEnv({ [`FINAL_${envKey}_ID`]: id, [`FINAL_${envKey}_PRIVATE_KEY`]: kp.toString() });
   for (let i = 0; i < 10; i++) { try { await provider.viewAccount({ accountId: id }); break; } catch { await sleep(1500); } }
   return new Account(id, single, kp.toString());
+}
+
+/** Idempotent task creation by slug. */
+async function ensureTask(slug, deadlineMs) {
+  let task = await view(C, "get_task_by_slug", { slug });
+  if (task) return task;
+  const deadline_ns = (BigInt(deadlineMs) * 1_000_000n).toString();
+  const id = Number((await step(`create_task ${slug}`, () => call(team, C, "create_task", {
+    title: (slug.endsWith("-open") ? "[open] " : "") + spec.title.slice(0, 72), slug, description_url: "https://github.com/", n_features: spec.n_features, feature_names: spec.features.map((f) => f.name),
+    secrets_account: SECRETS_ACCOUNT, secrets_profile: "german-credit", deadline_ns, fee_per_call: nearToYocto("0.001").toString(), submission_fee: nearToYocto("0.1").toString(), max_per_account: 3,
+  }, { deposit: nearToYocto("0.05"), gas: "50" }))).result);
+  return view(C, "get_task", { task_id: id });
+}
+
+/** Submit + score one reference model for a task unless that owner already has a submission there. */
+async function ensureScored(task, who, name) {
+  const mine = (await view(C, "list_submissions", { task_id: task.task_id })).filter((s) => s.owner === who.accountId);
+  if (mine.length) { console.log(`  ${name}: already submitted (#${mine[0].submission_id}, ${json(mine[0].status)})`); return mine[0]; }
+  const bytes = fs.readFileSync(path.join(root, "tasks", "german-credit", "out", name, "model.bin"));
+  const v = await view(C, "validate_model", { task_id: task.task_id, bytes: bytes.toString("base64") });
+  if (!v.ok) throw new Error(`${name}: validate_model ${json(v)}`);
+  const deposit = BigInt(v.storage_cost) + BigInt(task.submission_fee) + nearToYocto("0.02");
+  const id = Number((await step(`${name}: submit_model (task ${task.task_id})`, () => call(who, C, "submit_model", { task_id: task.task_id, bytes: bytes.toString("base64") }, { deposit, gas: "150" }))).result);
+  await step(`${name}: request_score #${id}`, () => call(who, C, "request_score", { submission_id: id }, { deposit: nearToYocto("0.1"), gas: "300" }));
+  const sub = await view(C, "get_submission", { submission_id: id });
+  const ok = sub.status === "Scored" && sub.score_a_bps === EXPECTED[name].a && sub.score_b_bps === EXPECTED[name].b;
+  console.log(`  ${name} #${id}: ${json(sub.status)} A ${sub.score_a_bps} B ${sub.score_b_bps} → ${ok ? "matches docs/EVALUATOR.md" : "MISMATCH — stop and check evaluator/secret before touching docs"}`);
+  if (!ok) throw new Error(`${name}: unexpected score ${json(sub)}`);
+  return sub;
 }
 
 console.log(`final deploy "${NAME}" from ${team.accountId}; evaluator ${EVALUATOR_HASH.slice(0, 8)}…; secrets ${SECRETS_ACCOUNT}/german-credit`);
@@ -60,7 +95,8 @@ const p2 = await named("p2", "0.6", "P2");                       // shallow mode
 const agentOwner = await named("agent", "0.6", "AGENT");         // FC-key agent
 const C = contract.accountId;
 out.contract = C;
-saveEnv({ BURSA_CONTRACT_ID: C });
+// aliases so submit.mjs/predict.mjs (--as P1/P2) and agent.mjs (AGENT_*) use the final accounts
+saveEnv({ BURSA_CONTRACT_ID: C, P1_ACCOUNT_ID: p1.accountId, P1_PRIVATE_KEY: process.env.FINAL_P1_PRIVATE_KEY, P2_ACCOUNT_ID: p2.accountId, P2_PRIVATE_KEY: process.env.FINAL_P2_PRIVATE_KEY, AGENT_ACCOUNT_ID: agentOwner.accountId, AGENT_PRIVATE_KEY: process.env.FINAL_AGENT_PRIVATE_KEY });
 
 const st = await provider.viewAccount({ accountId: C });
 if (st.code_hash === "11111111111111111111111111111111") {
@@ -69,35 +105,21 @@ if (st.code_hash === "11111111111111111111111111111111") {
 } else console.log("contract already deployed on", C);
 await step("get_config", () => view(C, "get_config"));
 
-let task = await view(C, "get_task_by_slug", { slug: "german-credit" });
-if (!task) {
-  const deadline_ns = (BigInt(Date.now() + MINUTES * 60_000) * 1_000_000n).toString();
-  const id = Number((await step("create_task german-credit", () => call(team, C, "create_task", {
-    title: spec.title.slice(0, 80), slug: "german-credit", description_url: "https://github.com/", n_features: spec.n_features, feature_names: spec.features.map((f) => f.name),
-    secrets_account: SECRETS_ACCOUNT, secrets_profile: "german-credit", deadline_ns, fee_per_call: nearToYocto("0.001").toString(), submission_fee: nearToYocto("0.1").toString(), max_per_account: 3,
-  }, { deposit: nearToYocto("0.05"), gas: "50" }))).result);
-  task = await view(C, "get_task", { task_id: id });
-}
+const task = await ensureTask("german-credit", Date.now() + MINUTES * 60_000);
+const openTask = await ensureTask("german-credit-open", OPEN_UNTIL);
 const tId = task.task_id;
-out.task_id = tId;
+out.task_id = tId; out.open_task_id = openTask.task_id;
 
-if (task.submission_count === 0) {
-  for (const [who, name] of [[p1, "deep"], [p2, "shallow"]]) {
-    const bytes = fs.readFileSync(path.join(root, "tasks", "german-credit", "out", name, "model.bin"));
-    const v = await view(C, "validate_model", { task_id: tId, bytes: bytes.toString("base64") });
-    const deposit = BigInt(v.storage_cost) + BigInt(task.submission_fee) + nearToYocto("0.02");
-    const id = Number((await step(`${name}: submit_model`, () => call(who, C, "submit_model", { task_id: tId, bytes: bytes.toString("base64") }, { deposit, gas: "150" }))).result);
-    await step(`${name}: request_score`, () => call(who, C, "request_score", { submission_id: id }, { deposit: nearToYocto("0.1"), gas: "300" }));
-    const sub = await view(C, "get_submission", { submission_id: id });
-    console.log(`  ${name} #${id}: ${json(sub.status)} A ${sub.score_a_bps} B ${sub.score_b_bps}`);
-  }
-} else console.log(`task ${tId} already has ${task.submission_count} submissions`);
+// reference models on both tasks (demo task gets both; open task gets the deep model so its leaderboard is not empty)
+await ensureScored(task, p1, "deep");
+await ensureScored(task, p2, "shallow");
+await ensureScored(openTask, p1, "deep");
 
 // agent: FC key + prepaid credit (once)
 if (!process.env.FINAL_AGENT_FC_PRIVATE_KEY) {
   const fc = KeyPair.fromRandom("ed25519");
+  saveEnv({ FINAL_AGENT_FC_PRIVATE_KEY: fc.toString(), AGENT_FC_PRIVATE_KEY: fc.toString() });
   await step("agent: add function-call key", () => agentOwner.signAndSendTransaction({ receiverId: agentOwner.accountId, actions: [actions.addFunctionCallAccessKey(fc.getPublicKey(), C, ["predict_task", "predict"], nearToYocto("1"))] }));
-  saveEnv({ FINAL_AGENT_FC_PRIVATE_KEY: fc.toString() });
 }
 if (BigInt(await view(C, "get_credit", { account_id: agentOwner.accountId })) < BigInt(nearToYocto("0.01"))) {
   await step("agent owner: deposit_credit 0.05", () => call(agentOwner, C, "deposit_credit", {}, { deposit: nearToYocto("0.05"), gas: "30" }));
@@ -115,5 +137,6 @@ if (args.includes("--close")) {
   console.log("leaderboard:", json(await view(C, "leaderboard", { task_id: tId })));
 }
 save();
-console.log(`\ncontract ${C} · task ${tId} · explorer https://bursa-model.vercel.app/?contract=${C}#/task/${tId}`);
-console.log("next: update VITE_BURSA_CONTRACT default in web/src/rpc.js, docs/TESTNET.md and README A.1 to this contract; agent.mjs/consumer.mjs work with BURSA_CONTRACT_ID set.");
+console.log(`\ncontract ${C} · demo task ${tId} (closed with --close) · open task ${openTask.task_id} (until ${new Date(OPEN_UNTIL).toISOString()})`);
+console.log(`explorer https://bursa-model.vercel.app/?contract=${C}#/task/${tId}`);
+console.log("next: update web/src/rpc.js default, README A/D/E ids, docs/TESTNET.md, docs/SUBMISSION.md; then node tools/consumer.mjs <demo task> --funder TEAM and node tools/agent.mjs <demo task> --funder TEAM.");

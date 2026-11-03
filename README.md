@@ -3,7 +3,7 @@
 *Trained off-chain, ranked on a private TEE benchmark, served from a NEAR contract to agents and other contracts. The model that earns the laurel serves on-chain.*
 
 Built at **NEAR HACKATHON 2026** (testnet). Tracks: `agents`, `privacy`, `open`. Contract codename `bursa` (Indonesian for *exchange*) is kept in code, file and account names.
-Sister project by the same team (disclosed per rule Q-015): **Undo** (reversible wrapped-USDC payments with a TEE-verified AI court). The two projects share no code except the research notes in `docs/research/` and the spike log.
+Sister project by the same team (disclosed per rule Q-015): **Undo** (reversible wrapped-USDC payments with a TEE-verified AI court). The two projects are independent products; what they share is the research notes in `docs/research/` and the testnet spike log: `spikes/contracts-undo/` and `spikes/s20*–s22*` are Undo's own spikes kept here as history and are not used by Laurel.
 
 ## What it is
 
@@ -35,14 +35,14 @@ Every claim is mapped to code and transactions in [CLAIMS.md](CLAIMS.md).
 1. Open https://bursa-model.vercel.app → **see** the task list read live from `bursa-dev.nh-ft-mvp6pidf.testnet`.
 2. Click task **#2 Risiko kredit** → **see** the final leaderboard: split-A scores, split-B scores (only visible because the task is closed), the winner badge on submission #3 and its call count.
 3. Click **Model #3** → **see** the evaluator output stored on-chain (confusion matrix, `eval_version`), the pinned evaluator hash and the owner's earnings.
-4. Same data straight from RPC:
+4. Same data straight from RPC (needs `curl` and Python 3 for the decoding one-liner):
    ```bash
    curl -s https://rpc.testnet.fastnear.com -H 'content-type: application/json' -d '{"jsonrpc":"2.0","id":1,"method":"query","params":{"request_type":"call_function","finality":"final","account_id":"bursa-dev.nh-ft-mvp6pidf.testnet","method_name":"leaderboard","args_base64":"eyJ0YXNrX2lkIjoyfQ=="}}' | python -c "import sys,json;print(bytes(json.load(sys.stdin)['result']['result']).decode())"
    ```
    → **see** JSON rows with `score_a_bps`, `score_b_bps`, `calls`.
 
 ### B. The whole journey from zero, on your own testnet account (≈ 6 minutes, ≈ 6 NEAR, 3.2 of them stay locked as contract storage)
-Prerequisites: Node ≥ 20, a NEAR **testnet** account with ≥ 6 NEAR (browser faucet: https://near-faucet.io) and its ed25519 private key.
+Prerequisites: Node ≥ 20, a NEAR **testnet** account with **≥ 7 NEAR** (browser faucet: https://near-faucet.io, or `near account create-account sponsor-by-faucet-service …` which funds 10 NEAR) and its ed25519 private key.
 ```bash
 cd tools && npm install && cd ..
 cp .env.example .env            # then fill TEAM_ACCOUNT_ID and TEAM_PRIVATE_KEY
@@ -55,20 +55,22 @@ Then open `https://bursa-model.vercel.app/?contract=<your bursa-… account>` �
 
 ### C. Rebuild and test (Linux/WSL with Rust 1.8x, `cargo-near`, target `wasm32-wasip2`)
 ```bash
-bash build.sh test        # 49 bursa + 3 credit-desk + 4 gbdt-core + 1 evaluator unit tests
+bash build.sh test        # 50 bursa + 3 credit-desk + 4 gbdt-core + 1 evaluator unit tests
 bash build.sh contract    # wasm/bursa.wasm, wasm/credit_desk.wasm (+ ABI)
-bash build.sh evaluator   # wasm/evaluator.wasm + sha256 (must equal the hash pinned in the contract you use)
+bash build.sh evaluator   # wasm/evaluator.wasm + its sha256
 ```
-→ **see** `test result: ok` four times and the three wasm files with sizes. Prebuilt wasm is committed in `wasm/`, so step B works without Rust.
+→ **see** `test result: ok` four times and the three wasm files with sizes. The printed evaluator sha256 is what you would pin with `set_evaluator` for your own deployment; it only equals our pinned `8b80010f…` if your Rust toolchain matches ours (Rust 1.99, see `docs/EVALUATOR.md`). Prebuilt wasm is committed in `wasm/`, so step B works without Rust.
 
 ### D. Train and submit your own model (Python 3.10+, `pip install scikit-learn pandas numpy`)
+Submit to an **open** task: on our final contract that is the task with slug `german-credit-open` (see the task list in the explorer; the demo task `german-credit` is closed so that `predict_task` works). On your own contract from step B, create one first — the `--secrets-account/--profile` pair points it at the private test set we host at OutLayer:
 ```bash
+node tools/create_task.mjs german-credit --as TEAM --minutes 1440 --secrets-account nh-spike-mvp62mw4.testnet --profile german-credit
 python tasks/german-credit/split.py                      # downloads UCI data, writes public/private splits + manifest
 python tasks/german-credit/train.py --trees 40 --depth 3  # trains on public_train.csv only
 python tools/export.py --task german-credit --model tasks/german-credit/model_baseline.pkl --out tasks/german-credit/out/mine
-node tools/submit.mjs <task_id> tasks/german-credit/out/mine/model.bin --as TEAM
+node tools/submit.mjs <open_task_id> tasks/german-credit/out/mine/model.bin --as TEAM
 ```
-→ **see** `validate_model -> {"ok":true,…}`, `submission_id = N`, then `scored in ~10000 ms -> {"status":"Scored","bal_acc_a_bps":…}` and the updated leaderboard. Models must be ≤ 250 KB / 500 trees with strictly increasing child indices (`crates/gbdt-core::validate`).
+→ **see** `validate_model -> {"ok":true,…}`, `submission_id = N`, then `scored in ~10000 ms -> {"status":"Scored","bal_acc_a_bps":…}` and the updated leaderboard. Models must be ≤ 250 KB / 500 trees with strictly increasing child indices and |values| ≤ 2^40 (`crates/gbdt-core::validate`).
 
 ### E. Call the winner from an agent or from a contract
 ```bash
@@ -104,7 +106,9 @@ NEAR features used: own contract (near-sdk 5.30), cross-contract promises and ca
 - **Private ≠ secret from everyone.** The dataset is public, so a participant could train on all 1,000 rows. The private split protects against leaderboard-feedback overfitting (3 submissions per account, scores rounded to 50 bps, split B only used at close), not against downloading UCI. Split-B scores are visible in the OutLayer transaction log even though the contract hides them until close.
 - **No real Sybil resistance** beyond per-account quota and submission cost.
 - **Model class.** Binary GBDT with integer thresholds only; a 197 KB / 100-tree model costs 13 Tgas per call and 2 NEAR of storage.
+- **Trust assumptions.** The contract trusts what `outlayer.testnet` returns: it verifies no TEE attestation itself, so the "only the pinned evaluator can read the secret" guarantee is OutLayer's, not ours. The contract `owner` can call `set_evaluator` at any time (an `evaluator_set` event is emitted and every scored submission records `scored_by`), so participants trust the owner not to swap the scorer mid-task. The private test set for the demo task is an OutLayer secret owned by a team account.
 - **Hosting.** The FastFS testnet gateway was down during the hackathon, so the evaluator wasm is served from Vercel; integrity still rests on the sha256 pinned in the contract, not on the host. Storing a 15 KB secret needed a one-line local patch of the OutLayer CLI deposit constant (`tools/patch_outlayer_cli.sh`).
+- **Score requests.** If OutLayer's own call fails (promise error), the deposit is returned to the requester by the callback; a request whose timeout callback lands after a re-request may need one more `request_score`.
 - Testnet only. Not audited.
 
 ## Repository map

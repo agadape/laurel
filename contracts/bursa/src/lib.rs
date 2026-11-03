@@ -108,6 +108,8 @@ pub struct Submission {
     pub f1_b_bps: Option<u32>,
     pub calls: u64,
     pub last_outlayer_raw: Option<String>,
+    /// sha256 of the evaluator wasm that produced the stored scores (set on `Scored`).
+    pub scored_by: Option<String>,
 }
 
 #[near(serializers = [json])]
@@ -361,6 +363,7 @@ impl Contract {
             f1_b_bps: None,
             calls: 0,
             last_outlayer_raw: None,
+            scored_by: None,
         };
         self.model_bytes.insert(submission_id, bytes.0);
         self.submissions.insert(submission_id, sub);
@@ -428,13 +431,16 @@ impl Contract {
         ext_outlayer::ext(self.outlayer.clone())
             .with_attached_deposit(deposit)
             .with_static_gas(gas_for_outlayer)
-            .request_execution(source, resource_limits, input_data, Some(secrets_ref), "Text".into(), Some(caller))
-            .then(Self::ext(env::current_account_id()).with_static_gas(CALLBACK_GAS).on_score(submission_id))
+            .request_execution(source, resource_limits, input_data, Some(secrets_ref), "Text".into(), Some(caller.clone()))
+            .then(Self::ext(env::current_account_id()).with_static_gas(CALLBACK_GAS).on_score(submission_id, caller, deposit))
     }
 
     /// Settles a score request. Idempotent: only a `Pending` submission changes state.
+    /// `payer`/`deposit`: when the OutLayer call itself fails (promise error), the deposit bounced back to this
+    /// contract, so it is returned to the payer here. Worker-level failures are refunded by OutLayer itself.
     #[private]
-    pub fn on_score(&mut self, submission_id: u32, #[callback_result] result: Result<Option<String>, PromiseError>) -> Status {
+    pub fn on_score(&mut self, submission_id: u32, payer: AccountId, deposit: NearToken, #[callback_result] result: Result<Option<String>, PromiseError>) -> Status {
+        let evaluator_hash = self.evaluator_hash.clone();
         let sub = self.submissions.get_mut(&submission_id).unwrap_or_else(|| env::panic_str("no such submission"));
         if !matches!(sub.status, Status::Pending { .. }) {
             env::log_str(&format!("on_score ignored: submission {submission_id} is {:?}", sub.status));
@@ -449,13 +455,19 @@ impl Contract {
                 }
             }
             Ok(None) => (Status::Failed { reason: "outlayer: empty output".into() }, None, None),
-            Err(e) => (Status::Failed { reason: format!("outlayer: promise error {e:?}") }, None, None),
+            Err(e) => {
+                if deposit.as_yoctonear() > 0 {
+                    Promise::new(payer.clone()).transfer(deposit);
+                }
+                (Status::Failed { reason: format!("outlayer: promise error {e:?} (deposit returned to {payer})") }, None, None)
+            }
         };
         if let Some(s) = scores {
             sub.score_a_bps = Some(s.a_bps);
             sub.f1_a_bps = s.a_f1;
             sub.score_b_bps = s.b_bps;
             sub.f1_b_bps = s.b_f1;
+            sub.scored_by = Some(evaluator_hash);
         }
         sub.status = status.clone();
         sub.last_outlayer_raw = raw;
@@ -993,12 +1005,26 @@ mod tests {
         testing_env!(owner_ctx(100).build());
         c.request_score(1);
         testing_env!(callback_ctx().build());
-        let st = c.on_score(1, Ok(Some(EVAL_OK.into())));
+        let st = c.on_score(1, accounts(2), MIN_SCORE_DEPOSIT, Ok(Some(EVAL_OK.into())));
         assert_eq!(st, Status::Scored);
         let s = c.get_submission(1).unwrap();
         assert_eq!((s.score_a_bps, s.f1_a_bps, s.score_b_bps, s.f1_b_bps), (Some(7600), Some(6650), Some(7200), Some(6100)));
+        assert_eq!(s.scored_by.as_deref(), Some(HASH));
         assert!(s.last_outlayer_raw.unwrap().contains("bal_acc_bps"));
         assert!(get_logs().iter().any(|l| l.contains("model_scored") && l.contains("\"ok\":true")));
+    }
+
+    #[test]
+    fn on_score_promise_error_mentions_refund_to_payer() {
+        let mut c = with_submission();
+        testing_env!(owner_ctx(100).build());
+        c.request_score(1);
+        testing_env!(callback_ctx().build());
+        match c.on_score(1, accounts(2), MIN_SCORE_DEPOSIT, Err(PromiseError::Failed)) {
+            Status::Failed { reason } => assert!(reason.contains(&format!("deposit returned to {}", accounts(2))), "{reason}"),
+            other => panic!("{other:?}"),
+        }
+        assert!(c.get_submission(1).unwrap().scored_by.is_none());
     }
 
     #[test]
@@ -1007,7 +1033,7 @@ mod tests {
         testing_env!(owner_ctx(100).build());
         c.request_score(1);
         testing_env!(callback_ctx().build());
-        assert_eq!(c.on_score(1, Ok(Some(EVAL_SPIKE.into()))), Status::Scored);
+        assert_eq!(c.on_score(1, accounts(2), MIN_SCORE_DEPOSIT, Ok(Some(EVAL_SPIKE.into()))), Status::Scored);
         let s = c.get_submission(1).unwrap();
         assert_eq!((s.score_a_bps, s.f1_a_bps, s.score_b_bps), (Some(8850), None, Some(9100)));
     }
@@ -1024,7 +1050,7 @@ mod tests {
             testing_env!(owner_ctx(100).build());
             c.request_score(1); // allowed again after each failure
             testing_env!(callback_ctx().build());
-            match c.on_score(1, result) {
+            match c.on_score(1, accounts(2), MIN_SCORE_DEPOSIT, result) {
                 Status::Failed { reason } => assert!(reason.starts_with(expect), "{reason} vs {expect}"),
                 other => panic!("expected Failed, got {other:?}"),
             }
@@ -1038,9 +1064,9 @@ mod tests {
         testing_env!(owner_ctx(100).build());
         c.request_score(1);
         testing_env!(callback_ctx().build());
-        c.on_score(1, Ok(Some(EVAL_OK.into())));
+        c.on_score(1, accounts(2), MIN_SCORE_DEPOSIT, Ok(Some(EVAL_OK.into())));
         // a second (stale) callback must not overwrite the score
-        let st = c.on_score(1, Ok(Some(EVAL_FAIL.into())));
+        let st = c.on_score(1, accounts(2), MIN_SCORE_DEPOSIT, Ok(Some(EVAL_FAIL.into())));
         assert_eq!(st, Status::Scored);
         assert_eq!(c.get_submission(1).unwrap().score_a_bps, Some(7600));
     }
@@ -1052,7 +1078,7 @@ mod tests {
         testing_env!(owner_ctx(100).build());
         c.request_score(1);
         testing_env!(callback_ctx().build());
-        c.on_score(1, Ok(Some(EVAL_OK.into())));
+        c.on_score(1, accounts(2), MIN_SCORE_DEPOSIT, Ok(Some(EVAL_OK.into())));
         testing_env!(owner_ctx(1000).build());
         c.request_score(1);
     }
@@ -1082,7 +1108,7 @@ mod tests {
         testing_env!(o.build());
         c.request_score(id);
         testing_env!(callback_ctx().build());
-        assert_eq!(c.on_score(id, Ok(Some(eval_json(a, b)))), Status::Scored);
+        assert_eq!(c.on_score(id, accounts(2), MIN_SCORE_DEPOSIT, Ok(Some(eval_json(a, b)))), Status::Scored);
         id
     }
 
@@ -1285,7 +1311,7 @@ mod tests {
         testing_env!(callback_ctx().build());
         let padding = "x".repeat(2000);
         let text = format!(r#"{{"ok":true,"a":{{"bal_acc_bps":7000}},"pad":"{padding}"}}"#);
-        assert_eq!(c.on_score(1, Ok(Some(text))), Status::Scored);
+        assert_eq!(c.on_score(1, accounts(2), MIN_SCORE_DEPOSIT, Ok(Some(text))), Status::Scored);
         let raw = c.get_submission(1).unwrap().last_outlayer_raw.unwrap();
         assert!(raw.len() <= 900, "{}", raw.len());
     }
@@ -1320,7 +1346,7 @@ mod tests {
         testing_env!(owner_ctx(100).build());
         c.request_score(1);
         testing_env!(callback_ctx().build());
-        c.on_score(1, Ok(Some(EVAL_FAIL.into())));
+        c.on_score(1, accounts(2), MIN_SCORE_DEPOSIT, Ok(Some(EVAL_FAIL.into())));
         testing_env!(agent_ctx("1").build());
         c.deposit_credit();
         c.predict(1, vec![3, 2]);

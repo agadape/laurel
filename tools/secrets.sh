@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
 # ML-2b — store a task's private splits as OutLayer secrets, bound to the pinned evaluator hash.
-#   (WSL)  bash tools/secrets.sh <slug> [profile=<slug>] [hash=wasm/evaluator.wasm.sha256]
+#   (WSL)  bash tools/secrets.sh <slug> <profile> <evaluator sha256>
 # Uses the outlayer CLI login of the *task creator* (see spikes/s31/s30_outlayer.sh login). The row is
 # keyed by (wasm_hash, profile, owner): only a run of exactly that evaluator build can read it.
+# The hash is the one pinned in the contract (`get_evaluator`), e.g. 8b80010f… for evaluator v1.
 set -euo pipefail
 source "$HOME/.cargo/env"; export PATH="$HOME/.cargo/bin:$PATH"
 cd "$(dirname "$0")/.."
-slug="${1:?slug}"; profile="${2:-$slug}"; hash="${3:-$(cut -c1-64 wasm/evaluator.wasm.sha256)}"
+slug="${1:?slug}"; profile="${2:?profile}"; hash="${3:?evaluator sha256 (64 hex)}"
 A="tasks/$slug/private_a.json"; B="tasks/$slug/private_b.json"
 [ -f "$A" ] && [ -f "$B" ] || { echo "run tasks/$slug/split.py first"; exit 1; }
 payload=$(python3 -c 'import json,sys;print(json.dumps({"TEST_SET_A":open(sys.argv[1]).read(),"TEST_SET_B":open(sys.argv[2]).read()}))' "$A" "$B")
