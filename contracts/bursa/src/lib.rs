@@ -1,4 +1,4 @@
-//! Bursa Model registry contract.
+//! Laurel registry contract (codename `bursa`).
 //!
 //! ABI: `docs/ABI.md`. Tasks, submissions, OutLayer scoring, closing/winner, prepaid inference (C-1 … C-5).
 use gbdt_core::{Model, Node, Tree, LEAF};

@@ -1,3 +1,5 @@
+> Nama final project: **Laurel** (lihat docs/NAMING.md); dokumen di bawah masih memakai nama kerja "Bursa Model".
+
 # IDEAS — Project 2, NEAR HACKATHON (Fase 2: audit lintas-model + konsep baru), 2 Nov 2026
 
 Masukan: riset kita ([docs/research/](docs/research/), [SPIKE_LOG.md](SPIKE_LOG.md)) dan dokumen Grok (22 konsep, `GROK_RESEARCH.md`). Aturan skor sama dengan [docs/research/10_ideas_v1_project1.md](docs/research/10_ideas_v1_project1.md): Feasibility maks 5 kalau dependensi inti belum di-spike; Judge Fit maks 5 tanpa juri bernama + bukti; Business maks 4 tanpa model bisnis satu kalimat.

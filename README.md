@@ -1,11 +1,13 @@
-# Bursa Model — small decision models as on-chain infrastructure on NEAR
+# Laurel — small decision models as on-chain infrastructure on NEAR
 
-Built at **NEAR HACKATHON 2026** (testnet). Tracks: `agents`, `privacy`, `open`.
+*Trained off-chain, ranked on a private TEE benchmark, served from a NEAR contract to agents and other contracts. The model that earns the laurel serves on-chain.*
+
+Built at **NEAR HACKATHON 2026** (testnet). Tracks: `agents`, `privacy`, `open`. Contract codename `bursa` (Indonesian for *exchange*) is kept in code, file and account names.
 Sister project by the same team (disclosed per rule Q-015): **Undo** (reversible wrapped-USDC payments with a TEE-verified AI court). The two projects share no code except the research notes in `docs/research/` and the spike log.
 
 ## What it is
 
-A **registry contract** (`bursa`) where anyone can publish a *decision task* with a private test set, anyone can submit a small gradient-boosted-tree model, a TEE worker (OutLayer) scores the model against the private test set, the score comes back on-chain, and the winning model becomes callable infrastructure: **other contracts and AI agents call `predict_task(task_id, features)` and get a prediction inside NEAR consensus**, paying a per-call fee to the model's owner.
+Laurel is a **registry contract** (`bursa`) where anyone can publish a *decision task* with a private test set, anyone can submit a small gradient-boosted-tree model, a TEE worker (OutLayer) scores the model against the private test set, the score comes back on-chain, and the winning model becomes callable infrastructure: **other contracts and AI agents call `predict_task(task_id, features)` and get a prediction inside NEAR consensus**, paying a per-call fee to the model's owner.
 
 Why on NEAR:
 - The model runs **inside the contract** (integer GBDT, no oracle round-trip): one prediction with a 33 KB / 50-tree model costs **4.3 Tgas** ([docs/GAS.md](docs/GAS.md)), so other contracts can compose it synchronously in a promise.

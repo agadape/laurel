@@ -1,4 +1,6 @@
-# PLAN — Bursa Model (Project 2, NEAR HACKATHON), ditulis 2 Nov 2026 malam
+# PLAN — Laurel (Project 2, NEAR HACKATHON), ditulis 2 Nov 2026 malam
+
+> **Nama final: Laurel** (3 Nov, [docs/NAMING.md](docs/NAMING.md)); nama kerja "Bursa Model" dan codename kontrak `bursa` masih muncul di dokumen di bawah.
 
 > **Status 2 Nov 23:30 WIB:** M0 selesai (S-1, S-2, S-4; S-3 menunggu manusia). M1 selesai lebih awal: C-1…C-5 terimplementasi (44 unit test), C-6 deploy ke `bursa-dev.nh-ft-mvp6pidf.testnet` dan **Checkpoint M1 lolos** dengan evaluator spike: tugas → 2 submit → 2 skor OutLayer → leaderboard → `close_task` → `predict_task` ×3 oleh agent dengan prabayar. Angka gas di [docs/GAS.md](docs/GAS.md): `predict` model 33 KB = **4,26 Tgas** (kriteria ≤ 8 ✓), model 197 KB = 13,2 Tgas.
 > **Status 3 Nov 14:05 WIB — M2 hampir selesai:** E-1 evaluator v1 (balanced accuracy + F1, format secret kompak) dibangun, di-host, dan dipin (`docs/EVALUATOR.md`); ML-2 `split.py` + `train.py` + manifest; ML-1 `export.py` per tugas (kecocokan int vs float 100%); ML-2b secret 15 KB tersimpan (CLI dipatch lokal, disetujui); ML-3 `create_task.mjs`, `submit.mjs`, `close_task.mjs`, `predict.mjs`, `set_evaluator.mjs`. **Checkpoint M2 tercapai**: tugas `german-credit` (id 2) di `bursa-dev`, dua model nyata diskor OutLayer identik dengan lokal/Python (deep A 7100/B 6650, shallow A 7550/B 6150). Tugas 2 ditutup (pemenang deep via split B), `predict_task` 4,3 Tgas.

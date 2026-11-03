@@ -1,3 +1,5 @@
+> Nama final project: **Laurel** (lihat docs/NAMING.md); dokumen di bawah masih memakai nama kerja "Bursa Model".
+
 # Uji Arsitektur — Bursa Model (sebelum commit), 2 Nov 2026
 
 Tujuan: menjawab empat pertanyaan arsitektur dengan memisahkan **fakta terdokumentasi**, **sudah dibuktikan spike kita**, dan **asumsi**. Lalu merampingkan MVP dan memberi go/no-go. Tidak ada kode yang ditulis.

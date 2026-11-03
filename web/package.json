@@ -1,9 +1,9 @@
 {
-  "name": "bursa-web",
+  "name": "laurel-web",
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "Read-only explorer for the Bursa Model contract (NEAR testnet): tasks, leaderboards, models, costs.",
+  "description": "Read-only explorer for the Laurel contract (codename bursa, NEAR testnet): tasks, leaderboards, models, costs.",
   "scripts": {
     "dev": "vite",
     "build": "vite build",

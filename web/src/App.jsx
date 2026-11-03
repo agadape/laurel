@@ -212,7 +212,7 @@ export default function App() {
     <>
       <header>
         <div className="wrap">
-          <h1><a href="#/">Bursa Model</a></h1>
+          <h1><a href="#/">Laurel</a></h1>
           <nav><a href="#/">Tugas</a><a href="#/biaya">Biaya &amp; cara kerja</a></nav>
           <span className="contract"><a href={EXPLORER_ACCOUNT(contractId())} target="_blank" rel="noreferrer">{contractId()}</a> · testnet · baca-saja</span>
         </div>

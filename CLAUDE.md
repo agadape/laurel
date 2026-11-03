@@ -1,6 +1,6 @@
-# CLAUDE.md — Bursa Model (project ke-2, NEAR HACKATHON)
+# CLAUDE.md — Laurel (project ke-2, NEAR HACKATHON)
 
-Project **kedua** tim di NEAR HACKATHON (deadline 2026-11-14T23:59:00Z, target submit 14 Nov 12:00 UTC). Ide **sudah dipilih: Bursa Model** — model keputusan kecil sebagai infrastruktur on-chain, dinilai di benchmark privat lewat OutLayer. Project pertama (Undo) ada di `C:\Project_Dave\NEAR_Hackathon`; baca saja kalau perlu, jangan diubah dari sini. README kedua project wajib saling menyebut (Q-015).
+Project **kedua** tim di NEAR HACKATHON (deadline 2026-11-14T23:59:00Z, target submit 14 Nov 12:00 UTC). Ide **sudah dipilih: Laurel** (nama kerja Bursa Model; codename kontrak `bursa` tidak diubah, lihat `docs/NAMING.md`) — model keputusan kecil sebagai infrastruktur on-chain, dinilai di benchmark privat lewat OutLayer. Project pertama (Undo) ada di `C:\Project_Dave\NEAR_Hackathon`; baca saja kalau perlu, jangan diubah dari sini. README kedua project wajib saling menyebut (Q-015).
 
 ## Baca dulu, sesuai urutan
 1. [PLAN.md](PLAN.md) — rencana kerja, arsitektur, tugas per ID (S-, C-, E-, ML-, I-, F-, T-, D-), milestone, freeze 11 Nov.

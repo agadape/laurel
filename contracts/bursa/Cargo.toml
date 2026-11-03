@@ -2,7 +2,7 @@
 name = "bursa"
 version = "0.1.0"
 edition = "2021"
-description = "Bursa Model: tasks, model submissions, private-benchmark scores via OutLayer, and on-chain inference."
+description = "Laurel (contract codename bursa): tasks, model submissions, private-benchmark scores via OutLayer, and on-chain inference."
 
 [lib]
 crate-type = ["cdylib", "rlib"]

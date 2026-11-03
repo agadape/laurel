@@ -1,4 +1,6 @@
-# CLAIMS — every statement in README.md mapped to code, tests and transactions
+# CLAIMS — Laurel: every statement in README.md mapped to code, tests and transactions
+
+Project name: **Laurel** (contract codename `bursa`, see `docs/NAMING.md`).
 
 Line numbers refer to the files at the hackathon submission commit. Transactions are on NEAR **testnet** (https://testnet.nearblocks.io/txns/<hash>).
 
