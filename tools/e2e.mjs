@@ -20,7 +20,7 @@ const CLEANUP_ONLY = opt("cleanup-only", null); // tag of an earlier run whose a
 const KEYS_FILE = path.join(here, "out", "e2e-keys.json"); // fresh-account keys, so a crashed run can still be cleaned up
 const keys = fs.existsSync(KEYS_FILE) ? JSON.parse(fs.readFileSync(KEYS_FILE, "utf8")) : {};
 const { JsonRpcProvider } = await import("near-api-js");
-const singleProvider = new JsonRpcProvider({ url: "https://rpc.testnet.fastnear.com" });
+const singleProvider = new JsonRpcProvider({ url: process.env.WRITE_RPC || "https://rpc.testnet.fastnear.com" });
 /** Same account on a single provider: typed protocol/contract errors instead of RetriesExceeded. */
 const single = (acc) => new Account(acc.accountId, singleProvider, keys[acc.accountId]);
 const EVALUATOR_URL = process.env.EVALUATOR_URL || "https://nh-spike-wasm.vercel.app/8b80010fc79259c9f5d95183a660e79ad7a450fdfceed3e8ce0924f296b60ac3.wasm";

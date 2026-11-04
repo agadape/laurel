@@ -13,9 +13,9 @@ what="${1:-all}"
 s=$(date +%s)
 if [[ "$what" == "test" || "$what" == "all" ]]; then
   echo "===== cargo test (gbdt-core, bursa)"
-  cargo test -p gbdt-core -p bursa -p credit-desk --release -- --nocapture 2>&1 | filt | tail -25; echo "exit=${PIPESTATUS[0]}"
+  cargo test -p gbdt-core -p bursa -p credit-desk --release 2>&1 | filt | grep -E "Running|test result|panicked|error(\[|:)|FAILED"; echo "exit=${PIPESTATUS[0]}"
   echo "===== cargo test evaluator (no host feature)"
-  cargo test -p evaluator --release --no-default-features 2>&1 | filt | tail -6; echo "exit=${PIPESTATUS[0]}"
+  cargo test -p evaluator --release --no-default-features 2>&1 | filt | grep -E "Running|test result|panicked|error(\[|:)|FAILED"; echo "exit=${PIPESTATUS[0]}"
 fi
 if [[ "$what" == "contract" || "$what" == "all" ]]; then
   echo "===== cargo near build contracts/bursa"

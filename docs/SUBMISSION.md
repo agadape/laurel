@@ -13,10 +13,10 @@ Aturan di [HACKATHON.md](../HACKATHON.md): submit **sekali** per repo, tidak bis
 - [ ] Post X oleh manusia: menyebut "built at NEAR HACKATHON", tag @NEARProtocol dan #NEARHackathon, lampirkan video. Simpan URL post.
 
 ## 13 Nov (agent, dengan persetujuan)
-- [ ] `bash build.sh test` hijau; `node tools/e2e.mjs --funder TEAM --cleanup` hijau → `docs/E2E.md` diperbarui (D-5).
-- [ ] `docs/GAS.md`, `docs/AGENT.md`, `docs/CONSUMER.md` merujuk kontrak final atau jelas menyebut kontrak dev.
-- [ ] `CLAIMS.md` nomor baris dicek ulang (`grep -n "pub fn"`).
-- [ ] Tidak ada secret di repo: `git ls-files | xargs grep -lE "PRIVATE_KEY=ed25519"` kosong; `.env`, `private_*.json`, `tools/out/`, `*.pkl` tetap di-ignore.
+- [x] 4 Nov: `bash build.sh test` hijau (50+3+4+1); `node tools/e2e.mjs --funder TEAM --cleanup` hijau (run `mw1xpamc`, 23 langkah, 17/17, 232 s) → `docs/E2E.md`. Ulangi 13 Nov hanya kalau ada perubahan kode/kontrak.
+- [x] 4 Nov: `docs/AGENT.md`, `docs/CONSUMER.md` merujuk kontrak final (tugas 3); `docs/GAS.md` tetap pengukuran di kontrak dev dan menyebutnya.
+- [x] 4 Nov: `CLAIMS.md` nomor baris dicek ulang (`grep -n "pub fn"`).
+- [x] 4 Nov (ulangi sebelum push): Tidak ada secret di repo: `git ls-files | xargs grep -lE "PRIVATE_KEY=ed25519"` kosong; `.env`, `private_*.json`, `tools/out/`, `*.pkl` tetap di-ignore.
 
 ## Payload (diisi manusia, dicetak agent, dikirim setelah "ya")
 ```json
