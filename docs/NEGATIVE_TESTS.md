@@ -50,7 +50,7 @@ Setiap baris adalah sesuatu yang **harus gagal** dan memang gagal, dengan bukti 
 | Build evaluator lain (hash `75f06a7d…`) menyebut `secrets_ref` yang sama | `secret TEST_SET_A missing` → submission `Failed` | SPIKE_LOG S30, tx `vcHbSoU19TTNQ66zS3DW2PGcXZLvnNJR3CPQXFXn5Jo`-series (2 Nov) |
 | `request_score` tanpa secret | `TEST_SET_A missing` | S30 tx `5v5TvhSk6LVrRPLRpYQtrjgxvWQpuTACsbATn57SXXbw` |
 | Peserta memilih evaluator sendiri | tidak mungkin: `request_score` tidak menerima URL/hash; hanya `set_evaluator` oleh owner | `docs/ABI.md`, kode `request_score` |
-| Kontrak konsumen memanggil dengan fitur salah | callback menerima promise error → `Outcome::Error`, tidak panik | `docs/CONSUMER.md` tx `HMmwsMTMaN9B1prQDPJ3DDY6yc6xkZ9kwayfQogbFTPd` |
+| Kontrak konsumen memanggil dengan fitur salah | callback menerima promise error → `Outcome::Error`, tidak panik | `docs/CONSUMER.md` tx `DtaaDVx9KhD1evMUTUCZ35T6gU5RBYs9ZTujtp3QRxYo` (kontrak final, 4 Nov; sebelumnya `HMmwsMTMaN9B1prQDPJ3DDY6yc6xkZ9kwayfQogbFTPd` di bursa-dev) |
 
 ## 4. Yang **tidak** diuji / tidak dijamin (ditulis di README)
 

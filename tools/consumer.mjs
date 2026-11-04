@@ -4,7 +4,7 @@
 // Writes tools/out/consumer.json and docs/CONSUMER.md.
 import fs from "node:fs";
 import path from "node:path";
-import { accountFromEnv, saveEnv, provider, view, call, summary, json, sleep, errMsg, root, here, Account, KeyPair, actions, teraToGas, nearToYocto, yoctoToNear } from "./lib.mjs";
+import { accountFromEnv, saveEnv, provider, view, call, summary, json, sleep, errMsg, root, here, Account, KeyPair, actions, teraToGas, nearToYocto, yoctoToNear, datasetDir } from "./lib.mjs";
 
 const args = process.argv.slice(2);
 const taskId = Number(args[0]);
@@ -61,7 +61,7 @@ if (credit0 < BigInt(nearToYocto("0.005"))) {
 out.desk_credit_before = yoctoToNear(BigInt(await view(C, "get_credit", { account_id: D })), 4);
 
 // 3) screen applicants: anyone may call; the desk's own credit pays
-const lines = fs.readFileSync(path.join(root, "tasks", task.slug, "public_holdout.csv"), "utf8").trim().split("\n");
+const lines = fs.readFileSync(path.join(datasetDir(task), "public_holdout.csv"), "utf8").trim().split("\n");
 for (const r of rows) {
   const cols = lines[r + 1].split(",").map(Number);
   const features = cols.slice(0, -1), truth = cols[cols.length - 1];

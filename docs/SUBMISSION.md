@@ -3,10 +3,10 @@
 Aturan di [HACKATHON.md](../HACKATHON.md): submit **sekali** per repo, tidak bisa diedit, hanya 1–14 Nov. Ambil ulang versi live https://nearhackathon.com/HACKATHON.md pada hari H.
 
 ## Sebelum hari H (manusia)
-- [ ] Nama project final (lihat `docs/NAMING.md`) dan rename selesai.
+- [x] Nama project final (lihat `docs/NAMING.md`) dan rename selesai.
 - [ ] Akun NEAR **mainnet** tim untuk payout (buat di wallet mana pun; jangan pernah dibuat oleh agent).
-- [ ] Akun testnet tim terisi ≥ 15 NEAR (faucet) → deploy kontrak demo final `bursa.<tim>.testnet`, `set_evaluator`, buat tugas `german-credit` dengan deadline **sebelum** 13 Nov supaya sudah tertutup saat penjurian, submit 2 model, `close_task`, beberapa `predict_task`.
-- [ ] `VITE_BURSA_CONTRACT` di Vercel (atau default di `web/src/rpc.js`) diarahkan ke kontrak final; deploy ulang web.
+- [x] 4 Nov: akun tim `laurel-team-mw0x0c8g.testnet` terisi 21,79 NEAR → kontrak final `laurel.laurel-team-mw0x0c8g.testnet` dideploy (evaluator dipin lewat `new`), tugas 3 `credit-risk` (demo, ditutup) dengan 2 model terskor, tugas 4 `credit-risk-open` (untuk juri, sampai 25 Nov) dengan 1 model (tugas 1/2 berjudul Indonesia digantikan); `close_task` + 5 `predict_task` oleh agent. Rincian di `docs/TESTNET.md`.
+- [x] Default `web/src/rpc.js` → `laurel.laurel-team-mw0x0c8g.testnet`; web dideploy ulang 4 Nov.
 - [ ] README Undo menyebut project ini, dan README ini menyebut Undo dengan tautan repo (Q-015).
 - [ ] Video ≤ 3 menit sesuai `DEMO.md` direkam, diunggah.
 - [ ] Repo GitHub dibuat publik (manusia), `git push`.

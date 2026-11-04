@@ -1,6 +1,6 @@
 # DEMO — naskah video 3 menit (D-3)
 
-Semua yang tampil adalah transaksi testnet asli. Rekam layar 1080p; terminal font besar; browser di https://bursa-model.vercel.app. Siapkan sebelum rekam: tugas baru `german-credit-demo` dengan deadline 4 menit (`node tools/create_task.mjs german-credit --minutes 4 --secrets-account nh-spike-mvp62mw4.testnet --profile german-credit --as TEAM --slug-override german-credit-demo`), model `deep` dan `shallow` sudah diekspor, agent sudah punya kredit.
+Semua yang tampil adalah transaksi testnet asli. Rekam layar 1080p; terminal font besar; browser di https://laurel-near.vercel.app (UI berbahasa Inggris: Tasks / Costs & how it works). Siapkan sebelum rekam: tugas baru `german-credit-demo` dengan deadline 4 menit (`node tools/create_task.mjs german-credit --minutes 4 --secrets-account nh-spike-mvp62mw4.testnet --profile german-credit --as TEAM --slug-override german-credit-demo`), model `deep` dan `shallow` sudah diekspor, agent sudah punya kredit.
 
 | Waktu | Layar | Ucapan (ID) |
 |---|---|---|

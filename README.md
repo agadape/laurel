@@ -14,7 +14,7 @@ Why on NEAR:
 - **OutLayer** (NEAR partner) runs the evaluator in a TEE with the test set stored as a secret that is **bound to the evaluator's wasm hash**; the contract pins that hash, so neither participants nor the operator can swap the scorer ([docs/EVALUATOR.md](docs/EVALUATOR.md)).
 - **Function-call access keys** let an AI agent hold a key that can only call `predict_task` on this contract: the protocol itself rejects `withdraw_credit`, deposits, other contracts and transfers from that key ([docs/AGENT.md](docs/AGENT.md)).
 
-Demo task: **credit risk on UCI German Credit** (simulation only, see limits) — 18 integer features, label `1 = bad`, metric balanced accuracy. Live read-only explorer: **https://bursa-model.vercel.app**.
+Demo task: **credit risk on UCI German Credit** (simulation only, see limits) — 18 integer features, label `1 = bad`, metric balanced accuracy. Live read-only explorer: **https://laurel-near.vercel.app**.
 
 ## What is proven on testnet (3 Nov 2026)
 
@@ -32,12 +32,12 @@ Every claim is mapped to code and transactions in [CLAIMS.md](CLAIMS.md).
 ## Try it
 
 ### A. Read-only, no setup (2 minutes)
-1. Open https://bursa-model.vercel.app → **see** the task list read live from `bursa-dev.nh-ft-mvp6pidf.testnet`.
-2. Click task **#2 Risiko kredit** → **see** the final leaderboard: split-A scores, split-B scores (only visible because the task is closed), the winner badge on submission #3 and its call count.
-3. Click **Model #3** → **see** the evaluator output stored on-chain (confusion matrix, `eval_version`), the pinned evaluator hash and the owner's earnings.
+1. Open https://laurel-near.vercel.app → **see** the task list read live from `laurel.laurel-team-mw0x0c8g.testnet`.
+2. Click task **#3 Credit risk** → **see** the final leaderboard: split-A scores, split-B scores (only visible because the task is closed), the winner badge on submission #4 (deep model: lower split-A score than #5, better split-B) and its call count.
+3. Click **Model #4** → **see** the evaluator output stored on-chain (confusion matrix, `eval_version`), the pinned evaluator hash and the owner's earnings.
 4. Same data straight from RPC (needs `curl` and Python 3 for the decoding one-liner):
    ```bash
-   curl -s https://rpc.testnet.fastnear.com -H 'content-type: application/json' -d '{"jsonrpc":"2.0","id":1,"method":"query","params":{"request_type":"call_function","finality":"final","account_id":"bursa-dev.nh-ft-mvp6pidf.testnet","method_name":"leaderboard","args_base64":"eyJ0YXNrX2lkIjoyfQ=="}}' | python -c "import sys,json;print(bytes(json.load(sys.stdin)['result']['result']).decode())"
+   curl -s https://rpc.testnet.fastnear.com -H 'content-type: application/json' -d '{"jsonrpc":"2.0","id":1,"method":"query","params":{"request_type":"call_function","finality":"final","account_id":"laurel.laurel-team-mw0x0c8g.testnet","method_name":"leaderboard","args_base64":"eyJ0YXNrX2lkIjozfQ=="}}' | python -c "import sys,json;print(bytes(json.load(sys.stdin)['result']['result']).decode())"
    ```
    → **see** JSON rows with `score_a_bps`, `score_b_bps`, `calls`.
 
@@ -51,7 +51,7 @@ node tools/e2e.mjs --funder TEAM --minutes 3 --cleanup
 → **see** in the terminal: 5 fresh accounts, `deploy + new`, `create_task`, two `submit_model`, two `request_score` lines ending in `matches local/Python`, `[rejected] …` for every negative path, `waiting …s for the deadline`, `close_task`, three `predict_task` lines with labels, a `SUMMARY` with `scores_match_local: true`, then cleanup. The report with all hashes lands in `docs/E2E.md` and `tools/out/e2e.json`.
 The private test set is the one we stored at OutLayer (owner `nh-spike-mvp62mw4.testnet`, profile `german-credit`, access `allow-all`, bound to evaluator hash `8b80010f…`); your fresh contract references it by `secrets_account/secrets_profile`, so you do not need our keys. To host your **own** secret and evaluator see [docs/EVALUATOR.md](docs/EVALUATOR.md).
 
-Then open `https://bursa-model.vercel.app/?contract=<your bursa-… account>` → **see** your run in the explorer.
+Then open `https://laurel-near.vercel.app/?contract=<your bursa-… account>` → **see** your run in the explorer.
 
 ### C. Rebuild and test (Linux/WSL with Rust 1.8x, `cargo-near`, target `wasm32-wasip2`)
 ```bash
@@ -62,7 +62,7 @@ bash build.sh evaluator   # wasm/evaluator.wasm + its sha256
 → **see** `test result: ok` four times and the three wasm files with sizes. The printed evaluator sha256 is what you would pin with `set_evaluator` for your own deployment; it only equals our pinned `8b80010f…` if your Rust toolchain matches ours (Rust 1.99, see `docs/EVALUATOR.md`). Prebuilt wasm is committed in `wasm/`, so step B works without Rust.
 
 ### D. Train and submit your own model (Python 3.10+, `pip install scikit-learn pandas numpy`)
-Submit to an **open** task: on our final contract that is the task with slug `german-credit-open` (see the task list in the explorer; the demo task `german-credit` is closed so that `predict_task` works). On your own contract from step B, create one first — the `--secrets-account/--profile` pair points it at the private test set we host at OutLayer:
+Submit to an **open** task: on our final contract `laurel.laurel-team-mw0x0c8g.testnet` that is **task 4** (slug `credit-risk-open`, open until 2026-11-25 23:59 UTC → use `4` as `<open_task_id>`; the demo task `german-credit` is closed so that `predict_task` works). On your own contract from step B, create one first — the `--secrets-account/--profile` pair points it at the private test set we host at OutLayer:
 ```bash
 node tools/create_task.mjs german-credit --as TEAM --minutes 1440 --secrets-account nh-spike-mvp62mw4.testnet --profile german-credit
 python tasks/german-credit/split.py                      # downloads UCI data, writes public/private splits + manifest
@@ -73,6 +73,7 @@ node tools/submit.mjs <open_task_id> tasks/german-credit/out/mine/model.bin --as
 → **see** `validate_model -> {"ok":true,…}`, `submission_id = N`, then `scored in ~10000 ms -> {"status":"Scored","bal_acc_a_bps":…}` and the updated leaderboard. Models must be ≤ 250 KB / 500 trees with strictly increasing child indices and |values| ≤ 2^40 (`crates/gbdt-core::validate`).
 
 ### E. Call the winner from an agent or from a contract
+On our final contract the closed demo task is **task 3** (`<task_id>` = `3`); `predict_task` works only on a closed task.
 ```bash
 node tools/predict.mjs <task_id> --row 0 --as TEAM --deposit 0.02   # prepay once, then predict_task
 node tools/agent.mjs <task_id> --rows 10                             # restricted key + 4 protocol rejections → docs/AGENT.md

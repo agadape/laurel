@@ -2,9 +2,9 @@
 // contract, pins the evaluator, publishes the German Credit task, submits the two reference models, scores them,
 // and (optionally) waits for the deadline, closes the task and lets the agent call the winner.
 //
-//   node tools/deploy_final.mjs --name laurel [--minutes 60] [--open-until 2026-11-25T23:59:00Z] [--close]
+//   node tools/deploy_final.mjs --name laurel [--slug credit-risk] [--minutes 60] [--open-until 2026-11-25T23:59:00Z] [--close]
 //
-// Creates TWO tasks: `german-credit` (demo; closed with --close so predict_task works) and `german-credit-open`
+// Creates TWO tasks: `<slug>` (demo; closed with --close so predict_task works) and `<slug>-open`
 // (same spec, deadline --open-until) so judges can still submit models and get them scored.
 // Needs in .env: TEAM_ACCOUNT_ID / TEAM_PRIVATE_KEY (≥ 8 NEAR free), and the OutLayer secret owner for the task
 // (SECRETS_ACCOUNT, default NEAR_ACCOUNT_ID, profile `german-credit`, bound to EVALUATOR_HASH).
@@ -18,13 +18,14 @@ const args = process.argv.slice(2);
 const opt = (k, d) => { const i = args.indexOf(`--${k}`); return i >= 0 ? args[i + 1] : d; };
 const NAME = opt("name", "laurel");
 const MINUTES = Number(opt("minutes", "60"));
+const SLUG = opt("slug", "german-credit"); // 4 Nov: tasks 1/2 (`german-credit*`, Indonesian title) were superseded by `credit-risk*` (English title)
 const OPEN_UNTIL = Date.parse(opt("open-until", "2026-11-25T23:59:00Z"));
 if (!process.env.TEAM_ACCOUNT_ID || !process.env.TEAM_PRIVATE_KEY) throw new Error("TEAM_ACCOUNT_ID/TEAM_PRIVATE_KEY missing in .env");
 const EVALUATOR_URL = process.env.EVALUATOR_URL || "https://nh-spike-wasm.vercel.app/8b80010fc79259c9f5d95183a660e79ad7a450fdfceed3e8ce0924f296b60ac3.wasm";
 const EVALUATOR_HASH = process.env.EVALUATOR_HASH || "8b80010fc79259c9f5d95183a660e79ad7a450fdfceed3e8ce0924f296b60ac3";
 const SECRETS_ACCOUNT = process.env.SECRETS_ACCOUNT || process.env.NEAR_ACCOUNT_ID;
 const { JsonRpcProvider } = await import("near-api-js");
-const single = new JsonRpcProvider({ url: "https://rpc.testnet.fastnear.com" }); // writes: one provider, typed errors
+const single = new JsonRpcProvider({ url: opt("rpc", process.env.WRITE_RPC || "https://rpc.testnet.fastnear.com") }); // writes: one provider, typed errors (--rpc to switch when rate-limited)
 const team = new Account(process.env.TEAM_ACCOUNT_ID, single, process.env.TEAM_PRIVATE_KEY);
 const out = { when: new Date().toISOString(), team: team.accountId, steps: [] };
 const EXPECTED = { deep: { a: 7100, b: 6650 }, shallow: { a: 7550, b: 6150 } }; // docs/EVALUATOR.md
@@ -43,7 +44,7 @@ async function step(name, fn) {
       return s;
     } catch (e) {
       const m = errMsg(e);
-      if (!/RetriesExceeded|429|Rate limit|ECONNRESET|fetch failed|timeout/i.test(m) || attempt >= 3) { console.log(`[FAILED] ${name}: ${m.slice(0, 200)}`); throw e; }
+      if (!/RetriesExceeded|429|Rate limit|ECONNRESET|fetch failed|timeout/i.test(m) || attempt >= 5) { console.log(`[FAILED] ${name}: ${m.slice(0, 200)}`); throw e; }
       console.log(`[retry ${attempt}] ${name}`); await sleep(4000 * attempt);
     }
   }
@@ -90,7 +91,7 @@ async function ensureScored(task, who, name) {
 
 console.log(`final deploy "${NAME}" from ${team.accountId}; evaluator ${EVALUATOR_HASH.slice(0, 8)}…; secrets ${SECRETS_ACCOUNT}/german-credit`);
 const contract = await named(NAME, "3.4", "CONTRACT");            // ≈ 2.9 NEAR code + task storage
-const p1 = await named("p1", "1.0", "P1");                       // deep model
+const p1 = await named("p1", "1.6", "P1");                       // deep model on two tasks (2 × ≈0.6)
 const p2 = await named("p2", "0.6", "P2");                       // shallow model
 const agentOwner = await named("agent", "0.6", "AGENT");         // FC-key agent
 const C = contract.accountId;
@@ -105,8 +106,8 @@ if (st.code_hash === "11111111111111111111111111111111") {
 } else console.log("contract already deployed on", C);
 await step("get_config", () => view(C, "get_config"));
 
-const task = await ensureTask("german-credit", Date.now() + MINUTES * 60_000);
-const openTask = await ensureTask("german-credit-open", OPEN_UNTIL);
+const task = await ensureTask(SLUG, Date.now() + MINUTES * 60_000);
+const openTask = await ensureTask(`${SLUG}-open`, OPEN_UNTIL);
 const tId = task.task_id;
 out.task_id = tId; out.open_task_id = openTask.task_id;
 
@@ -138,5 +139,5 @@ if (args.includes("--close")) {
 }
 save();
 console.log(`\ncontract ${C} · demo task ${tId} (closed with --close) · open task ${openTask.task_id} (until ${new Date(OPEN_UNTIL).toISOString()})`);
-console.log(`explorer https://bursa-model.vercel.app/?contract=${C}#/task/${tId}`);
+console.log(`explorer https://laurel-near.vercel.app/?contract=${C}#/task/${tId}`);
 console.log("next: update web/src/rpc.js default, README A/D/E ids, docs/TESTNET.md, docs/SUBMISSION.md; then node tools/consumer.mjs <demo task> --funder TEAM and node tools/agent.mjs <demo task> --funder TEAM.");

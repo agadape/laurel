@@ -4,7 +4,8 @@
 |---|---|---|
 | Evaluator v1 (`eval_version` "1") | sha256 `8b80010fc79259c9f5d95183a660e79ad7a450fdfceed3e8ce0924f296b60ac3`, 206.308 B, `wasm32-wasip2` | `bash build.sh evaluator` (3 Nov 2026) |
 | URL | `https://nh-spike-wasm.vercel.app/8b80010fc79259c9f5d95183a660e79ad7a450fdfceed3e8ce0924f296b60ac3.wasm` | `curl` → 200, sha256 cocok. FastFS testnet masih 502 (2–3 Nov) |
-| Dipin di `bursa-dev.nh-ft-mvp6pidf.testnet` | `set_evaluator` oleh owner `nh-ft-mvp6pidf.testnet` | tx `GRSvCNKdXurhSfiARZTdK5mw2xqxUQdbhMGNd7Dm8kxB` |
+| Dipin di kontrak **final** `laurel.laurel-team-mw0x0c8g.testnet` | argumen `new` saat deploy (4 Nov), owner `laurel-team-mw0x0c8g.testnet` | tx `4ThoX7csa7GsmJCAA4V4CgNbaMEepqoHvG6jUfVuVZNf`; `get_evaluator` mengembalikan URL + hash di atas |
+| Dipin di `bursa-dev.nh-ft-mvp6pidf.testnet` (dev) | `set_evaluator` oleh owner `nh-ft-mvp6pidf.testnet` | tx `GRSvCNKdXurhSfiARZTdK5mw2xqxUQdbhMGNd7Dm8kxB` |
 | Secret tugas `german-credit` | `TEST_SET_A` + `TEST_SET_B` (2 × 150 baris, format kompak, 15.282 B) disimpan oleh `nh-spike-mvp62mw4.testnet`, profil `german-credit`, **bound ke hash v1**, `--access allow-all` | `outlayer secrets set …` 3 Nov; `tasks/german-credit/private_manifest.json` memuat sha256 file privat |
 | Deposit secret | CLI resmi melampirkan 0,1 NEAR tetap (≈ 7 KB). Dipakai salinan lokal `outlayer-cli` 0.2.1 dengan konstanta deposit 0,5 NEAR (`tools/patch_outlayer_cli.sh`, satu baris diubah) | disetujui tim 3 Nov |
 | Evaluator spike (lama) | hash `dcc4aa66…`, hanya untuk Checkpoint M1 (tugas `gas-probe`), tidak lagi dipin | `docs/GAS.md` |

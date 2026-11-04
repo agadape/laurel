@@ -5,7 +5,7 @@
 //   [--as MAIN|FT|TEAM|AGENT] [--deposit 0.02]              # deposit credit first (full-access key)
 import fs from "node:fs";
 import path from "node:path";
-import { accountFromEnv, call, view, summary, root, nearToYocto, yoctoToNear, errMsg } from "./lib.mjs";
+import { accountFromEnv, call, view, summary, root, nearToYocto, yoctoToNear, errMsg, datasetDir } from "./lib.mjs";
 
 const args = process.argv.slice(2);
 const taskId = Number(args[0]);
@@ -22,7 +22,7 @@ try {
   if (opt("features")) features = opt("features").split(",").map((x) => Number(x.trim()));
   else {
     const row = Number(opt("row", "0"));
-    const lines = fs.readFileSync(path.join(root, "tasks", task.slug, "public_holdout.csv"), "utf8").trim().split("\n");
+    const lines = fs.readFileSync(path.join(datasetDir(task), "public_holdout.csv"), "utf8").trim().split("\n");
     const cols = lines[row + 1].split(",").map(Number);
     features = cols.slice(0, -1); label = cols[cols.length - 1];
   }

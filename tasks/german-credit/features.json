@@ -1,6 +1,6 @@
 {
   "slug": "german-credit",
-  "title": "Risiko kredit (UCI German Credit) — simulasi",
+  "title": "Credit risk (UCI German Credit) — simulation",
   "source": {
     "name": "Statlog (German Credit Data)",
     "url": "https://archive.ics.uci.edu/dataset/144/statlog+german+credit+data",

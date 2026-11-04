@@ -13,8 +13,11 @@ dotenv.config({ path: envPath, quiet: true });
 export const EXPLORER = "https://testnet.nearblocks.io/txns/";
 export const OUTLAYER = "outlayer.testnet";
 
+// 4 Nov: fastnear rate-limited this IP (429) mid-deploy, rpc.testnet.near.org is deprecated → more fallbacks for views.
 export const provider = new FailoverRpcProvider([
   new JsonRpcProvider({ url: "https://rpc.testnet.fastnear.com" }),
+  new JsonRpcProvider({ url: "https://archival-rpc.testnet.fastnear.com" }),
+  new JsonRpcProvider({ url: "https://near-testnet.drpc.org" }),
   new JsonRpcProvider({ url: "https://test.rpc.fastnear.com" }),
   new JsonRpcProvider({ url: "https://rpc.testnet.near.org" }),
 ]);
@@ -67,6 +70,19 @@ export function summary(label, res) {
   const shown = { ...out, logs: out.logs.filter((l) => !l.includes("execution_requested")).map((l) => l.slice(0, 300)) };
   console.log(json(shown));
   return out;
+}
+
+/** Dataset folder under tasks/ for an on-chain task: the folder whose features.json lists the same feature names
+ *  (task slugs may differ from folder names, e.g. `credit-risk` → tasks/german-credit), else tasks/<slug>. */
+export function datasetDir(task) {
+  const tasksDir = path.join(root, "tasks");
+  for (const d of fs.readdirSync(tasksDir)) {
+    const f = path.join(tasksDir, d, "features.json");
+    if (!fs.existsSync(f)) continue;
+    const names = JSON.parse(fs.readFileSync(f, "utf8")).features?.map((x) => x.name);
+    if (names && JSON.stringify(names) === JSON.stringify(task.feature_names)) return path.join(tasksDir, d);
+  }
+  return path.join(tasksDir, task.slug);
 }
 
 export { Account, KeyPair, actions, teraToGas };

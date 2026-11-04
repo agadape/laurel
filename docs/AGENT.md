@@ -1,38 +1,38 @@
-# Agent dengan function-call key (I-1) — 2026-11-03T16:58:18.828Z
+# Agent dengan function-call key (I-1) — 2026-11-04T09:37:35.567Z
 
-Kontrak `bursa-dev.nh-ft-mvp6pidf.testnet`, tugas 2 (`german-credit`), pemenang submission 3. Agent `agent.nh-ft-mvp6pidf.testnet`.
+Kontrak `laurel.laurel-team-mw0x0c8g.testnet`, tugas 3 (`credit-risk`), pemenang submission 4. Agent `agent.laurel-team-mw0x0c8g.testnet`.
 
-**Kunci yang dipegang proses agent:** `ed25519:96oxgbsnuNhJcdT2VDynuVHgMbAcdjxPhZhckM6U3zTQ` dengan izin
+**Kunci yang dipegang proses agent:** `ed25519:QBy4d6eVYonkZxWjtyfULKYjPsW29MhpXXqSDfMFwpQ` dengan izin
 ```json
 {
   "FunctionCall": {
-    "allowance": "95380552035401200000000",
+    "allowance": "997677934748424300000000",
     "method_names": [
       "predict_task",
       "predict"
     ],
-    "receiver_id": "bursa-dev.nh-ft-mvp6pidf.testnet"
+    "receiver_id": "laurel.laurel-team-mw0x0c8g.testnet"
   }
 }
 ```
-Pemilik menyetor kredit sekali dengan full-access key (`deposit_credit`, tx `vtwkytCRcm43xP47M38J8xdaRCCu8jFxjkyLUYQCRXh`); agent tidak pernah memegang kunci itu.
+Pemilik menyetor kredit sekali dengan full-access key (`deposit_credit`); agent tidak pernah memegang kunci itu.
 
 ## 10 pemohon dari `public_holdout.csv` lewat `predict_task`
 
 | # | skor mentah | label | label asli | keputusan simulasi | Tgas fungsi | tx |
 |---|---|---|---|---|---|---|
-| 0 | 811014 | 1 | 1 | minta uang muka | 4.307 | `8tTi9dbVnZfwMZkmqgMVG1FfXyihUs8MssCXraNELFMS` |
-| 1 | -2218985 | 0 | 0 | tempo bayar 30 hari | 4.308 | `DLqFLgikpHc7bSHtiHiBUaH1xudavBoqqu2AwFhoGphQ` |
-| 2 | -1107494 | 0 | 0 | tempo bayar 30 hari | 4.308 | `22NCTXyYLGWA8tkhAiRCKxgy6bJeAU39ynQpGH1gUYA9` |
-| 3 | 2240879 | 1 | 1 | minta uang muka | 4.307 | `5om2gMJanTeiMjwznU9HatcEtrjzZzWKZkkJiuBnRTS4` |
-| 4 | -436822 | 0 | 1 | tempo bayar 30 hari | 4.308 | `AsDsRsPs19ZD2KQuMfw4wZwsUt8N18FDjH2DQuWA1Vti` |
-| 5 | -398029 | 0 | 0 | tempo bayar 30 hari | 4.308 | `HZkNkzSUCyxd4Qu9Rhbzdxsqs6mSw896p7SJYNC93eg` |
-| 6 | -2626387 | 0 | 0 | tempo bayar 30 hari | 4.308 | `EfkBnvyN99QveLHdpgQpGyZfrZs9njiVa53LNVMnSrKn` |
-| 7 | 208102 | 1 | 0 | minta uang muka | 4.307 | `HRbBav2x65nAMCGTWmCw69vkZNmWK9T7fbvuhrfjxGez` |
-| 8 | 972159 | 1 | 1 | minta uang muka | 4.308 | `5fAp4HDmzYsmBZm5A5jYGZFgQ7fZnDoy62419dP7dpuK` |
-| 9 | -632874 | 0 | 1 | tempo bayar 30 hari | 4.308 | `3GdcxwPN2Vf2sAxuHkAeF3KUNc8f9mKjv5BytFt69o96` |
+| 0 | 811014 | 1 | 1 | minta uang muka | 4.34 | `B9cHP7YV9qBbBKNjnZSn5ZfB8szyU4rj7TVJdrhSkDN2` |
+| 1 | -2218985 | 0 | 0 | tempo bayar 30 hari | 4.341 | `CYcEhECbVAeA3yQivKLML5fcetFRLb2DTsf5dFkPMZWj` |
+| 2 | -1107494 | 0 | 0 | tempo bayar 30 hari | 4.341 | `HKQWGCwc93FShkdH1hvfMHjmW9o6bRKE3gzpgA3vJbmL` |
+| 3 | 2240879 | 1 | 1 | minta uang muka | 4.341 | `EpZ8T7hX3xZVRq8mWDEjeWDbxpwpjx4WYYQDBVa16ANa` |
+| 4 | -436822 | 0 | 1 | tempo bayar 30 hari | 4.341 | `8ZmWtByXLVDP7aW7NeZTnUnUcoy7XFZF4chBb3jsmF2M` |
+| 5 | -398029 | 0 | 0 | tempo bayar 30 hari | 4.341 | `J1HzpmJfrvxS7UrQWJx4iuGJLSouAovq5aAYpnqgs5FA` |
+| 6 | -2626387 | 0 | 0 | tempo bayar 30 hari | 4.341 | `HcmJmRF77cht1LRA7d6jPmy3sfMobfvM5xYRBJkRCkMM` |
+| 7 | 208102 | 1 | 0 | minta uang muka | 4.34 | `5e3DEh3e3NP3LCr3aEXY7XrVU889QrKCkwDK1RZj87qR` |
+| 8 | 972159 | 1 | 1 | minta uang muka | 4.341 | `GXHUAWNqqbnDYf3vfqNck5qE2t9griNZqi2bC4hfYLGU` |
+| 9 | -632874 | 0 | 1 | tempo bayar 30 hari | 4.341 | `4EgWGe2LMpqWgwRwb9v7iEQ8tTqmCUesKXbqUK2UC4kb` |
 
-Benar 7/10 · rata-rata **4.308 Tgas** per panggilan · fee total 0.01 NEAR dipotong dari kredit agent · pemilik model menerima 0.01 NEAR (`withdraw_earnings`).
+Benar 7/10 · rata-rata **4.341 Tgas** per panggilan · fee total 0.01 NEAR dipotong dari kredit agent · pemilik model menerima 0.01 NEAR (`withdraw_earnings`).
 
 ## Yang ditolak protokol untuk kunci yang sama (sebelum kode kontrak berjalan)
 

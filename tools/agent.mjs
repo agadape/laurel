@@ -12,7 +12,7 @@
 // Writes tools/out/agent.json and docs/AGENT.md.
 import fs from "node:fs";
 import path from "node:path";
-import { accountFromEnv, saveEnv, provider, view, call, summary, json, sleep, errMsg, root, here, Account, KeyPair, actions, teraToGas, nearToYocto, yoctoToNear } from "./lib.mjs";
+import { accountFromEnv, saveEnv, provider, view, call, summary, json, sleep, errMsg, root, here, Account, KeyPair, actions, teraToGas, nearToYocto, yoctoToNear, datasetDir } from "./lib.mjs";
 
 const args = process.argv.slice(2);
 const taskId = Number(args[0]);
@@ -78,7 +78,7 @@ console.log("FC key permission:", json(keyInfo.permission));
 const agent = new Account(A, provider, fcKey.toString()); // the agent process only ever holds this key
 
 // 3) owner prepays credit (full key; FC keys cannot attach deposits)
-const lines = fs.readFileSync(path.join(root, "tasks", task.slug, "public_holdout.csv"), "utf8").trim().split("\n");
+const lines = fs.readFileSync(path.join(datasetDir(task), "public_holdout.csv"), "utf8").trim().split("\n");
 let correct = 0;
 if (prev) {
   Object.assign(out, { calls: prev.calls, summary: prev.summary, deposit_tx: prev.deposit_tx, add_key_tx: prev.add_key_tx ?? out.add_key_tx });
@@ -114,7 +114,7 @@ console.log("\nsummary:", json(out.summary));
 
 // 5) negatives: the same FC key must be useless for anything else (single provider → typed protocol errors)
 const { JsonRpcProvider } = await import("near-api-js");
-const agent1 = new Account(A, new JsonRpcProvider({ url: "https://rpc.testnet.fastnear.com" }), fcKey.toString());
+const agent1 = new Account(A, new JsonRpcProvider({ url: process.env.WRITE_RPC || "https://rpc.testnet.fastnear.com" }), fcKey.toString());
 out.negatives = [];
 const neg = async (label, fn) => {
   try { const r = await fn(); out.negatives.push({ label, allowed: true, hash: r?.transaction?.hash }); console.log(`[UNEXPECTED ALLOWED] ${label}`); }

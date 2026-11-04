@@ -1,7 +1,7 @@
 // Read-only access to the Bursa contract through NEAR JSON-RPC view calls. No wallet, no writes.
-const RPCS = ["https://rpc.testnet.fastnear.com", "https://test.rpc.fastnear.com", "https://rpc.testnet.near.org"];
+const RPCS = ["https://rpc.testnet.fastnear.com", "https://archival-rpc.testnet.fastnear.com", "https://near-testnet.drpc.org", "https://test.rpc.fastnear.com", "https://rpc.testnet.near.org"];
 
-export const DEFAULT_CONTRACT = import.meta.env.VITE_BURSA_CONTRACT || "bursa-dev.nh-ft-mvp6pidf.testnet";
+export const DEFAULT_CONTRACT = import.meta.env.VITE_BURSA_CONTRACT || "laurel.laurel-team-mw0x0c8g.testnet";
 export const EXPLORER_ACCOUNT = (id) => `https://testnet.nearblocks.io/address/${id}`;
 export const EXPLORER_TX = (h) => `https://testnet.nearblocks.io/txns/${h}`;
 
