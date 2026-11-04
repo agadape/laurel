@@ -25,3 +25,6 @@ web/node_modules/
 tools/out/
 tasks/german-credit/german.data
 *.pkl
+
+# locally installed audit skills (docs/audit/)
+.claude/skills/

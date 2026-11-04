@@ -64,3 +64,7 @@ The flow as a technical diagram (SVG, both themes), the measured Tgas table, the
 No new npm dependencies; `rpc.js` exports unchanged (one view helper added for model bytes); routes `#/`, `#/task/:id`, `#/model/:id`, `#/costs` (alias `#/biaya`) and `?contract=` kept; English copy; no mock data; every RPC call has loading and error states; bundle stays near 160 KB; works at 390 px.
 
 Superseded: `docs/UI_DIRECTION_PLAYGROUND.md` (kept for the record).
+
+## 8. Audits and fixes (4 Nov 2026)
+
+Two external-skill audits of the first build are in `docs/audit/UIUX_PRO_MAX.md` and `docs/audit/TASTE.md`. Fixed the same day in the web: split B is withheld on every screen until the task is closed (the `get_submission` view still returns it; the copy now says "sealed in the leaderboard"); phone layout of the exhibit index and header; needle collisions measured in pixels with alternating tiers; `--accent-text` / `--tee-text` tokens for small text (AA on ivory), links in ink with underline, section numbers in mist, the "open" pill in ink; dot plates ordered by true class (filled = positive, ring = negative, orange = misjudged) with a key; the sealed band now renders on closed tasks and lifts once, with a slopegraph between the scales; tree glyphs carry leaf weight, split-feature tone and leaf direction, with a click/keyboard readout; error state and reserved box for model bytes; `h1` per screen, `document.title` per route, skip link, focus-visible; vertical flow list under 720 px; favicon and Open Graph. Not done: the contract-side change to `get_submission`.
