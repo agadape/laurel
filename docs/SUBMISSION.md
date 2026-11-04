@@ -28,7 +28,7 @@ Aturan di [HACKATHON.md](../HACKATHON.md): submit **sekali** per repo, tidak bis
   "size": "<1 | 2 - 4 | 4 - 6 | 6 - 8 | 8+>",
   "tracks": ["agents", "privacy", "open"],
   "nearAddress": "<akun mainnet payout, huruf kecil>",
-  "projectUrl": "https://github.com/<owner>/laurel",
+  "projectUrl": "https://github.com/agadape/laurel",
   "demoUrl": "https://x.com/<akun>/status/<id>",
   "idea": "<20–2000 karakter: masalah, produk, peran NEAR>",
   "consent": true

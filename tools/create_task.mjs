@@ -23,7 +23,7 @@ const deadline_ns = (BigInt(Date.now() + minutes * 60_000) * 1_000_000n).toStrin
 const taskArgs = {
   title: spec.title.slice(0, 80),
   slug: opt("slug-override", spec.slug),
-  description_url: opt("url", `https://github.com/`),
+  description_url: opt("url", `https://github.com/agadape/laurel/blob/main/tasks/${slug}/README.md`),
   n_features: spec.n_features,
   feature_names: spec.features.map((f) => f.name),
   secrets_account: opt("secrets-account", signer.accountId),

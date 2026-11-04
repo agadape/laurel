@@ -73,7 +73,7 @@ await step("get_config", () => view(C, "get_config"));
 // 3) task (8 features, like the probe models; secrets = spike profile `default` on the agent/main account)
 const deadlineNs = (BigInt(Date.now() + DEADLINE_SEC * 1000) * 1_000_000n).toString();
 const taskIdStr = await step("create_task", () => call(funder, C, "create_task", {
-  title: "Gas probe (synthetic)", slug: `gas-probe-${Date.now().toString(36)}`, description_url: "https://github.com/",
+  title: "Gas probe (synthetic)", slug: `gas-probe-${Date.now().toString(36)}`, description_url: "https://github.com/agadape/laurel",
   n_features: 8, feature_names: ["f0", "f1", "f2", "f3", "f4", "f5", "f6", "f7"],
   secrets_account: agent.accountId, secrets_profile: "default", deadline_ns: deadlineNs,
   fee_per_call: nearToYocto("0.001").toString(), submission_fee: nearToYocto("0.1").toString(), max_per_account: 3,

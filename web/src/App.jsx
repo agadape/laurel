@@ -185,7 +185,7 @@ function Costs() {
           <tr><td><code>request_score</code> → OutLayer → callback</td><td>33 KB, 2×150 rows</td><td className="num">12.5 total · ~10 s</td><td><a href={EXPLORER_TX("593SvaUAZLXjrQ2f5XkCnpKTnW8EkYT7h1o1Xmski3oq")} target="_blank" rel="noreferrer">tx</a></td></tr>
           <tr><td><code>close_task</code></td><td>—</td><td className="num">2.23</td><td><a href={EXPLORER_TX("2VLWMbGvyKTJgtekf5Bd4q1F73oSyFpbsM61LAum2cZP")} target="_blank" rel="noreferrer">tx</a></td></tr>
           <tr><td>another contract → <code>predict_task</code> → callback (<code>credit-desk</code>)</td><td>German Credit 50×4</td><td className="num">8.85 total</td><td><a href={EXPLORER_TX("BNR63PPUcD6RgjQyN8nQ1i2iP9uJQfGPcLrozsHAcGz6")} target="_blank" rel="noreferrer">tx</a></td></tr>
-          <tr><td>end-to-end from zero (23 steps, 17 negative tests)</td><td>—</td><td className="num">232 s</td><td><a href="https://github.com/" target="_blank" rel="noreferrer">docs/E2E.md</a></td></tr>
+          <tr><td>end-to-end from zero (23 steps, 17 negative tests)</td><td>—</td><td className="num">232 s</td><td><a href="https://github.com/agadape/laurel/blob/main/docs/E2E.md" target="_blank" rel="noreferrer">docs/E2E.md</a></td></tr>
         </tbody>
       </table>
       <h3>Flow</h3>
@@ -226,7 +226,7 @@ export default function App() {
         {page === "model" && <Model id={id} />}
         {(page === "costs" || page === "biaya") && <Costs />}
       </main>
-      <footer>Built at NEAR HACKATHON 2026 · every number comes from the contract's view RPC, no mock data · sister project: Undo</footer>
+      <footer>Built at NEAR HACKATHON 2026 · <a href="https://github.com/agadape/laurel" target="_blank" rel="noreferrer">source on GitHub</a> · every number comes from the contract's view RPC, no mock data · sister project: Undo</footer>
     </>
   );
 }

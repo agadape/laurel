@@ -66,7 +66,7 @@ async function ensureTask(slug, deadlineMs) {
   if (task) return task;
   const deadline_ns = (BigInt(deadlineMs) * 1_000_000n).toString();
   const id = Number((await step(`create_task ${slug}`, () => call(team, C, "create_task", {
-    title: (slug.endsWith("-open") ? "[open] " : "") + spec.title.slice(0, 72), slug, description_url: "https://github.com/", n_features: spec.n_features, feature_names: spec.features.map((f) => f.name),
+    title: (slug.endsWith("-open") ? "[open] " : "") + spec.title.slice(0, 72), slug, description_url: "https://github.com/agadape/laurel/blob/main/tasks/german-credit/README.md", n_features: spec.n_features, feature_names: spec.features.map((f) => f.name),
     secrets_account: SECRETS_ACCOUNT, secrets_profile: "german-credit", deadline_ns, fee_per_call: nearToYocto("0.001").toString(), submission_fee: nearToYocto("0.1").toString(), max_per_account: 3,
   }, { deposit: nearToYocto("0.05"), gas: "50" }))).result);
   return view(C, "get_task", { task_id: id });

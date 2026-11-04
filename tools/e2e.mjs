@@ -126,7 +126,7 @@ await expectFail("set_evaluator by non-owner", () => call(single(p1), C, "set_ev
 
 // ---------- 2. task ----------
 const deadline_ns = (BigInt(Date.now() + MINUTES * 60_000) * 1_000_000n).toString();
-const taskArgs = { title: spec.title.slice(0, 80), slug: "german-credit", description_url: "https://github.com/", n_features: spec.n_features, feature_names: spec.features.map((f) => f.name), secrets_account: SECRETS_ACCOUNT, secrets_profile: "german-credit", deadline_ns, fee_per_call: nearToYocto("0.001").toString(), submission_fee: nearToYocto("0.1").toString(), max_per_account: 3 };
+const taskArgs = { title: spec.title.slice(0, 80), slug: "german-credit", description_url: "https://github.com/agadape/laurel/blob/main/tasks/german-credit/README.md", n_features: spec.n_features, feature_names: spec.features.map((f) => f.name), secrets_account: SECRETS_ACCOUNT, secrets_profile: "german-credit", deadline_ns, fee_per_call: nearToYocto("0.001").toString(), submission_fee: nearToYocto("0.1").toString(), max_per_account: 3 };
 const tId = Number((await step("create_task german-credit", () => call(owner, C, "create_task", taskArgs, { deposit: nearToYocto("0.05"), gas: "50" }))).result);
 await expectFail("create_task with the same slug", () => call(single(owner), C, "create_task", taskArgs, { deposit: nearToYocto("0.05"), gas: "50" }), "slug taken");
 await expectFail("create_task with deadline in the past", () => call(single(owner), C, "create_task", { ...taskArgs, slug: "past", deadline_ns: "1" }, { deposit: nearToYocto("0.05"), gas: "50" }), "deadline in the past");
