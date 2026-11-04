@@ -1,0 +1,18 @@
+{
+  "task": "german-credit",
+  "model": "tasks/german-credit/model_baseline.pkl",
+  "bias_shift": 0.0,
+  "nodes": 450,
+  "trees": 30,
+  "model_bytes": 10051,
+  "within_60kb": true,
+  "integer_model_on_eval_rows": {
+    "tp": 22,
+    "tn": 48,
+    "fp": 22,
+    "fn": 8,
+    "bal_acc_bps": 7095,
+    "f1_bps": 5945,
+    "accuracy_bps": 7000
+  }
+}

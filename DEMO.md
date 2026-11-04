@@ -1,6 +1,6 @@
 # DEMO — naskah video 3 menit (D-3), versi kontrak final (4 Nov)
 
-Semua yang tampil adalah transaksi testnet asli di kontrak final **`laurel.laurel-team-mw0x0c8g.testnet`**. Rekam layar 1080p, terminal font besar, browser di **https://laurel-near.vercel.app** (UI bahasa Inggris). Narasi di bawah berbahasa Inggris karena juri internasional; boleh diucapkan dalam bahasa Indonesia dengan subtitle Inggris.
+Semua yang tampil adalah transaksi testnet asli di kontrak final **`laurel.laurel-team-mw0x0c8g.testnet`**. Rekam layar 1080p, terminal font besar, browser di **https://laurel-near.vercel.app** (UI bahasa Inggris, arah visual `docs/UI_DIRECTION.md`: menu Exhibits / Method; tugas = *exhibit*, model = *specimen*, skor = *readings* pada skala split A dan B). Narasi di bawah berbahasa Inggris karena juri internasional; boleh diucapkan dalam bahasa Indonesia dengan subtitle Inggris.
 
 Id yang dipakai (sudah ada di kontrak, tidak perlu dibuat ulang):
 
@@ -28,14 +28,14 @@ python tools/export.py --task german-credit --model tasks/german-credit/model_ba
 
 | Waktu | Layar | Narasi (EN) |
 |---|---|---|
-| 0:00–0:20 | Web, halaman **Tasks** (`https://laurel-near.vercel.app/#/`) — terlihat task 3 *closed · winner #4* dan task 4 *open* | "Small ML models usually live on someone else's server, and nobody can verify how good they are. On NEAR a model can be a contract: called by agents and by other contracts, ranked on a private benchmark nobody can read. This is Laurel." |
+| 0:00–0:20 | Web, halaman **Exhibits** (`https://laurel-near.vercel.app/#/`) — hero menggambar 50 pohon model #4 dari byte on-chain; indeks memperlihatkan exhibit 03 *closed* dan 04 *open* | "Small ML models usually live on someone else's server, and nobody can verify how good they are. On NEAR a model can be a contract: called by agents and by other contracts, ranked on a private benchmark nobody can read. This is Laurel." |
 | 0:20–0:55 | Terminal: `node tools/submit.mjs 4 tasks/german-credit/out/demo/model.bin --as TEAM` | "A participant trains a credit-risk model on public data, exports it as a 30-tree integer decision forest, and submits it to the open task. The contract validates the structure, then asks OutLayer to run the pinned evaluator inside a TEE against the private test set." Tunjuk `validate_model -> {"ok":true`, lalu `scored in ~10000 ms` dan `bal_acc_a_bps`. |
-| 0:55–1:10 | Web, **task 4** (`#/task/4`) — reload: submission baru muncul di leaderboard sementara (split A saja) | "Here it is on the provisional leaderboard. Split B stays hidden until the task closes, so nobody can overfit to the final score." |
-| 1:10–1:35 | Web, **task 3** (`#/task/3`) — leaderboard final | "This task already closed. The shallow model led on split A, but the hidden split B decided it: the deep model won. The winner is now a fixed address, `predict_task(3, features)`." |
+| 0:55–1:10 | Web, **exhibit 04** (`#/task/4`) — reload: jarum baru muncul di skala split A; skala split B masih berpita *sealed* | "Here it is on the provisional leaderboard. Split B stays hidden until the task closes, so nobody can overfit to the final score." |
+| 1:10–1:35 | Web, **exhibit 03** (`#/task/3`) — dua skala: jarum #5 di depan pada split A, jarum #4 (champion, oranye) di depan pada split B yang sudah terbuka; pelat spesimen di bawahnya | "This task already closed. The shallow model led on split A, but the hidden split B decided it: the deep model won. The winner is now a fixed address, `predict_task(3, features)`." |
 | 1:35–2:05 | Terminal: `node tools/agent.mjs 3 --rows 5 --funder TEAM` | "This agent holds only a function-call key: it may call `predict_task`, nothing else. Five applicants, about 4.3 Tgas each, fees flow to the model owner." Tunjuk 4 baris `[rejected]`: "The NEAR protocol itself rejects `withdraw_credit`, deposits, other contracts and transfers from that key — before any contract code runs." |
 | 2:05–2:30 | Terminal: `node tools/consumer.mjs 3 --funder TEAM` (atau buka `docs/CONSUMER.md`) | "Not only agents: another contract, credit-desk, calls the model through a cross-contract promise and pays from its own credit. One decision, about 9 Tgas including the callback." |
-| 2:30–2:50 | Web, **model #4** (`#/model/4`): output evaluator, hash evaluator terpin, earnings | "The scorer is an evaluator whose hash is pinned in the contract; the secret test set opens only for that hash. The TEE score equals the local computation bit for bit." |
-| 2:50–3:00 | Web, **Costs & how it works** (`#/costs`) | "The dataset is a 1994 simulation, not a credit tool. The repo contains an end-to-end run from a fresh account that a judge can replay in six minutes. Laurel, built at NEAR HACKATHON." |
+| 2:30–2:50 | Web, **specimen #4** (`#/model/4`): 50 pohon tergambar, dua pelat confusion, provenance (hash model, hash evaluator), in service | "The scorer is an evaluator whose hash is pinned in the contract; the secret test set opens only for that hash. The TEE score equals the local computation bit for bit." |
+| 2:50–3:00 | Web, **Method** (`#/costs`) | "The dataset is a 1994 simulation, not a credit tool. The repo contains an end-to-end run from a fresh account that a judge can replay in six minutes. Laurel, built at NEAR HACKATHON." |
 
 ## Catatan rekam
 

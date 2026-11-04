@@ -39,3 +39,11 @@ export const nsToDate = (ns) => new Date(Number(BigInt(ns) / 1_000_000n));
 export const short = (s, n = 10) => (s && s.length > 2 * n ? `${s.slice(0, n)}…${s.slice(-6)}` : s);
 export const statusText = (st) => (typeof st === "string" ? st : Object.keys(st)[0]);
 export const statusDetail = (st) => (typeof st === "string" ? "" : JSON.stringify(Object.values(st)[0]));
+
+/** Raw model bytes of a submission (borsh, see src/model.js), fetched through the same view call the evaluator uses. */
+export async function modelBytes(submission_id) {
+  const b64 = await view("get_model_bytes", { submission_id });
+  return Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+}
+/** Parse the evaluator JSON stored on-chain (≤ 900 B) or return null. */
+export function parseRaw(s) { try { return s ? JSON.parse(s) : null; } catch { return null; } }

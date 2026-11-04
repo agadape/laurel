@@ -1,4 +1,4 @@
-# Visual direction #1 — "The Arena" (Digital Playground for Laurel)
+# Visual direction #1 — "The Arena" (superseded on 4 Nov by docs/UI_DIRECTION.md)
 
 Design proposal only; nothing here is implemented yet. It builds on the existing site (Vite + React 18, hash routes `#/`, `#/task/:id`, `#/model/:id`, `#/costs`, read-only RPC views in `web/src/rpc.js`) and changes **nothing** in the contract, the tools or the data layer. Every visual element below is derived from fields the contract already returns; no mock data, no invented numbers.
 

@@ -32,9 +32,9 @@ Every claim is mapped to code and transactions in [CLAIMS.md](CLAIMS.md).
 ## Try it
 
 ### A. Read-only, no setup (2 minutes)
-1. Open https://laurel-near.vercel.app → **see** the task list read live from `laurel.laurel-team-mw0x0c8g.testnet`.
-2. Click task **#3 Credit risk** → **see** the final leaderboard: split-A scores, split-B scores (only visible because the task is closed), the winner badge on submission #4 (deep model: lower split-A score than #5, better split-B) and its call count.
-3. Click **Model #4** → **see** the evaluator output stored on-chain (confusion matrix, `eval_version`), the pinned evaluator hash and the owner's earnings.
+1. Open https://laurel-near.vercel.app → **see** the exhibits (tasks) read live from `laurel.laurel-team-mw0x0c8g.testnet`, and the champion model's 50 decision trees drawn from the bytes stored on-chain.
+2. Click exhibit **03 Credit risk** → **see** the two readings: on the split-A scale #5 is ahead (75.50 %), on the split-B scale, unsealed because the task is closed, #4 is the champion (66.50 %); below, one specimen plate per entry (one dot per private test row, orange = misjudged) and the "in service" strip with #4's call count. Exhibit **04** is still open, so its split-B scale shows a sealed band instead.
+3. Click **Specimen #4** → **see** all 50 trees drawn from the on-chain bytes (hover one for its root split), both confusion plates, the pinned evaluator hash, the model sha256 and the owner's earnings.
 4. Same data straight from RPC (needs `curl` and Python 3 for the decoding one-liner):
    ```bash
    curl -s https://rpc.testnet.fastnear.com -H 'content-type: application/json' -d '{"jsonrpc":"2.0","id":1,"method":"query","params":{"request_type":"call_function","finality":"final","account_id":"laurel.laurel-team-mw0x0c8g.testnet","method_name":"leaderboard","args_base64":"eyJ0YXNrX2lkIjozfQ=="}}' | python -c "import sys,json;print(bytes(json.load(sys.stdin)['result']['result']).decode())"
