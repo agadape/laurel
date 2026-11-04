@@ -1,16 +1,46 @@
-# DEMO — naskah video 3 menit (D-3)
+# DEMO — naskah video 3 menit (D-3), versi kontrak final (4 Nov)
 
-Semua yang tampil adalah transaksi testnet asli. Rekam layar 1080p; terminal font besar; browser di https://laurel-near.vercel.app (UI berbahasa Inggris: Tasks / Costs & how it works). Siapkan sebelum rekam: tugas baru `german-credit-demo` dengan deadline 4 menit (`node tools/create_task.mjs german-credit --minutes 4 --secrets-account nh-spike-mvp62mw4.testnet --profile german-credit --as TEAM --slug-override german-credit-demo`), model `deep` dan `shallow` sudah diekspor, agent sudah punya kredit.
+Semua yang tampil adalah transaksi testnet asli di kontrak final **`laurel.laurel-team-mw0x0c8g.testnet`**. Rekam layar 1080p, terminal font besar, browser di **https://laurel-near.vercel.app** (UI bahasa Inggris). Narasi di bawah berbahasa Inggris karena juri internasional; boleh diucapkan dalam bahasa Indonesia dengan subtitle Inggris.
 
-| Waktu | Layar | Ucapan (ID) |
+Id yang dipakai (sudah ada di kontrak, tidak perlu dibuat ulang):
+
+| Apa | Id | Keterangan |
 |---|---|---|
-| 0:00–0:20 | Halaman Tugas di web | "Model machine learning biasanya hidup di server orang lain. Di NEAR, model bisa jadi kontrak: dipanggil agent dan kontrak lain, dan mutunya diuji di benchmark privat yang tidak bisa dibaca siapa pun. Ini Laurel: model yang memenangkan sayembara, melayani on-chain." |
-| 0:20–0:50 | Terminal: `node tools/submit.mjs <id> tasks/german-credit/out/deep/model.bin --as TEAM` | "Peserta melatih model risiko kredit di data publik, mengekspornya jadi pohon keputusan integer 33 KB, dan mengirimnya ke kontrak. Kontrak memvalidasi strukturnya, lalu meminta OutLayer menjalankan evaluator di TEE." Tunjuk `scored in ~10 s` dan `bal_acc_a_bps`. |
-| 0:50–1:10 | Terminal: submit `shallow` sebagai akun kedua; lalu web Leaderboard | "Model kedua masuk. Di leaderboard sementara model dangkal justru unggul di split A…" |
-| 1:10–1:30 | Terminal: `node tools/close_task.mjs <id> --wait` → web Leaderboard (closed) | "…tapi setelah deadline, split B yang baru dibuka memutuskan: model dalam menang. Pemenang jadi alamat tetap `predict_task(id, fitur)`." |
-| 1:30–2:05 | Terminal: `node tools/agent.mjs <id> --rows 5` | "Agent ini hanya memegang function-call key: boleh `predict_task`, tidak boleh yang lain. Lima pemohon, ±4,3 Tgas per panggilan, fee masuk ke pemilik model." Tunjuk 4 baris `[rejected]`: "Protokol NEAR sendiri yang menolak `withdraw_credit`, deposit, kontrak lain, transfer." |
-| 2:05–2:30 | Terminal: `node tools/consumer.mjs <id> --funder TEAM` atau tunjukkan docs/CONSUMER.md | "Bukan cuma agent: kontrak lain pun memanggilnya lewat promise dan membayar dari kreditnya sendiri. Satu keputusan ±9 Tgas termasuk callback." |
-| 2:30–2:50 | Web: halaman Model #pemenang (output evaluator, hash evaluator terpin) | "Yang menilai model adalah evaluator yang hash-nya dipin di kontrak; secret test set hanya terbuka untuk hash itu. Skor dari TEE sama persis dengan hitungan lokal." |
-| 2:50–3:00 | Halaman Biaya | "Dataset ini simulasi, bukan alat kredit. Repo berisi e2e dari nol yang bisa dijalankan juri dalam 6 menit. Laurel, dibangun di NEAR HACKATHON." |
+| Tugas demo (tertutup) | **task 3** `credit-risk` | pemenang submission #4 (deep, split B 66.50 %); #5 shallow unggul di split A (75.50 %) tapi kalah di B (61.50 %) |
+| Tugas terbuka | **task 4** `credit-risk-open` | berisi submission #6; terbuka sampai 25 Nov 2026 23:59 UTC; di sini kita submit model baru secara live |
+| Model pemenang | **submission #4** | halaman `#/model/4` |
+| Agent | `agent.laurel-team-mw0x0c8g.testnet` | FC key hanya `predict_task`/`predict`, kredit sudah terisi |
+| Kontrak konsumen | `desk3.laurel-team-mw0x0c8g.testnet` | sudah dideploy dan didanai; `consumer.mjs 3` memakainya lagi |
 
-Catatan rekam: jalankan `tools/submit.mjs` untuk `shallow` dengan `--as P1` (akun kedua) agar pemilik berbeda; kalau OutLayer lambat (> 20 s), potong jeda di editing, jangan dipercepat.
+## Siapkan sebelum rekam (±10 menit, sekali saja)
+
+```bash
+# 1. model "peserta baru" untuk shot live: latih dengan parameter beda supaya skornya beda dari #6
+python tasks/german-credit/train.py --trees 30 --depth 3
+python tools/export.py --task german-credit --model tasks/german-credit/model_baseline.pkl --out tasks/german-credit/out/demo
+# 2. kalau fastnear membatasi (429), pakai RPC cadangan untuk tulis:
+#    set WRITE_RPC=https://near-testnet.drpc.org   (PowerShell: $env:WRITE_RPC="https://near-testnet.drpc.org")
+```
+
+`submit.mjs` memanggil `validate_model` (view, gratis) sebelum mengirim, jadi model yang salah ditolak tanpa biaya.
+
+## Shot list
+
+| Waktu | Layar | Narasi (EN) |
+|---|---|---|
+| 0:00–0:20 | Web, halaman **Tasks** (`https://laurel-near.vercel.app/#/`) — terlihat task 3 *closed · winner #4* dan task 4 *open* | "Small ML models usually live on someone else's server, and nobody can verify how good they are. On NEAR a model can be a contract: called by agents and by other contracts, ranked on a private benchmark nobody can read. This is Laurel." |
+| 0:20–0:55 | Terminal: `node tools/submit.mjs 4 tasks/german-credit/out/demo/model.bin --as TEAM` | "A participant trains a credit-risk model on public data, exports it as a 30-tree integer decision forest, and submits it to the open task. The contract validates the structure, then asks OutLayer to run the pinned evaluator inside a TEE against the private test set." Tunjuk `validate_model -> {"ok":true`, lalu `scored in ~10000 ms` dan `bal_acc_a_bps`. |
+| 0:55–1:10 | Web, **task 4** (`#/task/4`) — reload: submission baru muncul di leaderboard sementara (split A saja) | "Here it is on the provisional leaderboard. Split B stays hidden until the task closes, so nobody can overfit to the final score." |
+| 1:10–1:35 | Web, **task 3** (`#/task/3`) — leaderboard final | "This task already closed. The shallow model led on split A, but the hidden split B decided it: the deep model won. The winner is now a fixed address, `predict_task(3, features)`." |
+| 1:35–2:05 | Terminal: `node tools/agent.mjs 3 --rows 5 --funder TEAM` | "This agent holds only a function-call key: it may call `predict_task`, nothing else. Five applicants, about 4.3 Tgas each, fees flow to the model owner." Tunjuk 4 baris `[rejected]`: "The NEAR protocol itself rejects `withdraw_credit`, deposits, other contracts and transfers from that key — before any contract code runs." |
+| 2:05–2:30 | Terminal: `node tools/consumer.mjs 3 --funder TEAM` (atau buka `docs/CONSUMER.md`) | "Not only agents: another contract, credit-desk, calls the model through a cross-contract promise and pays from its own credit. One decision, about 9 Tgas including the callback." |
+| 2:30–2:50 | Web, **model #4** (`#/model/4`): output evaluator, hash evaluator terpin, earnings | "The scorer is an evaluator whose hash is pinned in the contract; the secret test set opens only for that hash. The TEE score equals the local computation bit for bit." |
+| 2:50–3:00 | Web, **Costs & how it works** (`#/costs`) | "The dataset is a 1994 simulation, not a credit tool. The repo contains an end-to-end run from a fresh account that a judge can replay in six minutes. Laurel, built at NEAR HACKATHON." |
+
+## Catatan rekam
+
+- Urutan shot sengaja: submit live ke **task 4** (terbuka), cerita menang-kalah di **task 3** (sudah tertutup). Tidak ada deadline yang harus ditunggu saat rekam.
+- Shot 0:20 adalah satu-satunya yang bergantung pada OutLayer. Kalau `scored in` lewat dari 20 detik, potong jedanya di editing, jangan dipercepat. Kalau gagal total (RPC 429 / worker lambat), ganti dengan halaman `#/model/6` (submission deep di task 4) dan ucapkan narasi yang sama; coba lagi nanti dengan `WRITE_RPC` cadangan.
+- `agent.mjs` dan `consumer.mjs` aman diulang berapa kali pun (hanya fee 0,001 NEAR per prediksi); keduanya menulis ulang `docs/AGENT.md` / `docs/CONSUMER.md`, jadi **commit dulu** sebelum take, atau `git checkout docs/AGENT.md docs/CONSUMER.md` setelah rekam kalau tidak ingin hash di dokumen berubah.
+- Kuota submit 3 per akun per tugas: akun TEAM punya 3 kesempatan di task 4 untuk take ulang shot 0:20. Biaya per submit ±0,35 NEAR (storage + fee + deposit skor, sebagian kembali).
+- Tx yang bisa ditunjuk kalau perlu: `close_task` task 3 `Fx7k6sDCUgVoVdVpjWLqGHoxcNE3tppEs2m8YYHD5EbB`, `predict_task` pertama oleh agent `C4zYEtAHPhJJChZJdVAqMwMb8AZsd4HSmSzZZFYgbpn7`, deploy + `new` `4ThoX7csa7GsmJCAA4V4CgNbaMEepqoHvG6jUfVuVZNf`.
