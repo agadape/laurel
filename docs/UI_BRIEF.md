@@ -1,6 +1,6 @@
 # UI brief — prompt for an external design / frontend AI
 
-Copy everything below the line into another AI (v0, Lovable, Claude, GPT, Gemini, Figma Make …). Attach `web/src/App.jsx`, `web/src/style.css`, `web/src/rpc.js` and a screenshot of https://laurel-near.vercel.app if the tool accepts files. The brief is self-contained otherwise.
+Copy everything below the line into another AI (v0, Lovable, Claude, GPT, Gemini, Figma Make …). Attach `web/src/App.jsx`, `web/src/style.css`, `web/src/rpc.js` and a screenshot of https://laurel-near.vercel.app (current look: `docs/img/ui-current-tasks.jpg`) if the tool accepts files. The brief is self-contained otherwise.
 
 ---
 
