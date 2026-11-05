@@ -21,8 +21,8 @@
 | **Problem** | A small ML model (credit scoring, fraud flags, routing) usually lives on someone's server. Its claimed accuracy cannot be checked, the test set it was tuned on can be the same one it is reported on, and an AI agent or a smart contract can only use it by trusting an API key and an operator. |
 | **What Laurel does** | A registry contract where anyone publishes a *task* with a private test set and anyone submits a small gradient-boosted-tree model **as data**. An OutLayer TEE worker scores each model on two private splits that only the contract's pinned evaluator can read. Split A is public while the task is open; split B stays sealed until close and alone picks the champion. The champion is then served by the contract itself: `predict_task(task_id, features)` runs the model inside NEAR consensus and pays a fee to the model's owner. |
 | **Who uses it** | **Model makers** compete and earn per call. **AI agents** call the champion with a function-call key that the protocol limits to prediction. **Contracts** call it through a promise, like any other contract method. |
-| **Demo task** | Credit risk on UCI German Credit (**simulation only**, see Limits): 18 integer features, label `1 = bad`, metric balanced accuracy, 150 private rows per split. |
-| **What is live (5 Nov 2026)** | 4 tasks and 6 submitted models on the final contract. Task 3 is closed: #5 led the public split (75.50 %), #4 won the sealed split (66.50 %) and became champion. #4 has served 19 paid predictions (0.019 NEAR to its owner). Task 4 is open until 2026-11-25 for anyone to enter. |
+| **Tasks** | Two datasets. **NEAR account retention** ([tasks/near-retention](tasks/near-retention/README.md)): real mainnet data, 22 integer features from a fresh `.near` account's first 7 days, label `1 = still acting between day 30 and day 90`; the private rows are accounts nobody can look up. **Credit risk** on UCI German Credit (**simulation only**, see Limits): 18 features, label `1 = bad`. Both: balanced accuracy, 150 private rows per split. |
+| **What is live (5 Nov 2026)** | 5 tasks and 9 submitted models on the final contract. Task 3 (credit risk) is closed: #5 led the public split (75.50 %), #4 won the sealed split (66.50 %) and became champion; #4 has served 19 paid predictions (0.019 NEAR to its owner). Task 5 (NEAR account retention, mainnet data) is open until 2026-11-12 12:00 UTC with three TEE-scored entries (83.50 / 82.50 / 82.00 % on split A, the smallest model leading); task 4 is open until 2026-11-25. Anyone can enter either. |
 | **Cost of one prediction** | 4.3 Tgas for a 33 KB, 50-tree model (≈ 0.0005 NEAR of gas) plus the task's 0.001 NEAR fee. |
 
 ## Why on NEAR
@@ -80,6 +80,7 @@ sequenceDiagram
 | Agent with a restricted key: 10 applicants screened, 4.31 Tgas/call, 4 forbidden actions rejected by the protocol | [docs/AGENT.md](docs/AGENT.md) |
 | Another contract uses the model through a promise and pays from its own prepaid credit | [docs/CONSUMER.md](docs/CONSUMER.md), `contracts/consumer-example` |
 | An MCP agent runs the champion locally and on-chain with the same raw score (811014 for holdout row 0 of task 3) | [docs/MCP.md](docs/MCP.md), tx `ZockCH1M…` |
+| A second task on **real NEAR mainnet data** (account retention, 4,407 activated accounts from 43,927 registrar creations, BigQuery public dataset): 3 models scored in the TEE on 5 Nov, split-A readings 8350 / 8250 / 8200 bps equal to the local evaluator's | [tasks/near-retention/README.md](tasks/near-retention/README.md), CLAIMS rows 23–24 |
 | A browser wallet buys prediction credit on the contract | tx [`4YHqm8GP…`](https://testnet.nearblocks.io/txns/4YHqm8GPUpv6kvMSiBzUP3UwTnhLoWp6tK3BoKrj8rfd) (0.05 NEAR via Meteor Wallet, 5 Nov) |
 | Gas and storage costs | [docs/GAS.md](docs/GAS.md); 10 agent calls on the final contract (4 Nov): function receipt **4.340 to 4.341 Tgas**, whole transaction **4.652 to 4.653 Tgas** burnt (`tools/out/agent.json`), i.e. about 0.00047 NEAR of gas plus the 0.001 NEAR fee per prediction at the base gas price |
 
@@ -120,7 +121,7 @@ bash build.sh evaluator   # wasm/evaluator.wasm + its sha256
 → **see** `test result: ok` four times and the three wasm files with sizes. The printed evaluator sha256 is what you would pin with `set_evaluator` for your own deployment; it only equals our pinned `8b80010f…` if your Rust toolchain matches ours (Rust 1.99, see `docs/EVALUATOR.md`). Prebuilt wasm is committed in `wasm/`, so step B works without Rust.
 
 ### D. Train and submit your own model (Python 3.10+, `pip install scikit-learn pandas numpy`)
-Submit to an **open** task: on our final contract `laurel.laurel-team-mw0x0c8g.testnet` that is **task 4** (slug `credit-risk-open`, open until 2026-11-25 23:59 UTC → use `4` as `<open_task_id>`; the demo task `german-credit` is closed so that `predict_task` works). On your own contract from step B, create one first — the `--secrets-account/--profile` pair points it at the private test set we host at OutLayer:
+Submit to an **open** task: on our final contract `laurel.laurel-team-mw0x0c8g.testnet` that is **task 5** (slug `near-retention`, real mainnet data, open until 2026-11-12 12:00 UTC; `tasks/near-retention/train.py`, `--task near-retention`) or **task 4** (slug `credit-risk-open`, open until 2026-11-25 23:59 UTC → use `4` as `<open_task_id>` with the commands below; the demo task `german-credit` is closed so that `predict_task` works). On your own contract from step B, create one first — the `--secrets-account/--profile` pair points it at the private test set we host at OutLayer:
 ```bash
 node tools/create_task.mjs german-credit --as TEAM --minutes 1440 --secrets-account nh-spike-mvp62mw4.testnet --profile german-credit
 python tasks/german-credit/split.py                      # downloads UCI data, writes public/private splits + manifest
@@ -184,7 +185,7 @@ What is **not** guaranteed, stated plainly: the contract trusts what `outlayer.t
 - **Why would anyone use a Laurel model instead of hosting their own?** Because it comes with a public, verifiable record (hash, evaluator, sealed-split score, every call) and is callable by other contracts: "models with publicly verifiable competition records, available through permissionless on-chain interfaces", not "the best model for everyone".
 - **What still depends on the operator?** Pinning the evaluator for new tasks, the Vercel hosting of the evaluator wasm (integrity still rests on the pinned hash), and OutLayer's availability. Closing a task and calling a winner are permissionless.
 - **What if the winning model is malicious or useless?** It can only return an integer score for the features it is given; it cannot touch funds or state. Consumers decide what to do with the score (`contracts/consumer-example` turns it into an approve / require-deposit decision), and the split-B record is public.
-- **Production-ready?** No: testnet, a 1994 simulation dataset, one task shape, no audit. The mechanisms are real; the deployment is a hackathon demo.
+- **Production-ready?** No: testnet, one model class, no audit. The mechanisms are real and one task runs on real mainnet data; the deployment is a hackathon demo.
 
 ## Architecture and repository map
 
@@ -197,7 +198,8 @@ What is **not** guaranteed, stated plainly: the contract trusts what `outlayer.t
 | `mcp/` | MCP server for agents, published as `laurel-mcp` ([docs/MCP.md](docs/MCP.md)) |
 | `web/` | Vite/React explorer over RPC view calls: a public landing page (`web/src/Landing.jsx`), the explorer (browsable as a guest, no wallet), and a NEAR wallet sign-in used only to buy credit and withdraw; `web/api/mcp.mjs` is the remote MCP endpoint |
 | `tools/` | Node scripts for every write action (the browser wallet only buys credit and withdraws); `tools/export.py` converts sklearn models |
-| `tasks/german-credit/` | Dataset spec, split and training scripts, commitment manifest of the private splits |
+| `tasks/near-retention/` | NEAR mainnet task: BigQuery SQL, fetch/build/train scripts, feature spec, population stats, commitment manifest |
+| `tasks/german-credit/` | Credit-risk simulation: dataset spec, split and training scripts, commitment manifest of the private splits |
 | `wasm/` | Prebuilt contract and evaluator wasm |
 | `docs/` | ABI, GAS, AGENT, CONSUMER, E2E, EVALUATOR, MCP, NEGATIVE_TESTS, TESTNET, UI_DIRECTION, audit, research |
 | `spikes/` | The original testnet spikes S0–S31 this design rests on, with [SPIKE_LOG.md](SPIKE_LOG.md) |
@@ -206,8 +208,9 @@ Planning history, in Indonesian: [PLAN.md](PLAN.md), [IDEAS.md](IDEAS.md), [ARCH
 
 ## Limits (please read before judging the numbers)
 
-- **Simulation.** German Credit is a 1973–75 German dataset with known biases; two sensitive attributes are dropped, `age` is kept. The decisions ("approve / require deposit") are illustrations, not a credit tool. [tasks/german-credit/README.md](tasks/german-credit/README.md).
-- **Private ≠ secret from everyone.** The dataset is public, so a participant could train on all 1,000 rows. The private split protects against leaderboard-feedback overfitting (3 submissions per account, scores rounded to 50 bps, split B only used at close), not against downloading UCI. Split-B scores are visible in the OutLayer transaction log and in the `get_submission` view even though the leaderboard and the site hide them until close.
+- **Simulation (credit risk).** German Credit is a 1973–75 German dataset with known biases; two sensitive attributes are dropped, `age` is kept. The decisions ("approve / require deposit") are illustrations, not a credit tool. [tasks/german-credit/README.md](tasks/german-credit/README.md).
+- **Mainnet data (retention).** Labels are observable on-chain, so the population is reconstructible from the published SQL; the private rows are 300 accounts out of 4,407 whose ids are never published, and a 250 KB model cannot memorise the population. The sample is enriched to 40 % retained; `creator_class` encodes which wallet created the account. [tasks/near-retention/README.md](tasks/near-retention/README.md).
+- **Private ≠ secret from everyone.** The credit-risk dataset is public, so a participant could train on all 1,000 rows. The private split protects against leaderboard-feedback overfitting (3 submissions per account, scores rounded to 50 bps, split B only used at close), not against downloading UCI. Split-B scores are visible in the OutLayer transaction log and in the `get_submission` view even though the leaderboard and the site hide them until close.
 - **No real Sybil resistance** beyond per-account quota and submission cost.
 - **Model class.** Binary GBDT with integer thresholds only; a 197 KB / 100-tree model costs 13 Tgas per call and 2 NEAR of storage.
 - **Trust assumptions.** The contract trusts what `outlayer.testnet` returns: it verifies no TEE attestation itself, so the "only the pinned evaluator can read the secret" guarantee is OutLayer's, not ours. The contract `owner` can call `set_evaluator` at any time (an `evaluator_set` event is emitted and every scored submission records `scored_by`), so participants trust the owner not to swap the scorer mid-task. The private test set for the demo task is an OutLayer secret owned by a team account.
@@ -220,4 +223,4 @@ Planning history, in Indonesian: [PLAN.md](PLAN.md), [IDEAS.md](IDEAS.md), [ARCH
 - **Sister project** by the same team, disclosed per rule Q-015: [**Undo**](https://github.com/agadape/undo), reversible wrapped-USDC payments with a TEE-verified AI court. The two projects are independent products; what they share is the research notes in `docs/research/` and the testnet spike log: `spikes/contracts-undo/` and `spikes/s20*–s22*` are Undo's own spikes kept here as history and are not used by Laurel.
 - **Naming.** The product is Laurel; the contract codename `bursa` (Indonesian for *exchange*) is kept in code, file and account names ([docs/NAMING.md](docs/NAMING.md)).
 - **AI-generated code.** Most code and documentation in this repository were written with Claude (Anthropic) under the team's direction; all behaviour described above was executed by the team on NEAR testnet and the transaction hashes in `docs/` are the record. Libraries: near-sdk, near-api-js, scikit-learn, Vite/React, wit-bindgen, base64, serde.
-- **License.** MIT — see [LICENSE](LICENSE). Dataset: UCI Statlog (German Credit Data), CC BY 4.0, Hofmann 1994.
+- **License.** MIT — see [LICENSE](LICENSE). Datasets: UCI Statlog (German Credit Data), CC BY 4.0, Hofmann 1994; NEAR mainnet history from the NEAR Public Lakehouse (`bigquery-public-data.crypto_near_mainnet_us`), public blockchain data.

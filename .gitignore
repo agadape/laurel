@@ -31,3 +31,5 @@ tasks/german-credit/german.data
 mcp/node_modules/
 mcp/test/out-model.bin
 laurel-model-*.bin
+tasks/near-retention/sample_raw.csv
+tasks/*/out/

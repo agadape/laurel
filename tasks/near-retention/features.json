@@ -1,0 +1,67 @@
+{
+  "slug": "near-retention",
+  "title": "NEAR account retention (mainnet) — active again after day 30?",
+  "source": {
+    "name": "NEAR mainnet, named accounts created through the `near` registrar",
+    "dataset": "bigquery-public-data.crypto_near_mainnet_us (NEAR Public Lakehouse)",
+    "url": "https://github.com/near/near-public-lakehouse",
+    "population": "every `*.near` account whose CREATE_ACCOUNT receipt (predecessor `near`) succeeded with block_date between creation_window.from and creation_window.to (UTC) AND that initiated at least one action (receipt predecessor = the account, directly or through a relayer) within its first 7 days; accounts that never acted in week 1 (85% of registrar creations in this period, mostly 6,308 accounts mass-created by one signer) are out of scope",
+    "creation_window": { "from": "2026-06-08", "to": "2026-08-02" },
+    "observation_days": 7,
+    "label_window_days": [30, 90],
+    "activity_definition": "an action whose receipt_predecessor_account_id is the account: a transaction it signed, or a meta-transaction (NEP-366) it sent through a relayer that signed for it",
+    "license": "public blockchain data; the Lakehouse is published by NEAR free of charge"
+  },
+  "label": {
+    "meaning": { "1": "retained: the account signed at least one transaction between day 30 and day 90 after creation (positive class)", "0": "churned: no transaction signed in that window" },
+    "definition": "count(receipt_actions where receipt_predecessor_account_id = account and t0 + 30d <= block_timestamp < t0 + 90d) >= 1, t0 = creation block timestamp",
+    "sampling": "all rows are a stratified sample of the population: positives and negatives are drawn so that the sample holds about 40% positives (the population rate is lower and is reported in population.json); the model's log-odds are therefore relative to that enriched prior"
+  },
+  "feature_scale": 1,
+  "out_scale": 1000000,
+  "positive_if_raw_score_gt": 0,
+  "n_features": 22,
+  "features_use_only": "the creation receipt and the first 7 days after creation (t0 <= block_timestamp < t0 + 7d); nothing from day 7 on",
+  "integer_rule": "every feature is an integer that fits i16; counts and amounts are clipped at 32767; NEAR amounts are in milliNEAR (1 mNEAR = 10^21 yocto), rounded down",
+  "features": [
+    { "pos": 0, "name": "created_hour_utc", "type": "integer", "range": [0, 23], "meaning": "UTC hour of the creation block" },
+    { "pos": 1, "name": "created_weekday", "type": "integer", "range": [0, 6], "meaning": "day of week of the creation block, 0 = Monday" },
+    { "pos": 2, "name": "creator_class", "type": "nominal_as_code", "meaning": "who signed the create_account call on the registrar; codes are the rank of the signer among the most frequent creators in the population, see creator_codes in population.json; the last code means 'any other account'" },
+    { "pos": 3, "name": "name_len", "type": "integer", "meaning": "length of the account name without the .near suffix" },
+    { "pos": 4, "name": "name_digits", "type": "integer", "meaning": "number of digit characters in the name" },
+    { "pos": 5, "name": "name_has_separator", "type": "binary", "meaning": "1 if the name contains '-' or '_'" },
+    { "pos": 6, "name": "initial_deposit_mnear", "type": "integer", "unit": "milliNEAR", "meaning": "NEAR transferred to the account in its creation receipt" },
+    { "pos": 7, "name": "tx_signed_7d", "type": "integer", "meaning": "actions the account initiated in the first 7 days, counted per receipt (signed itself or via a relayer)" },
+    { "pos": 8, "name": "active_days_7d", "type": "integer", "range": [1, 8], "meaning": "distinct UTC dates with at least one initiated action in the first 7 days (a 7-day window can touch 8 UTC dates)" },
+    { "pos": 9, "name": "days_to_first_tx", "type": "integer", "range": [0, 6], "meaning": "whole days from creation to the first action the account initiated (always within the window, by the population definition)" },
+    { "pos": 10, "name": "unique_receivers_7d", "type": "integer", "meaning": "distinct receiver accounts of the initiated actions" },
+    { "pos": 11, "name": "fn_calls_7d", "type": "integer", "meaning": "FUNCTION_CALL actions the account initiated" },
+    { "pos": 12, "name": "distinct_methods_7d", "type": "integer", "meaning": "distinct method names among those function calls" },
+    { "pos": 13, "name": "distinct_contracts_7d", "type": "integer", "meaning": "distinct receiver contracts among those function calls" },
+    { "pos": 14, "name": "transfers_out_7d", "type": "integer", "meaning": "TRANSFER actions the account initiated" },
+    { "pos": 15, "name": "near_out_7d_mnear", "type": "integer", "unit": "milliNEAR", "meaning": "sum of those outgoing transfers" },
+    { "pos": 16, "name": "near_in_7d_mnear", "type": "integer", "unit": "milliNEAR", "meaning": "sum of TRANSFER actions received after the creation receipt" },
+    { "pos": 17, "name": "tx_received_7d", "type": "integer", "meaning": "receipts from other accounts (not refunds) whose receiver is the account, after the creation receipt" },
+    { "pos": 18, "name": "keys_added_7d", "type": "integer", "meaning": "ADD_KEY actions on the account after the creation receipt (wallet or dapp logins)" },
+    { "pos": 19, "name": "deployed_contract_7d", "type": "binary", "meaning": "1 if a DEPLOY_CONTRACT action targeted the account" },
+    { "pos": 20, "name": "staked_7d", "type": "binary", "meaning": "1 if the account signed a STAKE action or a function call to a staking pool (*.poolv1.near, *.pool.near, meta-pool.near, linear-protocol.near)" },
+    { "pos": 21, "name": "touched_defi_7d", "type": "binary", "meaning": "1 if the account signed a function call to v2.ref-finance.near, dclv2.ref-labs.near, wrap.near, contract.main.burrow.near, intents.near or aurora" }
+  ],
+  "split": {
+    "method": "deterministic: rows ordered by FARM_FINGERPRINT(account_id) in BigQuery, then two-stage stratified train_test_split on label",
+    "random_state": 90,
+    "public_train": 800,
+    "public_holdout": 150,
+    "private_a": 150,
+    "private_b": 150,
+    "private_files_gitignored": ["private_a.json", "private_b.json", "sample_raw.csv"],
+    "commitment_file": "private_manifest.json",
+    "public_files_carry_account_id": true,
+    "note": "public rows name the account so anyone can recheck a feature against the chain; private rows are feature vectors only, their account ids are never published"
+  },
+  "metric": {
+    "primary": "balanced_accuracy_bps = (TPR_bps + TNR_bps) / 2, integer division, positive class = retained",
+    "secondary": "f1_bps = 2*TP*10000 / (2*TP + FP + FN)",
+    "rounding_bps": 50
+  }
+}

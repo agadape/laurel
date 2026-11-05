@@ -78,7 +78,7 @@ server.tool("laurel_predict_local", "Run a submitted model on this machine with 
   const { model } = await modelOf(submission_id);
   try {
     const raw = rawScore(model, features);
-    return text({ submission_id, raw_score: raw.toString(), label: raw > 0n ? 1 : 0, note: "label 1 = positive class (credit-risk demo: bad credit); identical to the on-chain result for the same bytes" });
+    return text({ submission_id, raw_score: raw.toString(), label: raw > 0n ? 1 : 0, note: "label 1 = the task's positive class (see the exhibit's description_url); identical to the on-chain result for the same bytes" });
   } catch (e) { return fail(String(e.message || e)); }
 });
 

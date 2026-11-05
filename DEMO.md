@@ -17,6 +17,7 @@ Id yang dipakai (sudah ada di kontrak, tidak perlu dibuat ulang):
 ```bash
 # 1. model "peserta baru" untuk shot live: latih dengan parameter beda supaya skornya beda dari #6
 python tasks/german-credit/train.py --trees 30 --depth 3
+# alternatif yang lebih kuat untuk juri: exhibit 05 memakai data mainnet asli (tasks/near-retention/README.md); tunjukkan #/task/5 saat menyebut "real NEAR data"
 python tools/export.py --task german-credit --model tasks/german-credit/model_baseline.pkl --out tasks/german-credit/out/demo
 # 2. shot MCP (1:35): Claude Code membaca .mcp.json di repo ini otomatis; isi env dengan kunci agent SEBELUM membuka claude:
 #    PowerShell: $env:LAUREL_ACCOUNT_ID="agent.laurel-team-mw0x0c8g.testnet"; $env:LAUREL_PRIVATE_KEY="<AGENT_FC_PRIVATE_KEY dari .env>"
