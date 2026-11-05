@@ -26,7 +26,7 @@ The on-chain call was signed with the demo agent's **function-call key** (allowe
 
 Claude Code: `claude mcp add laurel -- npx -y laurel-mcp`. From a clone: `cd mcp && npm install && node server.mjs`. To predict on-chain add `LAUREL_ACCOUNT_ID` and `LAUREL_PRIVATE_KEY` (a function-call key is enough) to the server's `env`; credit is prepaid with `deposit_credit` (see README E).
 
-**Publication status:** the package is prepared in `mcp/` (`laurel-mcp@0.1.0`, name free on npm as of 5 Nov). Publishing to npm is a human step (`npm login`, then `npm publish` from `mcp/`); until then use the clone command.
+**Publication status:** published 5 Nov 2026 as [`laurel-mcp@0.1.0`](https://www.npmjs.com/package/laurel-mcp) (4 files, 6.2 kB) by the team's npm account with 2FA. Verified after publishing (PowerShell, neutral working directory): a stdio client started `npx -y laurel-mcp@0.1.0` from the registry, listed 7 tools and `laurel_predict_local(4, <README sample row>)` returned 1016620, the same raw score the README's `near contract call-function … predict` example documents for that row. Gotcha: `npx laurel-mcp` must not be run from inside `mcp/` itself (npx then resolves the folder's own package and finds no installed bin); from any other folder it works. The registry also shows a `0.0.0-stage` placeholder that npm's web-authenticated publish flow created before `0.1.0` landed; `latest` points at `0.1.0`.
 
 ## Tools
 
