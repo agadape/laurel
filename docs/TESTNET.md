@@ -23,6 +23,8 @@ Status 3 Nov 2026: **belum terisi**. API faucet `helper.nearprotocol.com` menjaw
 
 ## Fallback kalau faucet tetap gagal
 
+Pembelian kredit pertama dari browser (Meteor Wallet, 5 Nov): `deposit_credit` 0,05 NEAR oleh `smoothicon6710.testnet`, tx `4YHqm8GPUpv6kvMSiBzUP3UwTnhLoWp6tK3BoKrj8rfd`. Catatan teknis: SDK wallet memakai `test.rpc.fastnear.com` secara bawaan dan terkena rate limit (429 → `near_rpc_error` di Meteor); situs kini memberi SDK `nodeUrl` dRPC dan daftar RPC cadangan.
+
 Saldo akun tim 4 Nov setelah deploy akhir, consumer, agent, dan e2e ulang (cleanup): ≈ 9,6 NEAR.
 
 Sisa akun spike (kunci ada di `.env`): `nh-ft-mvp6pidf.testnet` ≈ 8,4 NEAR bebas, `nh-nft-mvp6py9i.testnet` ≈ 7,8 NEAR, `nh-mt-mvp6qbyw.testnet` ≈ 2,3 NEAR bebas, `nh-s22-mvz0oawn.testnet` ≈ 8,9 NEAR (kontrak spike Undo, jangan ditimpa — tapi boleh mentransfer sisa), `s31.nh-mt-mvp6qbyw.testnet` ≈ 2,2 NEAR bebas. Total ≈ 29 NEAR dapat dipindahkan ke akun tim lewat transfer biasa. `nh-s21-mvz19hwe.testnet` menyimpan bukti S21 untuk Undo — jangan disentuh.

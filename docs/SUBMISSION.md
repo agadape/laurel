@@ -8,7 +8,7 @@ Aturan di [HACKATHON.md](../HACKATHON.md): submit **sekali** per repo, tidak bis
 - [x] 4 Nov: akun tim `laurel-team-mw0x0c8g.testnet` terisi 21,79 NEAR → kontrak final `laurel.laurel-team-mw0x0c8g.testnet` dideploy (evaluator dipin lewat `new`), tugas 3 `credit-risk` (demo, ditutup) dengan 2 model terskor, tugas 4 `credit-risk-open` (untuk juri, sampai 25 Nov) dengan 1 model (tugas 1/2 berjudul Indonesia digantikan); `close_task` + 5 `predict_task` oleh agent. Rincian di `docs/TESTNET.md`.
 - [x] Default `web/src/rpc.js` → `laurel.laurel-team-mw0x0c8g.testnet`; web dideploy ulang 4 Nov.
 - [ ] README Undo menyebut project ini, dan README ini menyebut Undo dengan tautan repo (Q-015).
-- [ ] Dari browser dengan wallet testnet: beli kredit (`deposit_credit`) sekali di https://laurel-near.vercel.app/#/connect, catat tx hash-nya di CLAIMS baris 22 (saat ini baris itu jujur menyebut belum ada tx dari browser).
+- [x] 5 Nov: beli kredit dari browser dengan Meteor Wallet di `#/connect` → tx `4YHqm8GPUpv6kvMSiBzUP3UwTnhLoWp6tK3BoKrj8rfd` (0.05 NEAR, akun `smoothicon6710.testnet`), dicatat di CLAIMS baris 22.
 - [ ] Video ≤ 3 menit sesuai `DEMO.md` direkam, diunggah.
 - [ ] Repo GitHub dibuat publik (manusia), `git push`.
 - [ ] Post X oleh manusia: menyebut "built at NEAR HACKATHON", tag @NEARProtocol dan #NEARHackathon, lampirkan video. Simpan URL post.
