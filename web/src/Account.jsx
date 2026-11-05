@@ -42,7 +42,7 @@ export function AccountPanel({ compact = false }) {
   const run = async (label, fn) => {
     setBusy(true); setMsg(null);
     try { const tx = await fn(); setMsg({ ok: `${label} sent${tx ? "" : " (confirm in the wallet tab)"}`, tx }); setTimeout(() => setN((x) => x + 1), 2500); }
-    catch (e) { setMsg({ err: String(e.message || e).slice(0, 300) }); }
+    catch (e) { const m = String(e.message || e); setMsg({ err: (/near_rpc_error|rpc/i.test(m) ? "The wallet's RPC node refused the request (usually rate-limiting on testnet). Wait a minute and retry, or use the CLI path below. " : "") + m.slice(0, 300) }); }
     finally { setBusy(false); }
   };
   const feeHint = "0.001 NEAR per prediction on the demo task · 0.05 NEAR ≈ 50 predictions";
