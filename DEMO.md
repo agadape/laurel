@@ -18,7 +18,11 @@ Id yang dipakai (sudah ada di kontrak, tidak perlu dibuat ulang):
 # 1. model "peserta baru" untuk shot live: latih dengan parameter beda supaya skornya beda dari #6
 python tasks/german-credit/train.py --trees 30 --depth 3
 python tools/export.py --task german-credit --model tasks/german-credit/model_baseline.pkl --out tasks/german-credit/out/demo
-# 2. kalau fastnear membatasi (429), pakai RPC cadangan untuk tulis:
+# 2. shot MCP (1:35): Claude Code membaca .mcp.json di repo ini otomatis; isi env dengan kunci agent SEBELUM membuka claude:
+#    PowerShell: $env:LAUREL_ACCOUNT_ID="agent.laurel-team-mw0x0c8g.testnet"; $env:LAUREL_PRIVATE_KEY="<AGENT_FC_PRIVATE_KEY dari .env>"
+#    lalu di Claude Code: "Use laurel: download model 4, predict holdout row 0 locally, then call the champion of task 3 on-chain with the same features"
+#    kredit agent tersisa ±0,03 NEAR (±30 prediksi); isi ulang: node tools/predict.mjs 3 --row 0 --as AGENT --deposit 0.05
+# 3. kalau fastnear membatasi (429), pakai RPC cadangan untuk tulis:
 #    set WRITE_RPC=https://near-testnet.drpc.org   (PowerShell: $env:WRITE_RPC="https://near-testnet.drpc.org")
 ```
 

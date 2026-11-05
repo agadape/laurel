@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "laurel": {
+      "command": "npx",
+      "args": ["-y", "laurel-mcp"],
+      "env": {
+        "LAUREL_CONTRACT": "laurel.laurel-team-mw0x0c8g.testnet",
+        "LAUREL_ACCOUNT_ID": "${LAUREL_ACCOUNT_ID}",
+        "LAUREL_PRIVATE_KEY": "${LAUREL_PRIVATE_KEY}"
+      }
+    }
+  }
+}
