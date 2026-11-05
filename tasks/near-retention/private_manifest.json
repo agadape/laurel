@@ -1,0 +1,42 @@
+{
+  "dataset": "bigquery-public-data.crypto_near_mainnet_us (NEAR Public Lakehouse)",
+  "creation_window": {
+    "from": "2026-06-08",
+    "to": "2026-08-02"
+  },
+  "random_state": 90,
+  "sizes": {
+    "public_train": 800,
+    "public_holdout": 150,
+    "private_a": 150,
+    "private_b": 150
+  },
+  "class_counts": {
+    "public_train": {
+      "churned": 480,
+      "retained": 320
+    },
+    "public_holdout": {
+      "churned": 90,
+      "retained": 60
+    },
+    "private_a": {
+      "churned": 90,
+      "retained": 60
+    },
+    "private_b": {
+      "churned": 90,
+      "retained": 60
+    }
+  },
+  "private_sha256": {
+    "private_a.json": "a9527bffa4dd1f46cbaff96cec31a1adb22698635703a779ccad3d0a6d154008",
+    "private_b.json": "e8609aac4417a401c853cdbfabc3a0059e298cf459b20bef2f4c1df6fa5db5b5"
+  },
+  "private_bytes": {
+    "private_a.json": 9217,
+    "private_b.json": 9217
+  },
+  "identical_feature_rows_between_private_and_public": 11,
+  "note": "identical rows are different accounts with the same 22 features and label (many accounts act exactly once in week 1), not shared accounts: every account appears in exactly one split"
+}
