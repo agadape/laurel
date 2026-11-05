@@ -67,6 +67,8 @@ export function CopyBtn({ text, label }) {
 }
 
 export const Pill = ({ kind, children }) => <span className={`pill ${kind || ""}`}>{children}</span>;
+/** Tasks built from real NEAR mainnet data (tasks/near-retention), as opposed to the UCI German Credit simulation. */
+export const mainnetData = (slug) => /^near-retention/.test(slug || "");
 export function StatusPill({ status }) {
   const t = statusText(status);
   const kind = t === "Scored" ? "scored" : t === "Pending" ? "pending" : t === "Failed" ? "failed" : "uploaded";
@@ -123,17 +125,21 @@ export function Scale({ variant = "a", title, note, entries = [], sealed = null,
   const ticks = []; for (let v = 50; v <= 100; v += 5) ticks.push(v);
   const sorted = entries.filter((e) => e.bps != null).slice().sort((a, b) => a.bps - b.bps);
   const minPx = 92; // widest label plus air
-  let lastX = -1e9, level = 0;
+  // each label takes the lowest row that is free at its position; close scores stack upwards and the track grows
+  const rowEnd = [];
   const placed = sorted.map((e) => {
     const x = pos(e.bps); const px = (x / 100) * width;
-    level = px - lastX < minPx ? (level + 1) % 2 : 0; lastX = px;
-    return { ...e, x, up: level === 1 };
+    let level = rowEnd.findIndex((end) => px - end >= minPx);
+    if (level < 0) level = rowEnd.length;
+    rowEnd[level] = px;
+    return { ...e, x, level };
   });
+  const trackH = 96 + 48 * Math.max(0, rowEnd.length - 2);
   const showBand = sealed || (reveal && stage !== "done");
   return (
     <div className={`scale ${variant}`}>
       <div className="head"><span>{title}</span><span className="mono mist">{note}</span></div>
-      <div className="track" ref={trackRef}>
+      <div className="track" ref={trackRef} style={trackH > 96 ? { height: trackH } : undefined}>
         {ticks.map((v) => (
           <React.Fragment key={v}>
             <div className="tick" style={{ left: `${pos(v * 100)}%`, height: v % 10 === 0 ? 18 : 9 }} />
@@ -141,7 +147,7 @@ export function Scale({ variant = "a", title, note, entries = [], sealed = null,
           </React.Fragment>
         ))}
         {!sealed && placed.map((e) => (
-          <a key={e.id} href={e.href} className={`needle ${e.accent ? "accent" : ""} ${e.muted ? "muted" : ""} ${e.up ? "up" : ""} ${armed ? "on" : ""}`} style={{ left: `${e.x}%` }} aria-label={`${e.label}: ${(e.bps / 100).toFixed(2)} %`}>
+          <a key={e.id} href={e.href} className={`needle ${e.accent ? "accent" : ""} ${e.muted ? "muted" : ""} ${armed ? "on" : ""}`} style={{ left: `${e.x}%`, bottom: e.level ? 48 * e.level : undefined }} aria-label={`${e.label}: ${(e.bps / 100).toFixed(2)} %`}>
             <span className="v">{(e.bps / 100).toFixed(2)}</span>
             <span className="id">{e.label}</span>
             <svg width="14" height="10" viewBox="0 0 14 10" aria-hidden="true"><path d="M7 10L0 0h14z" fill="currentColor" /></svg>

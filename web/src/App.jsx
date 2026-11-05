@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { view, contractId, yoctoToNear, bps, short, statusText, EXPLORER_ACCOUNT, EXPLORER_TX, modelBytes, parseRaw } from "./rpc.js";
-import { useView, useMedia, Err, Loading, Cmd, CopyBtn, Pill, StatusPill, Sec, Fig, Countdown, fmtDate, shortHash, Title, Scale, Slopegraph, DotPlate, Forest, statusDetail, useModelBytes } from "./components.jsx";
+import { useView, useMedia, Err, Loading, Cmd, CopyBtn, Pill, StatusPill, Sec, Fig, Countdown, fmtDate, shortHash, Title, Scale, Slopegraph, DotPlate, Forest, statusDetail, useModelBytes, mainnetData } from "./components.jsx";
 import Connect from "./Connect.jsx";
 import { WalletButton, AccountPanel, useWallet } from "./Account.jsx";
 import Landing from "./Landing.jsx";
@@ -137,7 +137,7 @@ function ExhibitRow({ t }) {
   return (
     <a href={`#/task/${t.task_id}`} className="row">
       <span className={`n ${t.closed ? "accent" : ""}`}>{pad2(t.task_id)}</span>
-      <span className="t"><b><Title text={t.title} /></b><span className="mono mist">{t.slug} · {t.n_features} features · {t.closed ? `closed ${fmtDate(t.deadline_ns)}` : <Countdown ns={t.deadline_ns} />} · {t.submission_count} {t.submission_count === 1 ? "entrant" : "entrants"}</span></span>
+      <span className="t"><b><Title text={t.title} /></b>{mainnetData(t.slug) && <span><Pill>real NEAR mainnet data</Pill></span>}<span className="mono mist">{t.slug} · {t.n_features} features · {t.closed ? `closed ${fmtDate(t.deadline_ns)}` : <Countdown ns={t.deadline_ns} />} · {t.submission_count} {t.submission_count === 1 ? "entrant" : "entrants"}</span></span>
       <span className="sig"><LeaderSig taskId={t.task_id} closed={t.closed} /></span>
       <span className="r" style={t.closed ? { color: "var(--mist)" } : undefined}><small className="ab">A</small>{leadA ? <>{bps(leadA.score_a_bps)}<span className="sub">#{leadA.submission_id}{t.closed && leadA.submission_id !== t.winner ? " led here" : ""}</span></> : <small>—</small>}</span>
       <span className="r"><small className="ab">B</small>{t.closed ? (win ? <><span className="accent">{bps(win.score_b_bps)}</span><span className="sub">#{win.submission_id} decided here</span></> : <small>—</small>) : <Pill kind="sealed">not yet observed</Pill>}</span>
@@ -445,8 +445,8 @@ function Costs() {
           <li>The scoring evaluator is fixed by the contract (hash pinned by the owner), not chosen by participants. The secret opens only for that hash: any other build gets <span className="mono">TEST_SET_A missing</span> (tested 2 Nov).</li>
           <li>The model runs inside NEAR consensus: <span className="mono">predict</span> results are identical to the evaluator and to Python, vector by vector.</li>
           <li>The agent uses a function-call key: the protocol rejects <span className="mono">withdraw_credit</span>, deposits, other contracts and transfers from that key (see <span className="mono">docs/AGENT.md</span>).</li>
-          <li><b>Not guaranteed:</b> Sybil resistance (only the 3-per-account quota + submission fee), secrecy of split-B scores from OutLayer logs or from the <span className="mono">get_submission</span> view (the leaderboard withholds them; this site withholds them too), and secrecy of a dataset that is public anyway (German Credit: the private split protects against overfitting through feedback, not against downloading the original data).</li>
-          <li>The German Credit dataset (1994, Germany) is used as a <b>simulation</b>; this is not a tool for scoring real people's credit.</li>
+          <li><b>Not guaranteed:</b> Sybil resistance (only the 3-per-account quota + submission fee), secrecy of split-B scores from OutLayer logs or from the <span className="mono">get_submission</span> view (the leaderboard withholds them; this site withholds them too), and secrecy of a dataset that is public anyway (both datasets are public: the private split protects against overfitting through feedback, not against downloading the original data).</li>
+          <li>Two datasets. <b>UCI German Credit</b> (1994, Germany) is used as a <b>simulation</b>; this is not a tool for scoring real people's credit. <b>NEAR mainnet account retention</b> (exhibit 05) is real on-chain data: fresh <span className="mono">.near</span> accounts' first seven days, from the public BigQuery dataset (<a href={`${REPO}/blob/main/tasks/near-retention/README.md`} target="_blank" rel="noreferrer" className="mono">tasks/near-retention</a>).</li>
         </ul>
       </section>
       {cfg.data && <section className="block wrap"><p className="mono mist" style={{ overflowWrap: "anywhere" }}>contract {contractId()} · evaluator {shortHash(cfg.data.evaluator_hash, 10)}<CopyBtn text={cfg.data.evaluator_hash} label="copy evaluator hash" /> · model limits {cfg.data.max_model_bytes.toLocaleString()} B / {cfg.data.max_trees} trees · {cfg.data.outlayer}</p></section>}

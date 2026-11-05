@@ -159,7 +159,6 @@ section.chapter + section.block { border-top: 0; }
 .scale .needle.accent .v, .scale .needle.accent .id { color: var(--accent-text); }
 .scale .needle.accent .v { font-size: 26px; font-weight: 800; }
 .scale .needle.muted .v { color: var(--mist); }
-.scale .needle.up { bottom: 48px; }
 .scale .band { position: absolute; inset: 0; background: repeating-linear-gradient(135deg, var(--sealed-soft) 0 6px, transparent 6px 12px); display: flex; align-items: center; justify-content: center; gap: 8px; font-family: var(--mono); font-size: 12px; color: var(--sealed); text-align: center; padding: 0 8px; transition: opacity 600ms ease, transform 600ms ease; }
 .scale .band.lift { opacity: 0; transform: translateY(-12px); pointer-events: none; }
 .slope { display: block; width: 100%; height: 56px; margin: -8px 0 -4px; }
