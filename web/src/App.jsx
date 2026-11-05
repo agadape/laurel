@@ -44,8 +44,8 @@ function LeaderSig({ taskId, closed }) {
   if (!lead) return <span className="mono mist">{lb.loading ? "…" : "no entries"}</span>;
   return (
     <div className="stack" style={{ gap: 4 }}>
-      <Forest bytes={bytes} trees={lead.trees} limit={16} cols={8} cell={40} accent={closed} onRetry={retry} />
-      <span className="mono mist">#{lead.submission_id} · {lead.trees} trees{closed ? " · champion" : " · leads split A"}</span>
+      <Forest bytes={bytes} trees={lead.trees} limit={4} cols={4} cell={80} accent={closed} onRetry={retry} />
+      <span className="mono mist">#{lead.submission_id} · {closed ? "champion" : "leads split A"} · {lead.trees > 4 ? `4 of ${lead.trees} trees` : `${lead.trees} trees`}</span>
     </div>
   );
 }
@@ -179,9 +179,9 @@ function Task({ id }) {
           {task.closed && <Slopegraph entries={slopeEntries} winner={task.winner} drawn={revealed} />}
           <Scale variant="b" title={<><b className="accent-text">Split B</b> · observed once at close · decides the champion</>} note={task.closed ? `unsealed ${fmtDate(task.deadline_ns)}` : <Countdown ns={task.deadline_ns} />} entries={entriesB} sealed={task.closed ? null : sealedText} reveal={task.closed} onRevealed={() => setRevealed(true)} />
           {task.closed && champ && leadA && leadA.id !== champ.submission_id && (
-            <p className="ink2" style={{ fontSize: 14, maxWidth: 760 }}>The lines cross: #{leadA.id} led the public split, #{champ.submission_id} the sealed one, and the sealed reading is the only one a model could not have been tuned against, so it decides.</p>
+            <p className="ink2" style={{ fontSize: 15, maxWidth: 760 }}>The lines cross: #{leadA.id} led the public split, #{champ.submission_id} the sealed one, and the sealed reading is the only one a model could not have been tuned against, so it decides.</p>
           )}
-          {!task.closed && <p className="ink2" style={{ fontSize: 14, maxWidth: 760 }}>Split A is the public reading. Split B is scored at the same time, but the leaderboard withholds it until the deadline passes and someone calls <span className="mono">close_task</span>; the champion is the best split-B reading.</p>}
+          {!task.closed && <p className="ink2" style={{ fontSize: 15, maxWidth: 760 }}>Split A is the public reading. Split B is scored at the same time, but the leaderboard withholds it until the deadline passes and someone calls <span className="mono">close_task</span>; the champion is the best split-B reading.</p>}
         </div>
       </section>
 
@@ -207,8 +207,8 @@ function Task({ id }) {
                     : <div className="mist mono">{statusText(r.status) === "Failed" ? `failed: ${statusDetail(r.status)}` : statusText(r.status) === "Pending" ? "in the TEE…" : "not scored yet"}</div>}</div>
                   <div className="stack" style={{ gap: 4 }}>
                     <span className="label">signature</span>
-                    <Forest bytes={s === undefined ? null : s.bytes} trees={r.trees} limit={one ? 50 : 30} cols={10} cell={40} accent={isChamp} featureNames={task.feature_names} onRetry={() => setRetryN((x) => x + 1)} />
-                    <span className="mono mist">{r.trees} trees{s?.sub ? ` · ${s.sub.nodes.toLocaleString()} nodes` : ""}{r.trees > (one ? 50 : 30) ? ` (${one ? 50 : 30} shown)` : ""}</span>
+                    <Forest bytes={s === undefined ? null : s.bytes} trees={r.trees} limit={one ? 20 : 8} cols={one ? 10 : 4} cell={one ? 60 : 80} accent={isChamp} featureNames={task.feature_names} onRetry={() => setRetryN((x) => x + 1)} />
+                    <span className="mono mist">{r.trees} trees{s?.sub ? ` · ${s.sub.nodes.toLocaleString()} nodes` : ""}{r.trees > (one ? 20 : 8) ? ` · first ${one ? 20 : 8} shown` : ""}</span>
                   </div>
                 </div>
               </a>
@@ -355,7 +355,7 @@ function Model({ id }) {
       <section className="block wrap g12">
         <div className="c2"><Sec n="05" title="Call it" /></div>
         <div className="c10 stack">
-          <p className="ink2" style={{ fontSize: 14 }}>Metered change method: the fee is taken from the caller's prepaid credit. Features are integers in the task's feature order. Raw score &gt; 0 ⇒ positive class.</p>
+          <p className="ink2" style={{ fontSize: 15 }}>Metered change method: the fee is taken from the caller's prepaid credit. Features are integers in the task's feature order. Raw score &gt; 0 ⇒ positive class.</p>
           <Cmd>{`node tools/predict.mjs ${sub.task_id} --submission ${sub.submission_id} --row 0 --as AGENT`}</Cmd>
           <Cmd>{`near contract call-function as-transaction ${contractId()} predict json-args '{"submission_id":${sub.submission_id},"features":[0,24,2,3,2500,0,2,3,0,2,1,35,2,1,1,2,1,0]}' prepaid-gas '30 Tgas' attached-deposit '0 NEAR' sign-as <agent> network-config testnet`}</Cmd>
         </div>
@@ -375,12 +375,12 @@ function FlowDiagram() {
           return (
             <g key={s}>
               <rect x={x} y={30} width={w} height={54} fill={last ? "var(--accent-text)" : "var(--plate)"} stroke={sealed ? "var(--sealed)" : tee ? "var(--tee-text)" : last ? "var(--accent-text)" : "var(--ink)"} strokeWidth={tee ? 2.5 : 1.5} strokeDasharray={sealed ? "4 3" : undefined} />
-              <text x={x + w / 2} y={61} textAnchor="middle" fontFamily="JetBrains Mono, monospace" fontSize="12.5" fill={last ? "var(--paper)" : tee ? "var(--tee-text)" : "var(--ink)"}>{s}</text>
+              <text x={x + w / 2} y={61} textAnchor="middle" fontFamily="JetBrains Mono, monospace" fontSize="12" fill={last ? "var(--paper)" : tee ? "var(--tee-text)" : "var(--ink)"}>{s}</text>
               {i < STAGES.length - 1 && <path d={`M${x + w} 57 l13 0`} stroke="var(--ink)" strokeWidth={1.5} />}
             </g>
           );
         })}
-        <text x={10} y={104} fontFamily="JetBrains Mono, monospace" fontSize="12.5" fill="var(--mist)">participant → contract → OutLayer worker (TEE) → contract → anyone (close) → agents and contracts (calls, fee to the owner)</text>
+        <text x={10} y={104} fontFamily="JetBrains Mono, monospace" fontSize="12" fill="var(--mist)">participant → contract → OutLayer worker (TEE) → contract → anyone (close) → agents and contracts (calls, fee to the owner)</text>
       </svg>
       <ol className="flow-v only-narrow">{STAGES.map((s, i) => <li key={s} className={i === 4 ? "sealed" : i === 3 ? "tee" : i === 6 ? "last" : ""}>{s}</li>)}</ol>
     </>
