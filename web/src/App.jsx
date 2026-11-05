@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { view, contractId, yoctoToNear, bps, short, statusText, EXPLORER_ACCOUNT, EXPLORER_TX, modelBytes, parseRaw } from "./rpc.js";
 import { useView, useMedia, Err, Loading, Cmd, CopyBtn, Pill, StatusPill, Sec, Fig, Countdown, fmtDate, shortHash, Title, Scale, Slopegraph, DotPlate, Forest, statusDetail } from "./components.jsx";
+import Connect from "./Connect.jsx";
 
 const REPO = "https://github.com/agadape/laurel";
 const UNDO = "https://github.com/agadape/undo";
@@ -17,7 +18,7 @@ function useRoute() {
     return () => window.removeEventListener("hashchange", f);
   }, []);
   const parts = hash.replace(/^#\/?/, "").split("?")[0].split("/");
-  const known = ["tasks", "task", "model", "costs", "biaya"];
+  const known = ["tasks", "task", "model", "costs", "biaya", "connect"];
   return { page: known.includes(parts[0]) ? parts[0] : "tasks", id: Number(parts[1]) || null };
 }
 const skipToMain = (e) => { e.preventDefault(); const m = document.getElementById("main"); m?.focus({ preventScroll: true }); m?.scrollIntoView(); };
@@ -437,13 +438,15 @@ function Costs() {
 export default function App() {
   const { page, id } = useRoute();
   const isMethod = page === "costs" || page === "biaya";
+  const isConnect = page === "connect";
+  const isExhibits = !isMethod && !isConnect;
   return (
     <>
       <a className="skip" href="#main" onClick={skipToMain}>Skip to content</a>
       <header>
         <div className="wrap">
           <div className="brand"><a href="#/">LAUREL</a><span>Observatory of small models</span></div>
-          <nav aria-label="primary"><a href="#/" className={!isMethod ? "on" : ""} aria-current={!isMethod ? "page" : undefined}>Exhibits</a><a href="#/costs" className={isMethod ? "on" : ""} aria-current={isMethod ? "page" : undefined}>Method</a><a href={REPO} target="_blank" rel="noreferrer">Source</a></nav>
+          <nav aria-label="primary"><a href="#/" className={isExhibits ? "on" : ""} aria-current={isExhibits ? "page" : undefined}>Exhibits</a><a href="#/costs" className={isMethod ? "on" : ""} aria-current={isMethod ? "page" : undefined}>Method</a><a href="#/connect" className={isConnect ? "on" : ""} aria-current={isConnect ? "page" : undefined}>Connect your agent</a><a href={REPO} target="_blank" rel="noreferrer">Source</a></nav>
           <span className="contract"><a href={EXPLORER_ACCOUNT(contractId())} target="_blank" rel="noreferrer">{contractId()}</a> · testnet · read-only</span>
         </div>
       </header>
@@ -452,6 +455,7 @@ export default function App() {
         {page === "task" && <Task id={id} />}
         {page === "model" && <Model id={id} />}
         {isMethod && <Costs />}
+        {isConnect && <Connect />}
       </main>
       <footer><div className="wrap"><span>Built at NEAR HACKATHON 2026 · every number is read live from <a href={EXPLORER_ACCOUNT(contractId())} target="_blank" rel="noreferrer" className="mono">{contractId()}</a> · no mock data · sister project: <a href={UNDO} target="_blank" rel="noreferrer">Undo</a> (same team)</span><a href={REPO} target="_blank" rel="noreferrer" className="mono">github.com/agadape/laurel</a></div></footer>
     </>

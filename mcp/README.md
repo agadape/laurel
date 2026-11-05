@@ -6,7 +6,9 @@ Live contract (testnet): `laurel.laurel-team-mw0x0c8g.testnet` · explorer https
 
 ## Install
 
-Claude Desktop / Claude Code / Cursor (any MCP client), read-only:
+No install at all: add the remote endpoint **https://laurel-near.vercel.app/api/mcp** as an HTTP MCP server (Claude.ai / Claude Desktop → Settings → Connectors → Add custom connector; Claude Code → `claude mcp add --transport http laurel https://laurel-near.vercel.app/api/mcp`). It serves the five read-only tools. Snippets for every client and OS: https://laurel-near.vercel.app/#/connect.
+
+Local package (adds the on-chain `laurel_predict`), Claude Desktop / Claude Code / Cursor (any MCP client), read-only:
 
 ```json
 {

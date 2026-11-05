@@ -80,7 +80,10 @@ node tools/agent.mjs <task_id> --rows 10                             # restricte
 node tools/consumer.mjs <task_id> --funder TEAM                      # deploys credit-desk, screens 3 applicants → docs/CONSUMER.md
 ```
 
-### F. Give the model to an AI agent as an MCP server (`mcp/`)
+### F. Give the model to an AI agent as an MCP server (`mcp/`, `web/api/mcp.mjs`)
+Two ways, for every OS and client; the picker with ready-to-paste snippets is at https://laurel-near.vercel.app/#/connect.
+- **Remote, nothing to install** (Claude.ai / Claude Desktop connectors, Claude Code `--transport http`, Cursor, VS Code): `https://laurel-near.vercel.app/api/mcp` — read-only (exhibits, leaderboards, specimens, model bytes, local prediction), served by a stateless Streamable-HTTP function on Vercel.
+- **Local, with on-chain calls** (Node 18+, macOS/Windows/Linux):
 ```json
 { "mcpServers": { "laurel": { "command": "npx", "args": ["-y", "laurel-mcp"] } } }
 ```
