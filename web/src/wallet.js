@@ -23,7 +23,7 @@ async function load() {
       import("@near-wallet-selector/modal-ui/styles.css"),
     ]);
     const selector = await setupWalletSelector({ network: NETWORK, modules: [setupMyNearWallet(), setupMeteorWallet()] });
-    modal = setupModal(selector, { contractId: contractId(), methodNames: ["deposit_credit", "withdraw_credit", "withdraw_earnings"] });
+    modal = setupModal(selector, { contractId: contractId() }); // deposits need a full-access signature anyway, so no method-restricted key is requested at sign-in
     const sync = () => { const a = selector.store.getState().accounts.find((x) => x.active) || selector.store.getState().accounts[0]; set({ accountId: a?.accountId ?? null, ready: true, loading: false }); };
     selector.store.observable.subscribe(sync); sync();
     return selector;
