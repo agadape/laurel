@@ -10,10 +10,6 @@ const UNDO = "https://github.com/agadape/undo";
 const REMOTE_MCP = "https://laurel-near.vercel.app/api/mcp";
 const pad2 = (n) => String(n).padStart(2, "0");
 
-/** Name of the screen a deep link asked for, so the landing can say what opens after sign-in. */
-const targetName = ({ page, id }) =>
-  page === "task" && id ? `Exhibit ${pad2(id)}` : page === "model" && id ? `Specimen #${id}` : page === "costs" || page === "biaya" ? "the Method page" : page === "connect" ? "Connect your agent" : null;
-
 function EnterButton({ big = false }) {
   const w = useWallet();
   return (
@@ -22,6 +18,10 @@ function EnterButton({ big = false }) {
     </button>
   );
 }
+/** Read-only entry: the explorer needs no wallet; only buying credit or withdrawing does. */
+const GuestButton = ({ onGuest, big = false }) => (
+  <button className={`ghost-btn ${big ? "big" : ""}`} onClick={onGuest}>Browse the exhibits without a wallet</button>
+);
 
 const STEPS = [
   ["Submit a model as data", "A gradient-boosted tree model, exported to a few kilobytes of integers, is stored by the contract itself. No server, no API key, no hosting bill."],
@@ -52,7 +52,7 @@ function Proof({ task }) {
   );
 }
 
-export default function Landing({ route }) {
+export default function Landing({ onGuest }) {
   const w = useWallet();
   const tasks = useView("list_tasks", { from: 0, limit: 50 }, []);
   const cfg = useView("get_config", {}, []);
@@ -61,7 +61,6 @@ export default function Landing({ route }) {
   const winner = useView("get_submission", { submission_id: champion?.winner }, [champion?.winner], { skip: champion?.winner == null });
   const earned = useView("get_earnings", { submission_id: champion?.winner }, [champion?.winner], { skip: champion?.winner == null });
   const [bytes, retry] = useModelBytes(champion?.winner);
-  const target = targetName(route);
   useEffect(() => { document.title = "Laurel · small models, judged in a TEE, paid on-chain"; }, []);
   const sk = <span className="sk" />;
   return (
@@ -81,10 +80,9 @@ export default function Landing({ route }) {
             <h1>Small models,<br />judged in the dark,<br />paid in the open.</h1>
             <p className="ink2 lede">Laurel is a registry on NEAR for small decision models. You submit a model as data, a TEE scores it on a test set nobody can read, and the best one becomes a contract method that agents and other contracts pay to call.</p>
             <div className="stack" style={{ gap: 10 }}>
-              {target && <span className="mono">Connect a wallet to open {target}.</span>}
-              <div className="cta-row"><EnterButton big /><a href={REPO} target="_blank" rel="noreferrer" className="mono">read the source →</a></div>
+              <div className="cta-row"><EnterButton big /><GuestButton onGuest={onGuest} big /></div>
               {w.error && <span className="err mono">{w.error}</span>}
-              <span className="mist" style={{ fontSize: 13, maxWidth: 520 }}>A {network} wallet: Meteor, Intear or Nightly. Signing in creates no transaction and costs nothing; purchases are approved one by one in the wallet.</span>
+              <span className="mist" style={{ fontSize: 13, maxWidth: 560 }}>Browsing is free and read-only: every exhibit, specimen and score is public contract state. A {network} wallet (Meteor, Intear or Nightly) is only needed to buy prediction credit or withdraw earnings; signing in creates no transaction. <a href={REPO} target="_blank" rel="noreferrer">Read the source</a>.</span>
             </div>
           </div>
           <div className="c5 stack" style={{ gap: 10 }}>
@@ -136,10 +134,10 @@ export default function Landing({ route }) {
           <div className="g12" style={{ alignItems: "end" }}>
             <div className="c7 stack" style={{ gap: 12 }}>
               <h2 className="h2">Enter the observatory.</h2>
-              <p className="ink2" style={{ fontSize: 15, maxWidth: 560 }}>Connect a NEAR {network} wallet to browse the exhibits, read every specimen and its trees, and buy prediction credit.</p>
+              <p className="ink2" style={{ fontSize: 15, maxWidth: 560 }}>Browse every exhibit, specimen and tree as a guest, or connect a NEAR {network} wallet to buy prediction credit for your agent.</p>
             </div>
             <div className="c5 stack" style={{ gap: 10 }}>
-              <EnterButton big />
+              <div className="cta-row"><EnterButton big /><GuestButton onGuest={onGuest} big /></div>
               <span className="mist" style={{ fontSize: 13 }}>For agents without a wallet, the read-only MCP endpoint stays open: <span className="mono">{REMOTE_MCP}</span></span>
             </div>
           </div>

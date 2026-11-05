@@ -8,7 +8,7 @@
 
 | | |
 |---|---|
-| **Live site** | https://laurel-near.vercel.app (public landing; the explorer opens after a NEAR testnet wallet sign-in, which creates no transaction) |
+| **Live site** | https://laurel-near.vercel.app (no wallet needed to browse: landing page, then "Browse the exhibits without a wallet"; a NEAR testnet wallet is only for buying prediction credit) |
 | **Contract** | [`laurel.laurel-team-mw0x0c8g.testnet`](https://testnet.nearblocks.io/address/laurel.laurel-team-mw0x0c8g.testnet) (NEAR testnet, codename `bursa`) |
 | **For AI agents** | remote MCP endpoint `https://laurel-near.vercel.app/api/mcp` (no install, no wallet) · npm package [`laurel-mcp`](https://www.npmjs.com/package/laurel-mcp) |
 | **Evidence** | [CLAIMS.md](CLAIMS.md) maps every statement below to code, tests and transaction hashes |
@@ -89,8 +89,8 @@ Unit tests: 50 in `contracts/bursa`, 3 in `contracts/consumer-example`, 4 in `cr
 
 Each step is "do X → see Y". A needs only a browser; B to F need the tools listed in each step.
 
-### A. Read-only, in the browser (2 minutes, needs a NEAR testnet wallet to sign in)
-1. Open https://laurel-near.vercel.app → **see** the landing page: live figures from `laurel.laurel-team-mw0x0c8g.testnet`, the champion model's 50 decision trees drawn from the bytes stored on-chain, and exhibit 03's split-A vs split-B readings. Click **Connect wallet to enter** and sign in with a testnet wallet (Meteor, Intear or Nightly; signing in creates no transaction) → **see** the exhibits (tasks). A deep link such as `#/task/3` opens straight after sign-in. Without a wallet, step 4 below and the remote MCP endpoint (section F) read the same data.
+### A. Read-only, in the browser (2 minutes, no wallet)
+1. Open https://laurel-near.vercel.app → **see** the landing page: live figures from `laurel.laurel-team-mw0x0c8g.testnet`, the champion model's 50 decision trees drawn from the bytes stored on-chain, and exhibit 03's split-A vs split-B readings. Click **Browse the exhibits without a wallet** → **see** the exhibits (tasks) read-only. A deep link such as https://laurel-near.vercel.app/#/task/3 opens its page directly, with no click and no wallet. **Connect wallet to enter** (Meteor, Intear or Nightly; testnet; signing in creates no transaction) is only needed to buy prediction credit or withdraw.
 2. Click exhibit **03 Credit risk** → **see** the two readings: on the split-A scale #5 is ahead (75.50 %), on the split-B scale, unsealed because the task is closed, #4 is the champion (66.50 %); below, one specimen plate per entry (one dot per private test row, orange = misjudged) and the "in service" strip with #4's call count. Exhibit **04** is still open, so its split-B scale shows a sealed band instead.
 3. Click **Specimen #4** → **see** all 50 trees drawn from the on-chain bytes (click one for its root split), both confusion plates, the pinned evaluator hash, the model sha256 and the owner's earnings.
 4. Same data straight from RPC (needs `curl` and Python 3 for the decoding one-liner):
@@ -139,7 +139,7 @@ node tools/consumer.mjs <task_id> --funder TEAM                      # deploys c
 ```
 
 ### F. Give the model to an AI agent as an MCP server (`mcp/`, `web/api/mcp.mjs`)
-Two ways, for every OS and client; the picker with ready-to-paste snippets is at https://laurel-near.vercel.app/#/connect (after sign-in).
+Two ways, for every OS and client; the picker with ready-to-paste snippets is at https://laurel-near.vercel.app/#/connect.
 - **Remote, nothing to install, no wallet** (Claude.ai / Claude Desktop connectors, Claude Code `--transport http`, Cursor, VS Code): `https://laurel-near.vercel.app/api/mcp` — read-only (exhibits, leaderboards, specimens, model bytes, local prediction), served by a stateless Streamable-HTTP function on Vercel.
 - **Local, with on-chain calls** (Node 18+, macOS/Windows/Linux):
 ```json
@@ -151,7 +151,7 @@ Published on npm as [`laurel-mcp`](https://www.npmjs.com/package/laurel-mcp) (5 
 
 A model that wins a task is **paid per prediction, in NEAR, on-chain**: the task creator sets `fee_per_call`; every `predict_task` / `predict` debits the caller's prepaid credit (`deposit_credit`) and credits the model owner, who withdraws with `withdraw_earnings`. This has run since the first deployment (docs/AGENT.md: 10 calls, 0.01 NEAR to the owner; the champion of task 3 has earned from 19 calls).
 
-The website is the surface for it: the landing page shows the live economics (calls served, earnings, gas per prediction); after a **NEAR wallet sign-in** (Meteor, Intear, Nightly; testnet) the site can *buy prediction credit* and withdraw credit or earnings; and the **Connect** page turns it into three steps: buy credit → give your agent a function-call key limited to `predict_task` (the "licence key": the protocol rejects everything else from it) → plug Laurel into the agent through MCP. Browsing the explorer is free but needs a wallet sign-in (no transaction); the landing page and the remote MCP endpoint need no wallet at all; only predictions are paid. First browser purchase: tx [`4YHqm8GP…`](https://testnet.nearblocks.io/txns/4YHqm8GPUpv6kvMSiBzUP3UwTnhLoWp6tK3BoKrj8rfd) (0.05 NEAR of credit via Meteor Wallet, 5 Nov).
+The website is the surface for it: the landing page shows the live economics (calls served, earnings, gas per prediction); with a **NEAR wallet sign-in** (Meteor, Intear, Nightly; testnet) the site can *buy prediction credit* and withdraw credit or earnings; and the **Connect** page turns it into three steps: buy credit → give your agent a function-call key limited to `predict_task` (the "licence key": the protocol rejects everything else from it) → plug Laurel into the agent through MCP. Browsing the landing page, the explorer and the remote MCP endpoint is free and needs no wallet; only predictions are paid. First browser purchase: tx [`4YHqm8GP…`](https://testnet.nearblocks.io/txns/4YHqm8GPUpv6kvMSiBzUP3UwTnhLoWp6tK3BoKrj8rfd) (0.05 NEAR of credit via Meteor Wallet, 5 Nov).
 
 **Not built, on purpose (phase 2 after the hackathon):** a price per model set by its owner (today the fee is per task), delegated spending so a hosted service can bill a user's credit, and on-chain licences. Model bytes are public by design (`get_model_bytes`): what is sold is the verified prediction, not the file.
 
@@ -184,7 +184,6 @@ What is **not** guaranteed, stated plainly: the contract trusts what `outlayer.t
 - **Why would anyone use a Laurel model instead of hosting their own?** Because it comes with a public, verifiable record (hash, evaluator, sealed-split score, every call) and is callable by other contracts: "models with publicly verifiable competition records, available through permissionless on-chain interfaces", not "the best model for everyone".
 - **What still depends on the operator?** Pinning the evaluator for new tasks, the Vercel hosting of the evaluator wasm (integrity still rests on the pinned hash), and OutLayer's availability. Closing a task and calling a winner are permissionless.
 - **What if the winning model is malicious or useless?** It can only return an integer score for the features it is given; it cannot touch funds or state. Consumers decide what to do with the score (`contracts/consumer-example` turns it into an approve / require-deposit decision), and the split-B record is public.
-- **Why does the explorer ask for a wallet?** The team put the explorer screens behind a NEAR wallet sign-in (connect only, no transaction, no cost); the same wallet then buys prediction credit. Everything the explorer shows is public contract state: the landing page, the RPC one-liner in A.4 and the remote MCP endpoint read the same data with no wallet.
 - **Production-ready?** No: testnet, a 1994 simulation dataset, one task shape, no audit. The mechanisms are real; the deployment is a hackathon demo.
 
 ## Architecture and repository map
@@ -196,7 +195,7 @@ What is **not** guaranteed, stated plainly: the contract trusts what `outlayer.t
 | `evaluator/` | `wasm32-wasip2` program for OutLayer: reads the model through the `view` host function, the secrets from env, prints ≤ 900 B JSON with balanced accuracy and F1 for both splits |
 | `contracts/consumer-example` | `credit-desk`, a contract that calls `predict_task` through a promise and pays from its own credit ([docs/CONSUMER.md](docs/CONSUMER.md)) |
 | `mcp/` | MCP server for agents, published as `laurel-mcp` ([docs/MCP.md](docs/MCP.md)) |
-| `web/` | Vite/React explorer over RPC view calls: a public landing page (`web/src/Landing.jsx`) and the explorer behind a NEAR wallet sign-in; `web/api/mcp.mjs` is the remote MCP endpoint |
+| `web/` | Vite/React explorer over RPC view calls: a public landing page (`web/src/Landing.jsx`), the explorer (browsable as a guest, no wallet), and a NEAR wallet sign-in used only to buy credit and withdraw; `web/api/mcp.mjs` is the remote MCP endpoint |
 | `tools/` | Node scripts for every write action (the browser wallet only buys credit and withdraws); `tools/export.py` converts sklearn models |
 | `tasks/german-credit/` | Dataset spec, split and training scripts, commitment manifest of the private splits |
 | `wasm/` | Prebuilt contract and evaluator wasm |

@@ -6,8 +6,14 @@ import { WalletButton, AccountPanel, useWallet } from "./Account.jsx";
 import Landing from "./Landing.jsx";
 import { hasSavedSession } from "./wallet.js";
 
-// The explorer screens need a signed-in NEAR wallet; signed-out visitors get the landing page (deep links survive sign-in).
-const WALLET_GATE = true;
+// Signed-out visitors opening the site root get the landing page; from there "Browse the exhibits without a wallet"
+// opens the explorer read-only (guest mode, kept for the browser session). A deep link (#/task/3, #/model/4, #/costs,
+// #/connect, #/tasks) opens its page directly as a guest, so a link from the README or CLAIMS needs no click and no
+// wallet. A wallet is needed only to buy prediction credit or withdraw.
+const GUEST_KEY = "laurel-guest";
+const readGuest = () => { try { return sessionStorage.getItem(GUEST_KEY) === "1"; } catch { return false; } };
+const saveGuest = () => { try { sessionStorage.setItem(GUEST_KEY, "1"); } catch {} };
+const isDeepLink = (page) => page !== "tasks" || /^#\/tasks(\/|$)/.test(window.location.hash);
 
 const REPO = "https://github.com/agadape/laurel";
 const UNDO = "https://github.com/agadape/undo";
@@ -452,11 +458,15 @@ export default function App() {
   const route = useRoute();
   const { page, id } = route;
   const w = useWallet();
-  if (WALLET_GATE && !w.accountId) {
+  const [guestChosen, setGuestChosen] = useState(readGuest);
+  const guest = guestChosen || isDeepLink(page);
+  useEffect(() => { if (guest && !guestChosen) { saveGuest(); setGuestChosen(true); } }, [guest, guestChosen]);
+  const enterAsGuest = () => { saveGuest(); setGuestChosen(true); window.scrollTo(0, 0); };
+  if (!w.accountId && !guest) {
     if (hasSavedSession() && !w.ready && !w.error) {
       return <main id="main" tabIndex={-1} className="restoring wrap"><span className="brand-word">LAUREL</span><p className="mist mono">restoring your wallet session…</p></main>;
     }
-    return <Landing route={route} />;
+    return <Landing onGuest={enterAsGuest} />;
   }
   const isMethod = page === "costs" || page === "biaya";
   const isConnect = page === "connect";

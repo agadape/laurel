@@ -96,7 +96,7 @@ export default function Connect() {
       <section className="block wrap g12" style={{ alignItems: "end" }}>
         <div className="c8 stack" style={{ gap: 12 }}>
           <h1 className="h2">Give the models to your agent.</h1>
-          <p className="ink2" style={{ fontSize: 15, maxWidth: 640 }}>Three steps: buy prediction credit with NEAR, give your agent a key that can only spend it on predictions, and plug Laurel into your agent through <a href="https://modelcontextprotocol.io" target="_blank" rel="noreferrer">MCP</a>. Browsing is free (signing in creates no transaction); only predictions are paid, and every payment goes to the model's owner.</p>
+          <p className="ink2" style={{ fontSize: 15, maxWidth: 640 }}>Three steps: buy prediction credit with NEAR, give your agent a key that can only spend it on predictions, and plug Laurel into your agent through <a href="https://modelcontextprotocol.io" target="_blank" rel="noreferrer">MCP</a>. Browsing is free and needs no wallet; only predictions are paid, and every payment goes to the model's owner.</p>
         </div>
         <div className="c4 stack" style={{ gap: 6 }}>
           <span className="label">operating system</span>

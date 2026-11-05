@@ -52,7 +52,7 @@ export function AccountPanel({ compact = false }) {
         <div className="between"><b style={{ fontFamily: "var(--display)", fontSize: 17 }}>Buy prediction credit with your NEAR wallet</b><span className="mono mist">{network}</span></div>
         <p className="ink2" style={{ fontSize: 14 }}>Credit is prepaid on the contract and spent by <span className="mono">predict_task</span>: each call pays the model owner. Sign in to deposit from the browser; the CLI path (<span className="mono">tools/predict.mjs … --deposit</span>) does the same thing.</p>
         <div><button className="wallet-btn" onClick={signIn} disabled={w.loading}>{w.loading ? "loading wallet…" : "Connect wallet"}</button>{w.error && <span className="err mono" style={{ marginLeft: 10 }}>{w.error}</span>}</div>
-        <p className="mist" style={{ fontSize: 12 }}>{feeHint}. Works with Meteor (opens a popup window: allow popups for this site, or use the Meteor browser extension), Intear and Nightly on {network}. Use a normal browser window, not an embedded preview. Signing in creates no transaction; each purchase is approved in the wallet. Signing in is also what opens the explorer.</p>
+        <p className="mist" style={{ fontSize: 12 }}>{feeHint}. Works with Meteor (opens a popup window: allow popups for this site, or use the Meteor browser extension), Intear and Nightly on {network}. Use a normal browser window, not an embedded preview. Signing in creates no transaction; each purchase is approved in the wallet. Nothing on this site needs a wallet to read.</p>
       </div>
     );
   }
