@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { view, contractId, yoctoToNear, bps, short, statusText, EXPLORER_ACCOUNT, EXPLORER_TX, modelBytes, parseRaw } from "./rpc.js";
 import { useView, useMedia, Err, Loading, Cmd, CopyBtn, Pill, StatusPill, Sec, Fig, Countdown, fmtDate, shortHash, Title, Scale, Slopegraph, DotPlate, Forest, statusDetail } from "./components.jsx";
 import Connect from "./Connect.jsx";
+import { WalletButton, AccountPanel } from "./Account.jsx";
 
 const REPO = "https://github.com/agadape/laurel";
 const UNDO = "https://github.com/agadape/undo";
@@ -59,7 +60,9 @@ function Home() {
   const champion = list.find((t) => t.closed && t.winner != null);
   const winner = useView("get_submission", { submission_id: champion?.winner }, [champion?.winner], { skip: champion?.winner == null });
   const [bytes, retry] = useModelBytes(champion?.winner);
+  const earned = useView("get_earnings", { submission_id: champion?.winner }, [champion?.winner], { skip: champion?.winner == null });
   const recent = list.filter((t) => t.task_id > 2), earlier = list.filter((t) => t.task_id <= 2);
+  const feeNear = champion ? yoctoToNear(champion.fee_per_call, 4) : null;
   return (
     <>
       <section className="block wrap g12">
@@ -86,8 +89,26 @@ function Home() {
         </div>
       </section>
 
+      <section className="block wrap g12 chapter">
+        <div className="c2"><Sec n="02" title="Economics" /></div>
+        <div className="c10 stack" style={{ gap: 18 }}>
+          <h2 className="h2" style={{ fontSize: 26 }}>A good model earns NEAR every time it is called.</h2>
+          <div className="figs" style={{ gridTemplateColumns: "repeat(4, minmax(0, 1fr))" }}>
+            <Fig v={feeNear ?? <span className="sk" />} unit="NEAR" l="fee per prediction, set by the task creator, paid to the model owner" />
+            <Fig v="≈ 0.0004" unit="NEAR" l="gas per prediction (4.3 Tgas at the base price)" />
+            <Fig v={winner.data ? winner.data.calls : <span className="sk" />} l={champion ? `predictions served by champion #${champion.winner}` : "predictions served"} />
+            <Fig v={earned.data ? yoctoToNear(earned.data, 3) : <span className="sk" />} unit="NEAR" l="earned by its owner so far (withdrawable on-chain)" />
+          </div>
+          <div className="g12" style={{ rowGap: 14 }}>
+            <div className="c6 stack" style={{ gap: 6 }}><span className="label">for model makers</span><p className="ink2" style={{ fontSize: 15 }}>Train on the public split, submit the model as data, get scored inside a TEE on a sealed test set. Win the exhibit and your model becomes <span className="mono">predict_task</span>: every call by an agent or another contract pays you the fee. Withdraw with <span className="mono">withdraw_earnings</span>, or from this site with your wallet.</p></div>
+            <div className="c6 stack" style={{ gap: 6 }}><span className="label">for users and agents</span><p className="ink2" style={{ fontSize: 15 }}>Prepay credit on the contract with NEAR, then call the champion from your agent (MCP, function-call key) or from your own contract. You pay per prediction, nothing else; the model, its score and its evaluator are all verifiable on-chain.</p></div>
+          </div>
+          <AccountPanel compact />
+        </div>
+      </section>
+
       <section className="block wrap">
-        <div className="row-head"><h2 className="sec">02 — Exhibits</h2><span>Task</span><span className="sig">Leader's signature</span><span className="right">Split A · observed</span><span className="right">Split B · at close</span><span className="right state">State</span></div>
+        <div className="row-head"><h2 className="sec">03 — Exhibits</h2><span>Task</span><span className="sig">Leader's signature</span><span className="right">Split A · observed</span><span className="right">Split B · at close</span><span className="right state">State</span></div>
         {tasks.error && <Err error={tasks.error} reload={tasks.reload} />}
         {recent.map((t) => <ExhibitRow key={t.task_id} t={t} />)}
         {earlier.length > 0 && (
@@ -100,7 +121,7 @@ function Home() {
       </section>
 
       <section className="block wrap g12" style={{ alignItems: "start" }}>
-        <div className="c2"><Sec n="03" title="Method" /></div>
+        <div className="c2"><Sec n="04" title="Method" /></div>
         <div className="c10 stack">
           <FlowDiagram />
           <div className="flow"><span>submit a model as data</span><span className="arrow" aria-hidden="true">→</span><span>judged in a TEE by the pinned evaluator <span className="mono">{cfg.data ? shortHash(cfg.data.evaluator_hash) : "…"}</span></span><span className="arrow" aria-hidden="true">→</span><span>split A public, split B sealed until close</span><span className="arrow" aria-hidden="true">→</span><span>the champion serves <span className="mono">predict_task</span></span><a href="#/costs" className="mono">measured costs and guarantees →</a></div>
@@ -447,6 +468,7 @@ export default function App() {
         <div className="wrap">
           <div className="brand"><a href="#/">LAUREL</a><span>Observatory of small models</span></div>
           <nav aria-label="primary"><a href="#/" className={isExhibits ? "on" : ""} aria-current={isExhibits ? "page" : undefined}>Exhibits</a><a href="#/costs" className={isMethod ? "on" : ""} aria-current={isMethod ? "page" : undefined}>Method</a><a href="#/connect" className={isConnect ? "on" : ""} aria-current={isConnect ? "page" : undefined}>Connect your agent</a><a href={REPO} target="_blank" rel="noreferrer">Source</a></nav>
+          <WalletButton />
           <span className="contract"><a href={EXPLORER_ACCOUNT(contractId())} target="_blank" rel="noreferrer">{contractId()}</a> · testnet · read-only</span>
         </div>
       </header>

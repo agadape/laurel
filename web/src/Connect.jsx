@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Cmd, Sec } from "./components.jsx";
+import { contractId } from "./rpc.js";
+import { AccountPanel } from "./Account.jsx";
 
 const REMOTE = "https://laurel-near.vercel.app/api/mcp";
 const os = () => { const u = navigator.userAgent; return /Mac/i.test(u) ? "mac" : /Win/i.test(u) ? "win" : "linux"; };
@@ -14,27 +16,27 @@ const PATHS = {
 };
 
 const CLIENTS = [
-  { id: "claude-ai", name: "Claude.ai / Claude Desktop (remote, no install)", body: (o) => (
+  { id: "claude-ai", name: "Claude.ai / Claude Desktop (remote, no install)", body: () => (
     <>
       <p className="ink2">Settings → Connectors → <b>Add custom connector</b> → paste the URL. Nothing to install; the server runs on Vercel and only reads the contract.</p>
       <Cmd>{REMOTE}</Cmd>
-      <p className="mist" style={{ fontSize: 13 }}>Read-only tools: exhibits, leaderboards, specimens, model bytes, local prediction. For on-chain <span className="mono">predict_task</span> use the local package below.</p>
+      <p className="mist" style={{ fontSize: 13 }}>Read-only tools: exhibits, leaderboards, specimens, model bytes, local prediction. For paid on-chain <span className="mono">predict_task</span> use the local package with your key (step 2).</p>
     </>
   ) },
   { id: "claude-desktop", name: "Claude Desktop (local, npx)", body: (o) => (
     <>
       <p className="ink2">Needs Node 18+. Edit <span className="mono">{PATHS[o]}</span> (Settings → Developer → Edit Config), then restart Claude Desktop.</p>
       <Cmd>{jsonLocal(false)}</Cmd>
-      <p className="mist" style={{ fontSize: 13 }}>To let it call the champion on-chain, add <span className="mono">env</span> with a NEAR account and a function-call key limited to <span className="mono">predict_task</span>:</p>
+      <p className="mist" style={{ fontSize: 13 }}>To let it call the champion on-chain (paid from your credit), add <span className="mono">env</span> with your account and the function-call key from step 2:</p>
       <Cmd>{jsonLocal(true)}</Cmd>
     </>
   ) },
   { id: "claude-code", name: "Claude Code", body: () => (
     <>
       <p className="ink2">One command, local (npx) or remote (URL):</p>
-      <Cmd>{`claude mcp add laurel -- npx -y laurel-mcp`}</Cmd>
+      <Cmd>{`claude mcp add laurel -e LAUREL_ACCOUNT_ID=<your account> -e LAUREL_PRIVATE_KEY=ed25519:<function-call key> -- npx -y laurel-mcp`}</Cmd>
       <Cmd>{`claude mcp add --transport http laurel ${REMOTE}`}</Cmd>
-      <p className="mist" style={{ fontSize: 13 }}>Cloning the repo is enough too: it ships a <span className="mono">.mcp.json</span> that Claude Code loads automatically.</p>
+      <p className="mist" style={{ fontSize: 13 }}>Cloning the repo is enough too: it ships a <span className="mono">.mcp.json</span> that Claude Code loads automatically (keys from your environment).</p>
     </>
   ) },
   { id: "cursor", name: "Cursor", body: () => (
@@ -88,12 +90,13 @@ export default function Connect() {
   const [c, setC] = useState("claude-ai");
   useEffect(() => { setO(os()); document.title = "Connect · Laurel"; }, []);
   const client = CLIENTS.find((x) => x.id === c);
+  const C = contractId();
   return (
     <>
       <section className="block wrap g12" style={{ alignItems: "end" }}>
         <div className="c8 stack" style={{ gap: 12 }}>
           <h1 className="h2">Give the models to your agent.</h1>
-          <p className="ink2" style={{ fontSize: 15, maxWidth: 620 }}>Laurel speaks <a href="https://modelcontextprotocol.io" target="_blank" rel="noreferrer">MCP</a>. Any AI agent can list the exhibits, read a leaderboard, download a model's bytes from the contract, run the model locally with the contract's own integer arithmetic, and, with a key, call the champion on-chain. Pick your client; the snippet is ready to paste.</p>
+          <p className="ink2" style={{ fontSize: 15, maxWidth: 640 }}>Three steps: buy prediction credit with NEAR, give your agent a key that can only spend it on predictions, and plug Laurel into your agent through <a href="https://modelcontextprotocol.io" target="_blank" rel="noreferrer">MCP</a>. Browsing is free and needs no wallet; only predictions are paid, and every payment goes to the model's owner.</p>
         </div>
         <div className="c4 stack" style={{ gap: 6 }}>
           <span className="label">operating system</span>
@@ -103,25 +106,50 @@ export default function Connect() {
         </div>
       </section>
 
-      <section className="block wrap g12">
-        <div className="c2"><Sec n="01" title="Your client" /></div>
-        <div className="c10 stack">
-          <div className="seg wrap-seg" role="tablist" aria-label="MCP client">
-            {CLIENTS.map((x) => <button key={x.id} role="tab" aria-selected={c === x.id} className={c === x.id ? "on" : ""} onClick={() => setC(x.id)}>{x.name}</button>)}
+      <section className="block wrap steps" style={{ paddingTop: 0 }}>
+        <div className="step">
+          <span className="num" aria-hidden="true">1</span>
+          <div className="stack" style={{ gap: 10 }}>
+            <h3>Buy prediction credit</h3>
+            <AccountPanel />
+            <details><summary>or from the command line</summary>
+              <p className="ink2" style={{ fontSize: 14, margin: "8px 0" }}>With a NEAR testnet account and its key in <span className="mono">.env</span> (see the repo README):</p>
+              <Cmd>{`node tools/predict.mjs 3 --row 0 --as TEAM --deposit 0.05   # deposit_credit 0.05 NEAR, then one prediction`}</Cmd>
+            </details>
           </div>
-          <div className="stack" role="tabpanel" style={{ gap: 12 }}>{client.body(o)}</div>
+        </div>
+
+        <div className="step">
+          <span className="num" aria-hidden="true">2</span>
+          <div className="stack" style={{ gap: 10 }}>
+            <h3>A key your agent can only spend on predictions</h3>
+            <p className="ink2" style={{ fontSize: 15 }}>Add a <b>function-call access key</b> to your account that is limited to <span className="mono">predict_task</span> and <span className="mono">predict</span> on <span className="mono">{C}</span>. The NEAR protocol itself rejects anything else from that key: no transfers, no withdrawals, no other contracts. Give that key to your agent, never your full-access key.</p>
+            <Cmd>{`near account add-key <your account> grant-function-call-access --allowance '1 NEAR' --receiver-account-id ${C} --method-names 'predict_task,predict' autogenerate-new-keypair save-to-keychain network-config testnet sign-with-keychain send`}</Cmd>
+            <p className="mist" style={{ fontSize: 13 }}>near-cli-rs prints the new key pair; the private part is what you put in <span className="mono">LAUREL_PRIVATE_KEY</span>. The repo's <span className="mono">tools/agent.mjs</span> does the same programmatically and proves the four protocol rejections (<a href="https://github.com/agadape/laurel/blob/main/docs/AGENT.md" target="_blank" rel="noreferrer">docs/AGENT.md</a>).</p>
+          </div>
+        </div>
+
+        <div className="step">
+          <span className="num" aria-hidden="true">3</span>
+          <div className="stack" style={{ gap: 12 }}>
+            <h3>Plug Laurel into your agent</h3>
+            <div className="seg wrap-seg" role="tablist" aria-label="MCP client">
+              {CLIENTS.map((x) => <button key={x.id} role="tab" aria-selected={c === x.id} className={c === x.id ? "on" : ""} onClick={() => setC(x.id)}>{x.name}</button>)}
+            </div>
+            <div className="stack" role="tabpanel" style={{ gap: 12 }}>{client.body(o)}</div>
+          </div>
         </div>
       </section>
 
       <section className="block wrap g12">
-        <div className="c2"><Sec n="02" title="What to ask" /></div>
+        <div className="c2"><Sec n="04" title="What to ask" /></div>
         <div className="c10 stack">
           <p className="ink2" style={{ fontSize: 15 }}>Once connected, your agent has seven tools (five on the remote endpoint). Try:</p>
           <ul className="plain">
             <li>"Which exhibits are open on Laurel, and who leads split A?"</li>
             <li>"Download model 4, run it on these 18 features, and tell me the raw score and label."</li>
             <li>"Compare the split-A and split-B readings on exhibit 3 and explain who won and why."</li>
-            <li>With a key: "Call the champion of exhibit 3 on-chain with the same features and show me the transaction."</li>
+            <li>With credit and a key: "Call the champion of exhibit 3 on-chain with the same features and show me the transaction."</li>
           </ul>
           <p className="mist" style={{ fontSize: 13 }}>Tools: <span className="mono">laurel_list_exhibits · laurel_exhibit · laurel_specimen · laurel_download_model · laurel_predict_local</span> (remote and local) · <span className="mono">laurel_credit · laurel_predict</span> (local package with a key). Split B of an open exhibit is withheld by the tools, like on this site. Package: <a href="https://www.npmjs.com/package/laurel-mcp" target="_blank" rel="noreferrer">laurel-mcp on npm</a> · source in <a href="https://github.com/agadape/laurel/tree/main/mcp" target="_blank" rel="noreferrer">mcp/</a>.</p>
         </div>

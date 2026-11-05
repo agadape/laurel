@@ -249,3 +249,20 @@ ul.plain { margin: 0; padding-left: 18px; display: flex; flex-direction: column;
 .seg button { font-family: var(--display); font-weight: 500; font-size: 13px; padding: 7px 12px; border: 1.5px solid var(--rule); background: var(--paper); color: var(--ink-2); cursor: pointer; }
 .seg button.on { border-color: var(--ink); color: var(--ink); background: var(--plate); box-shadow: inset 0 -3px 0 var(--accent); }
 .seg button:hover { border-color: var(--ink); }
+
+/* wallet */
+.wallet-btn { font-family: var(--display); font-weight: 700; font-size: 13px; padding: 8px 14px; border: 1.5px solid var(--ink); background: var(--ink); color: var(--paper); cursor: pointer; }
+.wallet-btn:disabled { opacity: 0.6; cursor: default; }
+.wallet { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; }
+header .wallet-btn { margin-left: auto; }
+header .wallet { margin-left: auto; }
+header .wallet ~ .contract, header .wallet-btn ~ .contract { margin-left: 0; }
+.panel { border: 1.5px solid var(--ink); padding: 16px 18px; background: var(--paper); }
+.buy { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.buy input { width: 110px; padding: 7px 10px; border: 1.5px solid var(--rule); background: var(--plate); color: var(--ink); font-size: 14px; }
+.buy input:focus { border-color: var(--ink); outline: none; }
+.steps { counter-reset: s; display: flex; flex-direction: column; gap: 0; }
+.step { display: grid; grid-template-columns: 56px minmax(0, 1fr); column-gap: 20px; padding: 22px 0; border-top: 1px solid var(--rule); }
+.step .num { font-family: var(--display); font-weight: 800; font-size: 40px; line-height: 1; letter-spacing: -0.03em; color: var(--mist); }
+.step h3 { margin-bottom: 8px; }
+@media (max-width: 720px) { .step { grid-template-columns: 1fr; row-gap: 8px; } header .wallet-btn, header .wallet { margin-left: 0; } }

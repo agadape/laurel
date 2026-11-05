@@ -89,6 +89,12 @@ Two ways, for every OS and client; the picker with ready-to-paste snippets is at
 ```
 Published on npm as [`laurel-mcp`](https://www.npmjs.com/package/laurel-mcp) (5 Nov 2026); Claude Code: `claude mcp add laurel -- npx -y laurel-mcp`; from this clone: `node mcp/server.mjs`. Seven tools: list exhibits, exhibit + leaderboard, specimen, **download the model's bytes from the contract**, **run it locally with the contract's integer arithmetic**, credit, and **`predict_task` on-chain** (needs `LAUREL_ACCOUNT_ID` / `LAUREL_PRIVATE_KEY`, a function-call key is enough). → **see** `laurel_predict_local` and `laurel_predict` return the same raw score for the same row (811014 for holdout row 0 of task 3, tx `ZockCH1M…`). The sealed rule holds in the tools too: split B of an open task is masked. Details and the verified run: [docs/MCP.md](docs/MCP.md).
 
+## Business model (what is built, and what is not)
+
+A model that wins an exhibit is **paid per prediction, in NEAR, on-chain**: the task creator sets `fee_per_call`; every `predict_task` / `predict` debits the caller's prepaid credit (`deposit_credit`) and credits the model owner, who withdraws with `withdraw_earnings`. This has run since the first deployment (docs/AGENT.md: 10 calls, 0.01 NEAR to the owner; the champion of exhibit 03 has earned from 19 calls). What the 5 Nov update adds is the **surface**: the landing page shows the live economics (fee, gas, calls served, earnings), the site has **NEAR wallet login** (MyNearWallet / Meteor, testnet) with one job, *buy prediction credit* from the browser and withdraw credit or earnings, and the **Connect** page turns it into three steps: buy credit → give your agent a function-call key limited to `predict_task` (the "licence key": the protocol rejects everything else from it) → plug Laurel into the agent through MCP. Browsing, the explorer and the remote MCP endpoint stay free and need no wallet; only predictions are paid.
+
+**Not built, on purpose (phase 2 after the hackathon):** a price per model set by its owner (today the fee is per task), delegated spending so a hosted service can bill a user's credit, and on-chain licences. Model bytes are public by design (`get_model_bytes`): what is sold is the verified prediction, not the file.
+
 ## How it works
 
 ```
