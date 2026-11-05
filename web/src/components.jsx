@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { view, nsToDate, bps, statusText, statusDetail } from "./rpc.js";
+import { view, nsToDate, bps, statusText, statusDetail, modelBytes } from "./rpc.js";
 import { decodeModel, treeLayout, maxLeaf, LEAF } from "./model.js";
 
 const reducedMotion = () => typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -26,6 +26,19 @@ export function useView(method, args, deps, { skip = false } = {}) {
     return () => { alive = false; };
   }, [...deps, n, skip]); // eslint-disable-line
   return { ...state, reload: () => setN((x) => x + 1) };
+}
+
+/** Bytes of a submission's model, fetched once; undefined on error. */
+export function useModelBytes(submissionId) {
+  const [bytes, setBytes] = useState(null);
+  const [n, setN] = useState(0);
+  useEffect(() => {
+    let alive = true; setBytes(null);
+    if (submissionId == null) return;
+    modelBytes(submissionId).then((b) => alive && setBytes(b)).catch(() => alive && setBytes(undefined));
+    return () => { alive = false; };
+  }, [submissionId, n]);
+  return [bytes, () => setN((x) => x + 1)];
 }
 
 export const Err = ({ error, reload, plain = false }) => (

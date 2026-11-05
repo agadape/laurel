@@ -7,14 +7,16 @@ Sister project by the same team (disclosed per rule Q-015): **Undo** (reversible
 
 ## What it is
 
+**Compete. Verify. Deploy.** Laurel is a decentralized model competition and deployment protocol: small models compete under confidential evaluation, prove their results through a TEE bound to a pinned evaluator, and become permissionless prediction services on NEAR.
+
 Laurel is a **registry contract** (`bursa`) where anyone can publish a *decision task* with a private test set, anyone can submit a small gradient-boosted-tree model, a TEE worker (OutLayer) scores the model against the private test set, the score comes back on-chain, and the winning model becomes callable infrastructure: **other contracts and AI agents call `predict_task(task_id, features)` and get a prediction inside NEAR consensus**, paying a per-call fee to the model's owner.
 
 Why on NEAR:
 - The model runs **inside the contract** (integer GBDT, no oracle round-trip): one prediction with a 33 KB / 50-tree model costs **4.3 Tgas** ([docs/GAS.md](docs/GAS.md)), so other contracts can compose it synchronously in a promise.
 - **OutLayer** (NEAR partner) runs the evaluator in a TEE with the test set stored as a secret that is **bound to the evaluator's wasm hash**; the contract pins that hash, so neither participants nor the operator can swap the scorer ([docs/EVALUATOR.md](docs/EVALUATOR.md)).
-- **Function-call access keys** let an AI agent hold a key that can only call `predict_task` on this contract: the protocol itself rejects `withdraw_credit`, deposits, other contracts and transfers from that key ([docs/AGENT.md](docs/AGENT.md)).
+- **Function-call access keys** give capability-based authorization at the protocol level: an AI agent holds a key that can only call `predict_task` on this contract: the protocol itself rejects `withdraw_credit`, deposits, other contracts and transfers from that key ([docs/AGENT.md](docs/AGENT.md)).
 
-Demo task: **credit risk on UCI German Credit** (simulation only, see limits) — 18 integer features, label `1 = bad`, metric balanced accuracy. Live read-only explorer: **https://laurel-near.vercel.app**.
+Demo task: **credit risk on UCI German Credit** (simulation only, see limits) — 18 integer features, label `1 = bad`, metric balanced accuracy. Live explorer: **https://laurel-near.vercel.app** (public landing page; the explorer opens after signing in with a NEAR testnet wallet, which creates no transaction).
 
 ## What is proven on testnet (3 Nov 2026)
 
@@ -25,14 +27,14 @@ Demo task: **credit risk on UCI German Credit** (simulation only, see limits) �
 | A different evaluator build cannot read the task secret | SPIKE_LOG S30, [docs/NEGATIVE_TESTS.md](docs/NEGATIVE_TESTS.md) §3 |
 | Agent with a restricted key: 10 applicants screened, 4.31 Tgas/call, 4 forbidden actions rejected by the protocol | [docs/AGENT.md](docs/AGENT.md) |
 | Another contract uses the model through a promise and pays from its own prepaid credit | [docs/CONSUMER.md](docs/CONSUMER.md), `contracts/consumer-example` |
-| Gas and storage costs | [docs/GAS.md](docs/GAS.md) |
+| Gas and storage costs | [docs/GAS.md](docs/GAS.md); 10 agent calls on the final contract (4 Nov): function receipt **4.340 to 4.341 Tgas**, whole transaction **4.652 to 4.653 Tgas** burnt (`tools/out/agent.json`), i.e. about 0.00047 NEAR of gas plus the 0.001 NEAR fee per prediction at the base gas price |
 
 Every claim is mapped to code and transactions in [CLAIMS.md](CLAIMS.md).
 
 ## Try it
 
-### A. Read-only, no setup (2 minutes)
-1. Open https://laurel-near.vercel.app → **see** the exhibits (tasks) read live from `laurel.laurel-team-mw0x0c8g.testnet`, and the champion model's 50 decision trees drawn from the bytes stored on-chain.
+### A. Read-only, in the browser (2 minutes, needs a NEAR testnet wallet to sign in)
+1. Open https://laurel-near.vercel.app → **see** the landing page: live figures from `laurel.laurel-team-mw0x0c8g.testnet`, the champion model's 50 decision trees drawn from the bytes stored on-chain, and exhibit 03's split-A vs split-B readings. Click **Connect wallet to enter** and sign in with a testnet wallet (Meteor, Intear or Nightly; signing in creates no transaction) → **see** the exhibits (tasks). A deep link such as `#/task/3` opens straight after sign-in. Without a wallet, step 4 below and the remote MCP endpoint (section on MCP) read the same data.
 2. Click exhibit **03 Credit risk** → **see** the two readings: on the split-A scale #5 is ahead (75.50 %), on the split-B scale, unsealed because the task is closed, #4 is the champion (66.50 %); below, one specimen plate per entry (one dot per private test row, orange = misjudged) and the "in service" strip with #4's call count. Exhibit **04** is still open, so its split-B scale shows a sealed band instead.
 3. Click **Specimen #4** → **see** all 50 trees drawn from the on-chain bytes (hover one for its root split), both confusion plates, the pinned evaluator hash, the model sha256 and the owner's earnings.
 4. Same data straight from RPC (needs `curl` and Python 3 for the decoding one-liner):
@@ -91,9 +93,40 @@ Published on npm as [`laurel-mcp`](https://www.npmjs.com/package/laurel-mcp) (5 
 
 ## Business model (what is built, and what is not)
 
-A model that wins an exhibit is **paid per prediction, in NEAR, on-chain**: the task creator sets `fee_per_call`; every `predict_task` / `predict` debits the caller's prepaid credit (`deposit_credit`) and credits the model owner, who withdraws with `withdraw_earnings`. This has run since the first deployment (docs/AGENT.md: 10 calls, 0.01 NEAR to the owner; the champion of exhibit 03 has earned from 19 calls). What the 5 Nov update adds is the **surface**: the landing page shows the live economics (fee, gas, calls served, earnings), the site has **NEAR wallet login** (Meteor, Intear, Nightly; testnet) with one job, *buy prediction credit* from the browser and withdraw credit or earnings, and the **Connect** page turns it into three steps: buy credit → give your agent a function-call key limited to `predict_task` (the "licence key": the protocol rejects everything else from it) → plug Laurel into the agent through MCP. Browsing, the explorer and the remote MCP endpoint stay free and need no wallet; only predictions are paid. First browser purchase: tx [`4YHqm8GP…`](https://testnet.nearblocks.io/txns/4YHqm8GPUpv6kvMSiBzUP3UwTnhLoWp6tK3BoKrj8rfd) (0.05 NEAR of credit via Meteor Wallet, 5 Nov).
+A model that wins an exhibit is **paid per prediction, in NEAR, on-chain**: the task creator sets `fee_per_call`; every `predict_task` / `predict` debits the caller's prepaid credit (`deposit_credit`) and credits the model owner, who withdraws with `withdraw_earnings`. This has run since the first deployment (docs/AGENT.md: 10 calls, 0.01 NEAR to the owner; the champion of exhibit 03 has earned from 19 calls). What the 5 Nov update adds is the **surface**: the landing page shows the live economics (fee, gas, calls served, earnings), the site has **NEAR wallet login** (Meteor, Intear, Nightly; testnet) with one job, *buy prediction credit* from the browser and withdraw credit or earnings, and the **Connect** page turns it into three steps: buy credit → give your agent a function-call key limited to `predict_task` (the "licence key": the protocol rejects everything else from it) → plug Laurel into the agent through MCP. Browsing the explorer is free but needs a wallet sign-in (no transaction); the landing page and the remote MCP endpoint need no wallet at all; only predictions are paid. First browser purchase: tx [`4YHqm8GP…`](https://testnet.nearblocks.io/txns/4YHqm8GPUpv6kvMSiBzUP3UwTnhLoWp6tK3BoKrj8rfd) (0.05 NEAR of credit via Meteor Wallet, 5 Nov).
 
 **Not built, on purpose (phase 2 after the hackathon):** a price per model set by its owner (today the fee is per task), delegated spending so a hosted service can bill a user's credit, and on-chain licences. Model bytes are public by design (`get_model_bytes`): what is sold is the verified prediction, not the file.
+
+## Security model and trust boundaries
+
+What an attacker would try, and what stops it today. "Protocol" means NEAR itself, "contract" means `contracts/bursa`, "OutLayer" means the TEE worker network we do not run.
+
+| Attack | What stops it | Where |
+|---|---|---|
+| Swap the model after it was scored | Bytes are stored once at `submit_model` and never updated; a new upload is a new submission id; `model_hash` (sha256) is stored and shown | `submit_model`, `Submission.model_hash` |
+| Have a lenient evaluator score my model | The evaluator is not chosen by participants: `request_score` only uses the hash the contract pins, and the OutLayer secret opens only for that hash (`TEST_SET_A missing` for any other build) | `request_score`, `set_evaluator` (owner), SPIKE_LOG S30 |
+| Operator swaps the evaluator later | Possible for *future* scores only: `set_evaluator` is owner-only and emits an event, and every submission records `scored_by` (the hash that produced its score), so a judge can see which evaluator scored what | `scored_by`, `docs/ABI.md` |
+| Learn the sealed split from the evaluator output | The evaluator returns aggregates only (tp/tn/fp/fn per split, at most 900 bytes), never per-row predictions; scores are rounded to 50 bps; split B stays hidden in the leaderboard until close | `evaluator/src/main.rs`, `leaderboard` |
+| Tune a model against split B by resubmitting | 3 submissions per account per task, a deadline, split B revealed once at close; the public dataset makes this a *leaderboard-feedback* defence, not data secrecy (see Limits) | `max_per_account`, `close_task` |
+| Replay an old score onto another submission | The OutLayer callback is bound to the submission id and is idempotent: a second or stale callback changes nothing | `on_score`, unit test `on_score_ignores_duplicate_callback` |
+| Change the winner after the fact | `close_task` is permissionless and deterministic: best split-B score, ties to the earlier submission; it runs once | `close_task`, unit tests |
+| Spend from the agent's account | The agent's key is a function-call key limited to `predict_task`/`predict` on this contract with a gas allowance: the protocol rejects transfers, deposits, other methods and other contracts before any contract code runs (capability-based authorization at the protocol level) | docs/AGENT.md |
+| Drain prediction credit | Credit is per account, debited only by that account's own calls, withdrawable only by its owner | `deposit_credit`, `withdraw_credit` |
+
+What is **not** guaranteed, stated plainly: the contract trusts what `outlayer.testnet` returns (it verifies no TDX attestation itself; attestation is OutLayer's, bound to the wasm hash, inputs and outputs of each run); the dataset commitment (`tasks/german-credit/private_manifest.json`, sha256 of both private splits) lives in the repo, not on-chain; the owner can pin a different evaluator for future scoring; a public dataset can be trained on in full; no Sybil resistance beyond quota and cost.
+
+## Questions a judge will ask
+
+- **Why a blockchain at all?** Because the winner becomes an *address*: `predict_task(id, features)` is callable by any account and any contract, metered and paid in consensus, without an API key or a server anyone has to keep alive. A leaderboard site cannot be composed into another contract.
+- **Why a TEE?** The private test set must be read by the evaluator and by nobody else. OutLayer binds the secret to the evaluator's wasm hash, so the only way to read it is to *be* the pinned evaluator, inside the enclave.
+- **If the TEE only proves what ran, how do we know the evaluator is correct?** That does not come from the TEE. The evaluator is open source (`evaluator/`), builds reproducibly to the pinned sha256, shares its scoring code with the contract's `gbdt-core`, and its outputs are checked against the local evaluator and a Python reference vector by vector (`docs/EVALUATOR.md`, `crates/gbdt-core` tests).
+- **Is the prediction really computed on-chain?** Yes: integer GBDT inside the contract, no oracle. The same bytes give the same raw score on-chain, in the TEE, in Python and in `laurel-mcp`'s local runner (811014 for holdout row 0 of task 3 on all four).
+- **Can participants overfit?** To split A, partly: that is why split B exists and is revealed only at close. With 150 rows per split a 5-point gap is 7 to 8 rows, so the demo's lesson is "the public leaderboard does not predict generalization", not "deep trees beat shallow ones".
+- **Why NEAR?** Function-call access keys (an agent key that can only call one method), cheap deterministic wasm execution (about 4.3 Tgas per prediction), precise storage accounting that makes a 33 KB model affordable to keep on-chain, and OutLayer as a NEAR-native TEE service with yield/resume.
+- **Why would anyone use a Laurel model instead of hosting their own?** Because it comes with a public, verifiable record (hash, evaluator, sealed-split score, every call) and is callable by other contracts: "models with publicly verifiable competition records, available through permissionless on-chain interfaces", not "the best model for everyone".
+- **What still depends on the operator?** Pinning the evaluator for new tasks, the Vercel hosting of the evaluator wasm (integrity still rests on the pinned hash), and OutLayer's availability. Closing a task and calling a winner are permissionless.
+- **What if the winning model is malicious or useless?** It can only return an integer score for the features it is given; it cannot touch funds or state. Consumers decide what to do with the score (`contracts/consumer-example` turns it into an approve / require-deposit decision), and the split-B record is public.
+- **Production-ready?** No: testnet, a 1994 simulation dataset, one task shape, no audit. The mechanisms are real; the deployment is a hackathon demo.
 
 ## How it works
 
@@ -110,8 +143,8 @@ agent/contract ─ predict_task(task_id, features) ─────────�
 - `contracts/bursa` — tasks, submissions, pinned evaluator, score state machine (`Uploaded → Pending → Scored | Failed`, idempotent callback), leaderboard (split B hidden until close), prepaid credit, metered `predict`/`predict_task`, pull-payment earnings. ABI: [docs/ABI.md](docs/ABI.md).
 - `crates/gbdt-core` — integer-only GBDT shared by the contract and the evaluator; `validate()` rejects cycles, bad indices and feature ranges.
 - `evaluator/` — `wasm32-wasip2` program for OutLayer: reads the model through the `view` host function, the secrets from env, prints ≤ 900 B JSON with balanced accuracy and F1 for both splits.
-- `tools/` — Node scripts for every write action (no wallet in the browser); `tools/export.py` converts sklearn models.
-- `web/` — read-only Vite/React explorer over RPC view calls.
+- `tools/` — Node scripts for every write action (the browser wallet only buys credit and withdraws); `tools/export.py` converts sklearn models.
+- `web/` — Vite/React explorer over RPC view calls: a public landing page (`web/src/Landing.jsx`) and the explorer behind a NEAR wallet sign-in.
 - `tasks/german-credit/` — dataset spec, split and training scripts, commitment manifest of the private splits.
 
 NEAR features used: own contract (near-sdk 5.30), cross-contract promises and callbacks, function-call access keys with method restriction, OutLayer (TEE compute with hash-bound secrets, result returned into the calling transaction), NEP-297 events, precise storage accounting.

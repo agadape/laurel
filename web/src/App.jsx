@@ -1,8 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { view, contractId, yoctoToNear, bps, short, statusText, EXPLORER_ACCOUNT, EXPLORER_TX, modelBytes, parseRaw } from "./rpc.js";
-import { useView, useMedia, Err, Loading, Cmd, CopyBtn, Pill, StatusPill, Sec, Fig, Countdown, fmtDate, shortHash, Title, Scale, Slopegraph, DotPlate, Forest, statusDetail } from "./components.jsx";
+import { useView, useMedia, Err, Loading, Cmd, CopyBtn, Pill, StatusPill, Sec, Fig, Countdown, fmtDate, shortHash, Title, Scale, Slopegraph, DotPlate, Forest, statusDetail, useModelBytes } from "./components.jsx";
 import Connect from "./Connect.jsx";
-import { WalletButton, AccountPanel } from "./Account.jsx";
+import { WalletButton, AccountPanel, useWallet } from "./Account.jsx";
+import Landing from "./Landing.jsx";
+import { hasSavedSession } from "./wallet.js";
+
+// The explorer screens need a signed-in NEAR wallet; signed-out visitors get the landing page (deep links survive sign-in).
+const WALLET_GATE = true;
 
 const REPO = "https://github.com/agadape/laurel";
 const UNDO = "https://github.com/agadape/undo";
@@ -24,19 +29,6 @@ function useRoute() {
 }
 const skipToMain = (e) => { e.preventDefault(); const m = document.getElementById("main"); m?.focus({ preventScroll: true }); m?.scrollIntoView(); };
 function useTitle(t) { useEffect(() => { document.title = t ? `${t} · Laurel` : "Laurel"; }, [t]); }
-
-/** Bytes of a submission's model, fetched once; undefined on error. */
-function useModelBytes(submissionId) {
-  const [bytes, setBytes] = useState(null);
-  const [n, setN] = useState(0);
-  useEffect(() => {
-    let alive = true; setBytes(null);
-    if (submissionId == null) return;
-    modelBytes(submissionId).then((b) => alive && setBytes(b)).catch(() => alive && setBytes(undefined));
-    return () => { alive = false; };
-  }, [submissionId, n]);
-  return [bytes, () => setN((x) => x + 1)];
-}
 
 // ---------- Home: exhibits ----------
 function LeaderSig({ taskId, closed }) {
@@ -457,7 +449,15 @@ function Costs() {
 }
 
 export default function App() {
-  const { page, id } = useRoute();
+  const route = useRoute();
+  const { page, id } = route;
+  const w = useWallet();
+  if (WALLET_GATE && !w.accountId) {
+    if (hasSavedSession() && !w.ready && !w.error) {
+      return <main id="main" tabIndex={-1} className="restoring wrap"><span className="brand-word">LAUREL</span><p className="mist mono">restoring your wallet session…</p></main>;
+    }
+    return <Landing route={route} />;
+  }
   const isMethod = page === "costs" || page === "biaya";
   const isConnect = page === "connect";
   const isExhibits = !isMethod && !isConnect;

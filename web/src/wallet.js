@@ -40,12 +40,13 @@ async function load() {
   return selectorP;
 }
 
-/** Restore a previous session silently (no modal). */
+/** true when wallet-selector left a session in localStorage (a returning visitor). */
+export function hasSavedSession() {
+  try { return Object.keys(localStorage).some((k) => k.startsWith("near-wallet-selector")); } catch { return false; }
+}
 /** Restore a previous session silently (no modal). Loads the wallet code only if a session was saved before. */
 export async function restore() {
-  let saved = false;
-  try { saved = Object.keys(localStorage).some((k) => k.startsWith("near-wallet-selector")); } catch {}
-  if (!saved) return;
+  if (!hasSavedSession()) return;
   try { await load(); } catch {}
 }
 export async function signIn() { await load(); modal.show(); }
