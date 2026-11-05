@@ -15,14 +15,16 @@ async function load() {
   if (selectorP) return selectorP;
   set({ loading: true });
   selectorP = (async () => {
-    const [{ setupWalletSelector }, { setupModal }, { setupMyNearWallet }, { setupMeteorWallet }] = await Promise.all([
+    // MyNearWallet retired new app connections in Nov 2026, so it is not offered.
+    const [{ setupWalletSelector }, { setupModal }, { setupMeteorWallet }, { setupIntearWallet }, { setupNightly }] = await Promise.all([
       import("@near-wallet-selector/core"),
       import("@near-wallet-selector/modal-ui"),
-      import("@near-wallet-selector/my-near-wallet"),
       import("@near-wallet-selector/meteor-wallet"),
+      import("@near-wallet-selector/intear-wallet"),
+      import("@near-wallet-selector/nightly"),
       import("@near-wallet-selector/modal-ui/styles.css"),
     ]);
-    const selector = await setupWalletSelector({ network: NETWORK, modules: [setupMyNearWallet(), setupMeteorWallet()] });
+    const selector = await setupWalletSelector({ network: NETWORK, modules: [setupMeteorWallet(), setupIntearWallet(), setupNightly()] });
     // "connect only": no access key is created at sign-in (deposits need a full signature anyway), so signing in is one
     // wallet approval with no transaction; each purchase/withdrawal is then approved in the wallet.
     modal = setupModal(selector, { contractId: "" });
@@ -48,7 +50,9 @@ const yocto = (near) => (BigInt(Math.round(Number(near) * 1e6)) * 10n ** 18n).to
 async function call(methodName, args = {}, { deposit = "0", gas = "30000000000000" } = {}) {
   const s = await load();
   const w = await s.wallet();
-  const res = await w.signAndSendTransaction({ receiverId: contractId(), actions: [{ type: "FunctionCall", params: { methodName, args, gas, deposit } }] });
+  // wallet-selector v10 takes near-api-js-shaped actions: { functionCall: { methodName, args: bytes, gas, deposit } }
+  const action = { functionCall: { methodName, args: new TextEncoder().encode(JSON.stringify(args)), gas: BigInt(gas), deposit: BigInt(deposit) } };
+  const res = await w.signAndSendTransaction({ receiverId: contractId(), actions: [action] });
   return res?.transaction?.hash || res?.transaction_outcome?.id || null;
 }
 /** Buy prediction credit: attaches `near` NEAR to deposit_credit. Returns the tx hash (or null when the wallet redirected). */
