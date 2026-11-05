@@ -39,6 +39,7 @@ See `mcp/README.md` for the table. Design notes:
 - `laurel_specimen` nulls `score_b_bps` / `f1_b_bps` and masks `last_outlayer_raw.b` while the task is open, because the contract's `get_submission` view still returns them (known limit, README "Limits").
 - `mcp/gbdt.mjs` is a 60-line port of `crates/gbdt-core::raw_score` (BigInt, `feature <= threshold` goes left, bias + one leaf per tree). The web explorer's `web/src/model.js` shares the decoder layout.
 - Errors from `predict_task` are passed through with a hint: insufficient credit, task not closed, wrong key.
+- Added 5 Nov (evening) for the autonomous agents in `agents/`: `laurel_submit_model` (validate → `submit_model` with storage + fee deposit → `request_score` with 0.1 NEAR, refunds included), `laurel_wait_score` (polls `get_submission`, applies the sealed rule) and `laurel_predict_model` (`predict` against one entry while its task is still open). Only `laurel_submit_model` needs a full-access key, because function-call keys cannot attach deposits; the agents keep that key in the MCP subprocess's environment, never in the model's context.
 
 ## Dependencies
 

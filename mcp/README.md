@@ -42,7 +42,7 @@ From a clone of the repo instead of npm: `node mcp/server.mjs`.
 | `LAUREL_CONTRACT` | `laurel.laurel-team-mw0x0c8g.testnet` | the registry contract |
 | `LAUREL_NETWORK` | from the contract suffix | `testnet` or `mainnet` |
 | `LAUREL_RPC` | fastnear + dRPC | comma-separated JSON-RPC URLs, tried in order |
-| `LAUREL_ACCOUNT_ID`, `LAUREL_PRIVATE_KEY` | — | only for `laurel_predict` / `laurel_credit` |
+| `LAUREL_ACCOUNT_ID`, `LAUREL_PRIVATE_KEY` | — | `laurel_predict` / `laurel_predict_model` / `laurel_credit` work with a function-call key limited to `predict_task,predict`; `laurel_submit_model` attaches deposits and needs a full-access key of an account you dedicate to entering models (see `agents/`) |
 
 ## Tools
 
@@ -55,6 +55,9 @@ From a clone of the repo instead of npm: `node mcp/server.mjs`.
 | `laurel_predict_local(submission_id, features)` | runs the model here; raw score identical to on-chain | no |
 | `laurel_credit()` | prepaid credit of the configured account | account id |
 | `laurel_predict(task_id, features)` | `predict_task` on-chain, fee to the model owner, returns the tx | yes |
+| `laurel_predict_model(submission_id, features)` | `predict` on-chain against ONE entry, even while its task is open; fee to the owner | yes |
+| `laurel_submit_model(task_id, model_path, request_score?)` | enters a `model.bin` in an open task (`validate_model` → `submit_model` → `request_score`), returns the submission id and both txs | **full-access key** |
+| `laurel_wait_score(submission_id, timeout_s?)` | polls until the TEE evaluator has scored the entry; split B stays sealed while the task is open | no |
 
 Features are integers in the task's feature order (`laurel_exhibit` lists the names). A raw score > 0 is the positive class; for the credit-risk demo that means *bad credit* (simulation only, not a credit tool).
 

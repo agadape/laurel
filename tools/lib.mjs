@@ -36,7 +36,8 @@ export function accountFromEnv(idKey, keyKey) {
 
 /** Append KEY=value lines to .env and process.env. */
 export function saveEnv(entries) {
-  fs.appendFileSync(envPath, Object.entries(entries).map(([k, v]) => `${k}=${v}\n`).join(""));
+  const cur = fs.existsSync(envPath) ? fs.readFileSync(envPath, "utf8") : "";
+  fs.appendFileSync(envPath, (cur && !cur.endsWith("\n") ? "\n" : "") + Object.entries(entries).map(([k, v]) => `${k}=${v}\n`).join(""));
   Object.assign(process.env, entries);
 }
 

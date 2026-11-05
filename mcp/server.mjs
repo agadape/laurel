@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // laurel-mcp — an MCP server (stdio) for Laurel, small decision models as on-chain infrastructure on NEAR.
-// Read-only tools need no key. `laurel_predict` signs a predict_task call and needs LAUREL_ACCOUNT_ID + LAUREL_PRIVATE_KEY
-// (a function-call key limited to predict_task/predict is enough) with prepaid credit on the contract.
+// Read-only tools need no key. `laurel_predict` / `laurel_predict_model` sign paid calls and need LAUREL_ACCOUNT_ID +
+// LAUREL_PRIVATE_KEY (a function-call key limited to predict_task/predict is enough) with prepaid credit on the contract.
+// `laurel_submit_model` enters a model in a task and needs a FULL-ACCESS key (it attaches deposits).
 import fs from "node:fs";
 import path from "node:path";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
@@ -104,6 +105,69 @@ server.tool("laurel_predict", "Call the champion model of a closed task ON-CHAIN
     const m = String(e.message || e);
     const hint = /insufficient credit/i.test(m) ? " — top up with deposit_credit (laurel_credit shows the balance)" : /task not closed/i.test(m) ? " — predict_task only serves closed tasks; use laurel_predict_local on an open task's entries" : /access ?key/i.test(m) ? " — the key must be a key of LAUREL_ACCOUNT_ID that allows predict_task on this contract" : "";
     return fail(`predict_task failed: ${m.slice(0, 400)}${hint}`);
+  }
+});
+
+
+/** Signer for change methods that need a deposit (submit_model, request_score): a FULL-ACCESS key. */
+function signer() {
+  const id = process.env.LAUREL_ACCOUNT_ID, key = process.env.LAUREL_PRIVATE_KEY;
+  if (!id || !key) return null;
+  return new Account(id, new JsonRpcProvider({ url: RPCS[0] }), key);
+}
+const txSummary = (res) => ({ tx: res.transaction.hash, explorer: explorerTx(res.transaction.hash), gas_tgas: Number((res.receipts_outcome?.reduce((a, r) => a + Number(r.outcome.gas_burnt), 0) / 1e12).toFixed(3)) });
+
+server.tool("laurel_submit_model", "Enter a model in an OPEN task: validate the borsh bytes against the task, store them on the contract (submit_model, deposit = storage + the task's submission fee) and ask the pinned TEE evaluator to score them (request_score). Needs LAUREL_ACCOUNT_ID + LAUREL_PRIVATE_KEY with a FULL-ACCESS key and about 0.6 NEAR free (deposits are refunded except storage and the fee). Returns the submission id; follow with laurel_wait_score.", { task_id: z.number().int(), model_path: z.string().describe("path to the model.bin produced by tools/export.py"), request_score: z.boolean().default(true) }, async ({ task_id, model_path, request_score }) => {
+  const account = signer();
+  if (!account) return fail("laurel_submit_model needs LAUREL_ACCOUNT_ID and LAUREL_PRIVATE_KEY (full-access key) in the server's env");
+  let bytes;
+  try { bytes = fs.readFileSync(model_path); } catch (e) { return fail(`cannot read ${model_path}: ${e.message}`); }
+  try {
+    const task = await view("get_task", { task_id });
+    if (!task) return fail(`task ${task_id} does not exist`);
+    if (task.closed) return fail(`task ${task_id} is closed; submit to an open task (laurel_list_exhibits)`);
+    const v = await view("validate_model", { task_id, bytes: bytes.toString("base64") });
+    if (!v.ok) return fail(`validate_model rejected the bytes: ${JSON.stringify(v)}`);
+    const deposit = BigInt(v.storage_cost) + BigInt(task.submission_fee) + 20_000_000_000_000_000_000_000n; // + 0.02 NEAR slack, refunded
+    const r1 = await account.signAndSendTransaction({ receiverId: CONTRACT, actions: [actions.functionCall("submit_model", { task_id, bytes: bytes.toString("base64") }, teraToGas("150"), deposit)] });
+    const submission_id = Number(JSON.parse(Buffer.from(r1.status.SuccessValue, "base64").toString()));
+    const out = { task_id, submission_id, bytes: bytes.length, trees: v.trees, nodes: v.nodes, sha256: sha256(bytes), submit: txSummary(r1), owner: account.accountId };
+    if (request_score) {
+      const r2 = await account.signAndSendTransaction({ receiverId: CONTRACT, actions: [actions.functionCall("request_score", { submission_id }, teraToGas("300"), 100_000_000_000_000_000_000_000n)] });
+      out.request_score = txSummary(r2);
+      const sub = await view("get_submission", { submission_id });
+      out.status = sub.status; out.score_a_bps = sub.score_a_bps; out.f1_a_bps = sub.f1_a_bps;
+      out.note = sub.status === "Scored" ? "scored by the pinned evaluator inside the TEE; split B stays sealed until the task closes" : "scoring is asynchronous: call laurel_wait_score";
+    }
+    return text(out);
+  } catch (e) {
+    const m = String(e.message || e);
+    const hint = /quota|max_per_account|3 submissions/i.test(m) ? " — this account already has the maximum number of entries for this task" : /deposit|storage/i.test(m) ? " — the account needs more NEAR for storage + fee" : /access ?key|signer/i.test(m) ? " — the key is not a full-access key of LAUREL_ACCOUNT_ID" : "";
+    return fail(`submit failed: ${m.slice(0, 400)}${hint}`);
+  }
+});
+
+server.tool("laurel_wait_score", "Wait until the TEE evaluator has scored a submission (status Scored or Failed) and return its split-A reading. Polls the contract; split B is reported only once the task is closed.", { submission_id: z.number().int(), timeout_s: z.number().int().min(5).max(600).default(180) }, async ({ submission_id, timeout_s }) => {
+  const t0 = Date.now();
+  while (Date.now() - t0 < timeout_s * 1000) {
+    const s = await specimen(submission_id);
+    if (!s) return fail(`submission ${submission_id} does not exist`);
+    if (s.status === "Scored" || (typeof s.status === "object" && s.status.Failed)) return text({ submission_id, status: s.status, score_a_bps: s.score_a_bps, f1_a_bps: s.f1_a_bps, split_b: s.split_b ?? s.score_b_bps, scored_by: s.scored_by, waited_s: Math.round((Date.now() - t0) / 1000) });
+    await new Promise((r) => setTimeout(r, 4000));
+  }
+  return fail(`submission ${submission_id} not scored after ${timeout_s}s (status: ${JSON.stringify((await specimen(submission_id))?.status)})`);
+});
+
+server.tool("laurel_predict_model", "Call ONE specific submitted model ON-CHAIN (predict), even while its task is still open: the prediction is computed inside NEAR consensus and the per-call fee goes to the model owner. Paid from the configured account's prepaid credit; a function-call key limited to predict/predict_task is enough.", { submission_id: z.number().int(), features: z.array(z.number()) }, async ({ submission_id, features }) => {
+  const account = signer();
+  if (!account) return fail("laurel_predict_model needs LAUREL_ACCOUNT_ID and LAUREL_PRIVATE_KEY in the server's env");
+  try {
+    const res = await account.signAndSendTransaction({ receiverId: CONTRACT, actions: [actions.functionCall("predict", { submission_id, features: features.map((v) => Math.trunc(Number(v))) }, teraToGas("30"), 0n)] });
+    const raw = res.status?.SuccessValue != null ? Buffer.from(res.status.SuccessValue, "base64").toString() : null;
+    return text({ submission_id, raw_score: raw, label: raw != null ? (BigInt(raw) > 0n ? 1 : 0) : null, ...txSummary(res), paid_by: account.accountId });
+  } catch (e) {
+    const m = String(e.message || e);
+    return fail(`predict failed: ${m.slice(0, 400)}${/insufficient credit/i.test(m) ? " — top up with deposit_credit (laurel_credit shows the balance)" : ""}`);
   }
 });
 

@@ -33,3 +33,5 @@ mcp/test/out-model.bin
 laurel-model-*.bin
 tasks/near-retention/sample_raw.csv
 tasks/*/out/
+agents/work/
+agents/out/*.log
