@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { view, contractId, yoctoToNear, bps, short, statusText, EXPLORER_ACCOUNT, EXPLORER_TX, modelBytes, parseRaw } from "./rpc.js";
-import { useView, Err, Loading, Cmd, CopyBtn, Pill, StatusPill, Sec, Fig, Countdown, fmtDate, shortHash, Title, Scale, Slopegraph, DotPlate, Forest, statusDetail } from "./components.jsx";
+import { useView, useMedia, Err, Loading, Cmd, CopyBtn, Pill, StatusPill, Sec, Fig, Countdown, fmtDate, shortHash, Title, Scale, Slopegraph, DotPlate, Forest, statusDetail } from "./components.jsx";
 
 const REPO = "https://github.com/agadape/laurel";
+const UNDO = "https://github.com/agadape/undo";
 // task slug → dataset folder in the repo (slugs may differ from folder names)
 const datasetDir = (slug) => (/^(credit-risk|german-credit)/.test(slug || "") ? "german-credit" : (slug || "").replace(/-open$/, ""));
 const pad2 = (n) => String(n).padStart(2, "0");
@@ -16,8 +17,10 @@ function useRoute() {
     return () => window.removeEventListener("hashchange", f);
   }, []);
   const parts = hash.replace(/^#\/?/, "").split("?")[0].split("/");
-  return { page: parts[0] || "tasks", id: Number(parts[1]) || null };
+  const known = ["tasks", "task", "model", "costs", "biaya"];
+  return { page: known.includes(parts[0]) ? parts[0] : "tasks", id: Number(parts[1]) || null };
 }
+const skipToMain = (e) => { e.preventDefault(); const m = document.getElementById("main"); m?.focus({ preventScroll: true }); m?.scrollIntoView(); };
 function useTitle(t) { useEffect(() => { document.title = t ? `${t} · Laurel` : "Laurel"; }, [t]); }
 
 /** Bytes of a submission's model, fetched once; undefined on error. */
@@ -72,7 +75,7 @@ function Home() {
         </div>
         <div className="c6 stack" style={{ gap: 10 }}>
           <div className="between mono mist">
-            <span className="accent-text">{champion ? `Specimen · entry #${champion.winner} · champion of exhibit ${pad2(champion.task_id)}` : "Specimen"}</span>
+            <span>{champion ? <>Specimen · entry #{champion.winner} · <span className="accent-text">champion</span> of exhibit {pad2(champion.task_id)}</> : "Specimen"}</span>
             <span>{winner.data ? `${winner.data.trees} trees · ${winner.data.bytes.toLocaleString()} B · drawn from the bytes on-chain` : ""}</span>
           </div>
           <div className={`plate ${champion ? "accent" : ""}`} style={{ padding: 14 }}>
@@ -83,7 +86,7 @@ function Home() {
       </section>
 
       <section className="block wrap">
-        <div className="row-head"><span className="accent-text">02 — Exhibits</span><span>Task</span><span className="sig">Leader's signature</span><span className="right">Split A · observed</span><span className="right">Split B · at close</span><span className="right state">State</span></div>
+        <div className="row-head"><h2 className="sec">02 — Exhibits</h2><span>Task</span><span className="sig">Leader's signature</span><span className="right">Split A · observed</span><span className="right">Split B · at close</span><span className="right state">State</span></div>
         {tasks.error && <Err error={tasks.error} reload={tasks.reload} />}
         {recent.map((t) => <ExhibitRow key={t.task_id} t={t} />)}
         {earlier.length > 0 && (
@@ -95,11 +98,11 @@ function Home() {
         {tasks.data && tasks.data.length === 0 && <p className="mist" style={{ paddingTop: 12 }}>No tasks on this contract yet.</p>}
       </section>
 
-      <section className="block wrap g12" style={{ alignItems: "baseline" }}>
+      <section className="block wrap g12" style={{ alignItems: "start" }}>
         <div className="c2"><Sec n="03" title="Method" /></div>
         <div className="c10 stack">
           <FlowDiagram />
-          <div className="flow"><span>submit a model as data</span><span className="arrow">→</span><span>judged in a TEE by the pinned evaluator <span className="mono">{cfg.data ? shortHash(cfg.data.evaluator_hash) : "…"}</span></span><span className="arrow">→</span><span>split A public, split B sealed until close</span><span className="arrow">→</span><span>the champion serves <span className="mono">predict_task</span></span><a href="#/costs" className="mono">measured costs and guarantees →</a></div>
+          <div className="flow"><span>submit a model as data</span><span className="arrow" aria-hidden="true">→</span><span>judged in a TEE by the pinned evaluator <span className="mono">{cfg.data ? shortHash(cfg.data.evaluator_hash) : "…"}</span></span><span className="arrow" aria-hidden="true">→</span><span>split A public, split B sealed until close</span><span className="arrow" aria-hidden="true">→</span><span>the champion serves <span className="mono">predict_task</span></span><a href="#/costs" className="mono">measured costs and guarantees →</a></div>
         </div>
       </section>
     </>
@@ -117,7 +120,7 @@ function ExhibitRow({ t }) {
       <span className="t"><b><Title text={t.title} /></b><span className="mono mist">{t.slug} · {t.n_features} features · {t.closed ? `closed ${fmtDate(t.deadline_ns)}` : <Countdown ns={t.deadline_ns} />} · {t.submission_count} {t.submission_count === 1 ? "entrant" : "entrants"}</span></span>
       <span className="sig"><LeaderSig taskId={t.task_id} closed={t.closed} /></span>
       <span className="r" style={t.closed ? { color: "var(--mist)" } : undefined}><small className="ab">A</small>{leadA ? <>{bps(leadA.score_a_bps)}<span className="sub">#{leadA.submission_id}{t.closed && leadA.submission_id !== t.winner ? " led here" : ""}</span></> : <small>—</small>}</span>
-      <span className="r"><small className="ab">B</small>{t.closed ? (win ? <span className="accent">{bps(win.score_b_bps)}<span className="sub">#{win.submission_id} decided here</span></span> : <small>—</small>) : <Pill kind="sealed">not yet observed</Pill>}</span>
+      <span className="r"><small className="ab">B</small>{t.closed ? (win ? <><span className="accent">{bps(win.score_b_bps)}</span><span className="sub">#{win.submission_id} decided here</span></> : <small>—</small>) : <Pill kind="sealed">not yet observed</Pill>}</span>
       <span className="state">{t.closed ? <Pill>closed</Pill> : <Pill kind="open">open</Pill>}</span>
     </a>
   );
@@ -132,6 +135,7 @@ function Task({ id }) {
   useTitle(task ? `Exhibit ${pad2(task.task_id)} · ${task.slug}` : `Exhibit ${pad2(id || 0)}`);
   const [subs, setSubs] = useState({});
   const [retryN, setRetryN] = useState(0);
+  const [revealed, setRevealed] = useState(false);
   useEffect(() => {
     let alive = true;
     Promise.all(rows.map(async (r) => {
@@ -142,7 +146,7 @@ function Task({ id }) {
   }, [lb.data, retryN]); // eslint-disable-line
   const earnings = useView("get_earnings", { submission_id: task?.winner }, [task?.winner], { skip: task?.winner == null });
   if (t.loading) return <section className="block wrap"><Loading /></section>;
-  if (t.error || !task) return <section className="block wrap"><Err error={t.error || `task ${id} not found`} reload={t.reload} /></section>;
+  if (t.error || !task) return <section className="block wrap"><Err error={t.error || `Exhibit ${id} does not exist on this contract.`} plain={!t.error} reload={t.reload} /></section>;
   const champ = rows.find((r) => r.submission_id === task.winner);
   const ds = datasetDir(task.slug);
   const bestA = Math.max(-1, ...rows.map((x) => x.score_a_bps ?? -1));
@@ -151,6 +155,7 @@ function Task({ id }) {
   const leadA = entriesA.slice().sort((a, b) => b.bps - a.bps)[0];
   const sealedText = `sealed in the contract's leaderboard until ${fmtDate(task.deadline_ns)}`;
   const one = rows.length === 1;
+  const slopeEntries = rows.map((r) => ({ id: r.submission_id, a: r.score_a_bps, b: r.score_b_bps }));
   return (
     <>
       <section className="block wrap g12" style={{ alignItems: "end" }}>
@@ -171,10 +176,10 @@ function Task({ id }) {
         <div className="c10 stack" style={{ gap: 18 }}>
           {lb.error && <Err error={lb.error} reload={lb.reload} />}
           <Scale variant="a" title={<><b>Split A</b> · observed in public while the exhibit is open</>} note="balanced accuracy, 50–100 %" entries={entriesA} />
-          {task.closed && <Slopegraph entries={rows.map((r) => ({ id: r.submission_id, a: r.score_a_bps, b: r.score_b_bps }))} winner={task.winner} />}
-          <Scale variant="b" title={<><b className="accent-text">Split B</b> · observed once at close · decides the champion</>} note={task.closed ? `unsealed ${fmtDate(task.deadline_ns)}` : sealedText} entries={entriesB} sealed={task.closed ? null : sealedText} reveal={task.closed} />
+          {task.closed && <Slopegraph entries={slopeEntries} winner={task.winner} drawn={revealed} />}
+          <Scale variant="b" title={<><b className="accent-text">Split B</b> · observed once at close · decides the champion</>} note={task.closed ? `unsealed ${fmtDate(task.deadline_ns)}` : <Countdown ns={task.deadline_ns} />} entries={entriesB} sealed={task.closed ? null : sealedText} reveal={task.closed} onRevealed={() => setRevealed(true)} />
           {task.closed && champ && leadA && leadA.id !== champ.submission_id && (
-            <p className="ink2" style={{ fontSize: 14, maxWidth: 760 }}>The lines cross: #{leadA.id} read higher on the public split, #{champ.submission_id} on the sealed one, and the sealed reading is the only one a model could not have been tuned against, so it decides.</p>
+            <p className="ink2" style={{ fontSize: 14, maxWidth: 760 }}>The lines cross: #{leadA.id} led the public split, #{champ.submission_id} the sealed one, and the sealed reading is the only one a model could not have been tuned against, so it decides.</p>
           )}
           {!task.closed && <p className="ink2" style={{ fontSize: 14, maxWidth: 760 }}>Split A is the public reading. Split B is scored at the same time, but the leaderboard withholds it until the deadline passes and someone calls <span className="mono">close_task</span>; the champion is the best split-B reading.</p>}
         </div>
@@ -193,10 +198,16 @@ function Task({ id }) {
               <a key={r.submission_id} href={`#/model/${r.submission_id}`} className={`spec ${one ? "c12 wide" : "c6"} ${isChamp ? "accent" : ""}`}>
                 <div className="head"><b>#{r.submission_id}{isChamp ? " · champion" : ""}</b><span className="mono mist">{short(r.owner, 12)} · {r.bytes.toLocaleString()} B · <StatusPill status={r.status} /></span></div>
                 <div className="body">
-                  <div>{scored ? <DotPlate counts={counts} caption={`split ${split.toUpperCase()} · ${counts?.n ?? ""} rows · one dot per private test row`} /> : <div className="mist mono">{statusText(r.status) === "Failed" ? `failed: ${statusDetail(r.status)}` : statusText(r.status) === "Pending" ? "in the TEE…" : "not scored yet"}</div>}</div>
+                  <div>{scored
+                    ? (s === undefined
+                      ? <DotPlate counts={null} caption={`split ${split.toUpperCase()} · one dot per private test row`} ghostText="reading the evaluator record…" />
+                      : s.sub === null
+                        ? <DotPlate counts={null} caption={`split ${split.toUpperCase()} · one dot per private test row`} ghostText="could not read the evaluator output" onRetry={() => setRetryN((x) => x + 1)} />
+                        : <DotPlate counts={counts} caption={`split ${split.toUpperCase()} · ${counts?.n ?? "—"} rows · one dot per private test row`} />)
+                    : <div className="mist mono">{statusText(r.status) === "Failed" ? `failed: ${statusDetail(r.status)}` : statusText(r.status) === "Pending" ? "in the TEE…" : "not scored yet"}</div>}</div>
                   <div className="stack" style={{ gap: 4 }}>
                     <span className="label">signature</span>
-                    <Forest bytes={s?.bytes} trees={r.trees} limit={one ? 50 : 30} cols={10} cell={40} accent={isChamp} featureNames={task.feature_names} onRetry={() => setRetryN((x) => x + 1)} />
+                    <Forest bytes={s === undefined ? null : s.bytes} trees={r.trees} limit={one ? 50 : 30} cols={10} cell={40} accent={isChamp} featureNames={task.feature_names} onRetry={() => setRetryN((x) => x + 1)} />
                     <span className="mono mist">{r.trees} trees{s?.sub ? ` · ${s.sub.nodes.toLocaleString()} nodes` : ""}{r.trees > (one ? 50 : 30) ? ` (${one ? 50 : 30} shown)` : ""}</span>
                   </div>
                 </div>
@@ -256,9 +267,10 @@ function Model({ id }) {
   const e = useView("get_earnings", { submission_id: id }, [id]);
   const cfg = useView("get_config", {}, []);
   const [bytes, retry] = useModelBytes(sub ? id : null);
+  const narrow = useMedia("(max-width: 720px)");
   useTitle(`Specimen #${id || ""}`);
   if (s.loading) return <section className="block wrap"><Loading /></section>;
-  if (s.error || !sub) return <section className="block wrap"><Err error={s.error || `submission ${id} not found`} reload={s.reload} /></section>;
+  if (s.error || !sub) return <section className="block wrap"><Err error={s.error || `Specimen ${id} does not exist on this contract.`} plain={!s.error} reload={s.reload} /></section>;
   const task = t.data; const raw = parseRaw(sub.last_outlayer_raw);
   const isChamp = !!task?.closed && task.winner === sub.submission_id;
   // split B is shown only once the task is closed, whatever the submission view returns
@@ -312,8 +324,8 @@ function Model({ id }) {
       <section className="block wrap g12">
         <div className="c2"><Sec n="02" title="The model" /></div>
         <div className="c10 stack">
-          <div className="between mono mist"><span className="accent-text">all {sub.trees} trees, drawn from the bytes on-chain</span><span>{isChamp ? "champion: orange roots" : ""}</span></div>
-          <div className={`plate ${isChamp ? "accent" : ""}`} style={{ padding: 14 }}><Forest bytes={bytes} trees={sub.trees} limit={500} cols={10} draw featureNames={task?.feature_names || []} accent={isChamp} onRetry={retry} readout /></div>
+          <div className="between mono mist"><span>all {sub.trees} trees, drawn from the bytes on-chain</span><span>{isChamp ? <><span className="accent-text">champion</span>: orange roots</> : ""}</span></div>
+          <div className={`plate ${isChamp ? "accent" : ""}`} style={{ padding: 14 }}><Forest bytes={bytes} trees={sub.trees} limit={500} cols={narrow ? 5 : 10} draw featureNames={task?.feature_names || []} accent={isChamp} onRetry={retry} readout /></div>
         </div>
       </section>
 
@@ -362,13 +374,13 @@ function FlowDiagram() {
           const x = 10 + i * 141, w = 128, sealed = i === 4, tee = i === 3, last = i === 6;
           return (
             <g key={s}>
-              <rect x={x} y={30} width={w} height={54} fill={last ? "var(--accent)" : "var(--plate)"} stroke={sealed ? "var(--sealed)" : tee ? "var(--tee-text)" : "var(--ink)"} strokeWidth={tee ? 2.5 : 1.5} strokeDasharray={sealed ? "4 3" : undefined} />
-              <text x={x + w / 2} y={61} textAnchor="middle" fontFamily="JetBrains Mono, monospace" fontSize="11" fill={last ? "var(--paper)" : tee ? "var(--tee-text)" : "var(--ink)"}>{s}</text>
+              <rect x={x} y={30} width={w} height={54} fill={last ? "var(--accent-text)" : "var(--plate)"} stroke={sealed ? "var(--sealed)" : tee ? "var(--tee-text)" : last ? "var(--accent-text)" : "var(--ink)"} strokeWidth={tee ? 2.5 : 1.5} strokeDasharray={sealed ? "4 3" : undefined} />
+              <text x={x + w / 2} y={61} textAnchor="middle" fontFamily="JetBrains Mono, monospace" fontSize="12.5" fill={last ? "var(--paper)" : tee ? "var(--tee-text)" : "var(--ink)"}>{s}</text>
               {i < STAGES.length - 1 && <path d={`M${x + w} 57 l13 0`} stroke="var(--ink)" strokeWidth={1.5} />}
             </g>
           );
         })}
-        <text x={10} y={104} fontFamily="JetBrains Mono, monospace" fontSize="11" fill="var(--mist)">participant → contract → OutLayer worker (TEE) → contract → anyone (close) → agents and contracts (calls, fee to the owner)</text>
+        <text x={10} y={104} fontFamily="JetBrains Mono, monospace" fontSize="12.5" fill="var(--mist)">participant → contract → OutLayer worker (TEE) → contract → anyone (close) → agents and contracts (calls, fee to the owner)</text>
       </svg>
       <ol className="flow-v only-narrow">{STAGES.map((s, i) => <li key={s} className={i === 4 ? "sealed" : i === 3 ? "tee" : i === 6 ? "last" : ""}>{s}</li>)}</ol>
     </>
@@ -427,11 +439,11 @@ export default function App() {
   const isMethod = page === "costs" || page === "biaya";
   return (
     <>
-      <a className="skip" href="#main">Skip to content</a>
+      <a className="skip" href="#main" onClick={skipToMain}>Skip to content</a>
       <header>
         <div className="wrap">
           <div className="brand"><a href="#/">LAUREL</a><span>Observatory of small models</span></div>
-          <nav aria-label="primary"><a href="#/" className={!isMethod ? "on" : ""}>Exhibits</a><a href="#/costs" className={isMethod ? "on" : ""}>Method</a><a href={REPO} target="_blank" rel="noreferrer">Source</a></nav>
+          <nav aria-label="primary"><a href="#/" className={!isMethod ? "on" : ""} aria-current={!isMethod ? "page" : undefined}>Exhibits</a><a href="#/costs" className={isMethod ? "on" : ""} aria-current={isMethod ? "page" : undefined}>Method</a><a href={REPO} target="_blank" rel="noreferrer">Source</a></nav>
           <span className="contract"><a href={EXPLORER_ACCOUNT(contractId())} target="_blank" rel="noreferrer">{contractId()}</a> · testnet · read-only</span>
         </div>
       </header>
@@ -441,7 +453,7 @@ export default function App() {
         {page === "model" && <Model id={id} />}
         {isMethod && <Costs />}
       </main>
-      <footer><div className="wrap"><span>Built at NEAR HACKATHON 2026 · every number is read live from <a href={EXPLORER_ACCOUNT(contractId())} target="_blank" rel="noreferrer" className="mono">{contractId()}</a> · no mock data · sister project: Undo (same team)</span><a href={REPO} target="_blank" rel="noreferrer" className="mono">github.com/agadape/laurel</a></div></footer>
+      <footer><div className="wrap"><span>Built at NEAR HACKATHON 2026 · every number is read live from <a href={EXPLORER_ACCOUNT(contractId())} target="_blank" rel="noreferrer" className="mono">{contractId()}</a> · no mock data · sister project: <a href={UNDO} target="_blank" rel="noreferrer">Undo</a> (same team)</span><a href={REPO} target="_blank" rel="noreferrer" className="mono">github.com/agadape/laurel</a></div></footer>
     </>
   );
 }
