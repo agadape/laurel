@@ -122,6 +122,8 @@ bash build.sh evaluator   # wasm/evaluator.wasm + its sha256
 → **see** `test result: ok` four times and the three wasm files with sizes. The printed evaluator sha256 is what you would pin with `set_evaluator` for your own deployment; it only equals our pinned `8b80010f…` if your Rust toolchain matches ours (Rust 1.99, see `docs/EVALUATOR.md`). Prebuilt wasm is committed in `wasm/`, so step B works without Rust.
 
 ### D. Train and submit your own model (Python 3.10+, `pip install scikit-learn pandas numpy`)
+**One command** does all of the below for an open task, from a funded testnet account in `.env` to a TEE-scored entry with its rank: `node tools/quickstart.mjs --task 5` (add `--dry` to stop at the cost quote, `--model my.pkl` for your own pickle). Participant guide with account setup and an invitation text: [docs/QUICKSTART.md](docs/QUICKSTART.md). Proven 5 Nov: submission #11, 5,041 B, 8300 bps on split A (CLAIMS row 26).
+
 Submit to an **open** task: on our final contract `laurel.laurel-team-mw0x0c8g.testnet` that is **task 5** (slug `near-retention`, real mainnet data, open until 2026-11-12 12:00 UTC; `tasks/near-retention/train.py`, `--task near-retention`) or **task 4** (slug `credit-risk-open`, open until 2026-11-25 23:59 UTC → use `4` as `<open_task_id>` with the commands below; the demo task `german-credit` is closed so that `predict_task` works). On your own contract from step B, create one first — the `--secrets-account/--profile` pair points it at the private test set we host at OutLayer:
 ```bash
 node tools/create_task.mjs german-credit --as TEAM --minutes 1440 --secrets-account nh-spike-mvp62mw4.testnet --profile german-credit
