@@ -27,8 +27,9 @@ async function load() {
     // explicit nodeUrl: the wallet SDKs otherwise default to test.rpc.fastnear.com, which rate-limits (429) and surfaces as near_rpc_error
     const network = NETWORK === "mainnet"
       ? { networkId: "mainnet", nodeUrl: "https://near.drpc.org", helperUrl: "https://helper.mainnet.near.org", explorerUrl: "https://nearblocks.io", indexerUrl: "https://api.kitwallet.app" }
-      : { networkId: "testnet", nodeUrl: "https://near-testnet.drpc.org", helperUrl: "https://helper.testnet.near.org", explorerUrl: "https://testnet.nearblocks.io", indexerUrl: "https://testnet-api.kitwallet.app" };
-    const selector = await setupWalletSelector({ network, modules: [setupMeteorWallet(), setupIntearWallet(), setupNightly()] });
+      : { networkId: "testnet", nodeUrl: "https://near-testnet.drpc.org", helperUrl: "https://helper.testnet.near.org", explorerUrl: "https://testnet.nearblocks.io", indexerUrl: "https://test.api.fastnear.com/v0" };
+    const fallbackRpcUrls = NETWORK === "mainnet" ? ["https://near.drpc.org", "https://rpc.mainnet.fastnear.com"] : ["https://near-testnet.drpc.org", "https://rpc.testnet.fastnear.com", "https://archival-rpc.testnet.fastnear.com"];
+    const selector = await setupWalletSelector({ network, fallbackRpcUrls, modules: [setupMeteorWallet(), setupIntearWallet(), setupNightly()] });
     // "connect only": no access key is created at sign-in (deposits need a full signature anyway), so signing in is one
     // wallet approval with no transaction; each purchase/withdrawal is then approved in the wallet.
     modal = setupModal(selector, { contractId: "" });
