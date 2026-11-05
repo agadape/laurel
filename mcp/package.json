@@ -1,0 +1,22 @@
+{
+  "name": "laurel-mcp",
+  "version": "0.1.0",
+  "description": "MCP server for Laurel: small decision models as on-chain infrastructure on NEAR. Browse exhibits and leaderboards, download a model's bytes, run it locally, or call the champion on-chain with predict_task.",
+  "type": "module",
+  "bin": { "laurel-mcp": "server.mjs" },
+  "files": ["server.mjs", "gbdt.mjs", "README.md"],
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "start": "node server.mjs",
+    "test": "node test/smoke.mjs"
+  },
+  "keywords": ["mcp", "near", "model-context-protocol", "machine-learning", "gbdt", "blockchain", "laurel"],
+  "license": "MIT",
+  "repository": { "type": "git", "url": "https://github.com/agadape/laurel.git", "directory": "mcp" },
+  "homepage": "https://laurel-near.vercel.app",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "near-api-js": "^7.4.0",
+    "zod": "^3.23.8"
+  }
+}

@@ -28,3 +28,6 @@ tasks/german-credit/german.data
 
 # locally installed audit skills (docs/audit/)
 .claude/skills/
+mcp/node_modules/
+mcp/test/out-model.bin
+laurel-model-*.bin

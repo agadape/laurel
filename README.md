@@ -80,6 +80,12 @@ node tools/agent.mjs <task_id> --rows 10                             # restricte
 node tools/consumer.mjs <task_id> --funder TEAM                      # deploys credit-desk, screens 3 applicants → docs/CONSUMER.md
 ```
 
+### F. Give the model to an AI agent as an MCP server (`mcp/`)
+```json
+{ "mcpServers": { "laurel": { "command": "npx", "args": ["-y", "laurel-mcp"] } } }
+```
+(or from this clone: `cd mcp && npm install && node server.mjs`; Claude Code: `claude mcp add laurel -- node mcp/server.mjs`). Seven tools: list exhibits, exhibit + leaderboard, specimen, **download the model's bytes from the contract**, **run it locally with the contract's integer arithmetic**, credit, and **`predict_task` on-chain** (needs `LAUREL_ACCOUNT_ID` / `LAUREL_PRIVATE_KEY`, a function-call key is enough). → **see** `laurel_predict_local` and `laurel_predict` return the same raw score for the same row (811014 for holdout row 0 of task 3, tx `ZockCH1M…`). The sealed rule holds in the tools too: split B of an open task is masked. Details and the verified run: [docs/MCP.md](docs/MCP.md). The npm package is prepared but not yet published; the clone command works today.
+
 ## How it works
 
 ```
@@ -114,7 +120,7 @@ NEAR features used: own contract (near-sdk 5.30), cross-contract promises and ca
 
 ## Repository map
 
-`contracts/` `crates/` `evaluator/` `tools/` `web/` `tasks/` `wasm/` (prebuilt) · `docs/` (ABI, GAS, AGENT, CONSUMER, E2E, EVALUATOR, NEGATIVE_TESTS, TESTNET, research) · `spikes/` (the original testnet spikes S0–S31 that this design rests on, with [SPIKE_LOG.md](SPIKE_LOG.md)) · [PLAN.md](PLAN.md), [IDEAS.md](IDEAS.md), [ARCH_STRESS_TEST.md](ARCH_STRESS_TEST.md) (how the idea was chosen and stress-tested, in Indonesian).
+`contracts/` `crates/` `evaluator/` `tools/` `web/` `mcp/` (MCP server for agents) `tasks/` `wasm/` (prebuilt) · `docs/` (ABI, GAS, AGENT, CONSUMER, E2E, EVALUATOR, MCP, NEGATIVE_TESTS, TESTNET, UI_DIRECTION, audit, research) · `spikes/` (the original testnet spikes S0–S31 that this design rests on, with [SPIKE_LOG.md](SPIKE_LOG.md)) · [PLAN.md](PLAN.md), [IDEAS.md](IDEAS.md), [ARCH_STRESS_TEST.md](ARCH_STRESS_TEST.md) (how the idea was chosen and stress-tested, in Indonesian).
 
 ## AI-generated code disclosure
 
