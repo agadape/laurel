@@ -8,7 +8,7 @@
 
 | | |
 |---|---|
-| **Live site** | https://laurel-near.vercel.app (no wallet needed to browse: landing page, then "Browse the exhibits without a wallet"; a NEAR testnet wallet is only for buying prediction credit) |
+| **Live site** | https://laurel-near.vercel.app (no wallet needed to browse: landing page, then "Browse without a wallet"; a NEAR testnet wallet is only for buying prediction credit) |
 | **Contract** | [`laurel.laurel-team-mw0x0c8g.testnet`](https://testnet.nearblocks.io/address/laurel.laurel-team-mw0x0c8g.testnet) (NEAR testnet, codename `bursa`) |
 | **For AI agents** | remote MCP endpoint `https://laurel-near.vercel.app/api/mcp` (no install, no wallet) · npm package [`laurel-mcp`](https://www.npmjs.com/package/laurel-mcp) |
 | **Evidence** | [CLAIMS.md](CLAIMS.md) maps every statement below to code, tests and transaction hashes |
@@ -94,7 +94,7 @@ Unit tests: 50 in `contracts/bursa`, 3 in `contracts/consumer-example`, 4 in `cr
 Each step is "do X → see Y". A needs only a browser; B to F need the tools listed in each step.
 
 ### A. Read-only, in the browser (2 minutes, no wallet)
-1. Open https://laurel-near.vercel.app → **see** the landing page: live figures from `laurel.laurel-team-mw0x0c8g.testnet`, the champion model's 50 decision trees drawn from the bytes stored on-chain, and exhibit 03's split-A vs split-B readings. Click **Browse the exhibits without a wallet** → **see** the exhibits (tasks) read-only. A deep link such as https://laurel-near.vercel.app/#/task/3 opens its page directly, with no click and no wallet. **Connect wallet to enter** (Meteor, Intear or Nightly; testnet; signing in creates no transaction) is only needed to buy prediction credit or withdraw.
+1. Open https://laurel-near.vercel.app → **see** the landing page, read live from `laurel.laurel-team-mw0x0c8g.testnet`: a scroll-driven room of glass panes, each one decision tree decoded from the model bytes stored on-chain; exhibit 05 (NEAR mainnet account retention) with every entry's split-A score and its split B still sealed; and exhibit 03, where the public leader loses on the sealed split. Scroll once and click **Browse without a wallet** → **see** the exhibits (tasks) read-only. A deep link such as https://laurel-near.vercel.app/#/task/3 opens its page directly, with no click and no wallet. **Connect wallet to enter** (Meteor, Intear or Nightly; testnet; signing in creates no transaction) is only needed to buy prediction credit or withdraw.
 2. Click exhibit **03 Credit risk** → **see** the two readings: on the split-A scale #5 is ahead (75.50 %), on the split-B scale, unsealed because the task is closed, #4 is the champion (66.50 %); below, one specimen plate per entry (one dot per private test row, orange = misjudged) and the "in service" strip with #4's call count. Exhibit **04** is still open, so its split-B scale shows a sealed band instead.
 3. Click **Specimen #4** → **see** all 50 trees drawn from the on-chain bytes (click one for its root split), both confusion plates, the pinned evaluator hash, the model sha256 and the owner's earnings.
 4. Same data straight from RPC (needs `curl` and Python 3 for the decoding one-liner):
@@ -210,7 +210,7 @@ What is **not** guaranteed, stated plainly: the contract trusts what `outlayer.t
 | `evaluator/` | `wasm32-wasip2` program for OutLayer: reads the model through the `view` host function, the secrets from env, prints ≤ 900 B JSON with balanced accuracy and F1 for both splits |
 | `contracts/consumer-example` | `credit-desk`, a contract that calls `predict_task` through a promise and pays from its own credit ([docs/CONSUMER.md](docs/CONSUMER.md)) |
 | `mcp/` | MCP server for agents, published as `laurel-mcp` ([docs/MCP.md](docs/MCP.md)) |
-| `web/` | Vite/React explorer over RPC view calls: a public landing page (`web/src/Landing.jsx`), the explorer (browsable as a guest, no wallet), and a NEAR wallet sign-in used only to buy credit and withdraw; `web/api/mcp.mjs` is the remote MCP endpoint |
+| `web/` | Vite/React explorer over RPC view calls: a public landing page (`web/src/Landing.jsx` loads `web/src/landing/`: WebGL stage, scroll timeline, sections, with a labelled snapshot fallback when RPC is slow), the explorer (browsable as a guest, no wallet), and a NEAR wallet sign-in used only to buy credit and withdraw; `web/api/mcp.mjs` is the remote MCP endpoint |
 | `tools/` | Node scripts for every write action (the browser wallet only buys credit and withdraws); `tools/export.py` converts sklearn models |
 | `agents/` | Claude Agent SDK agents: `competitor.mjs` (enters a model under a strict tool policy), `caller.mjs` (buys predictions with a function-call key); transcripts in `agents/out/` |
 | `tasks/near-retention/` | NEAR mainnet task: BigQuery SQL, fetch/build/train scripts, feature spec, population stats, commitment manifest |
@@ -237,5 +237,6 @@ Planning history, in Indonesian: [PLAN.md](PLAN.md), [IDEAS.md](IDEAS.md), [ARCH
 
 - **Sister project** by the same team, disclosed per rule Q-015: [**Undo**](https://github.com/agadape/undo), reversible wrapped-USDC payments with a TEE-verified AI court. The two projects are independent products; what they share is the research notes in `docs/research/` and the testnet spike log: `spikes/contracts-undo/` and `spikes/s20*–s22*` are Undo's own spikes kept here as history and are not used by Laurel.
 - **Naming.** The product is Laurel; the contract codename `bursa` (Indonesian for *exchange*) is kept in code, file and account names ([docs/NAMING.md](docs/NAMING.md)).
+- **Design.** Landing page and visual design by Dex Bennett (`docs/design/`).
 - **AI-generated code.** Most code and documentation in this repository were written with Claude (Anthropic) under the team's direction; all behaviour described above was executed by the team on NEAR testnet and the transaction hashes in `docs/` are the record. Libraries: near-sdk, near-api-js, scikit-learn, Vite/React, wit-bindgen, base64, serde.
-- **License.** MIT — see [LICENSE](LICENSE). Datasets: UCI Statlog (German Credit Data), CC BY 4.0, Hofmann 1994; NEAR mainnet history from the NEAR Public Lakehouse (`bigquery-public-data.crypto_near_mainnet_us`), public blockchain data.
+- **License.** MIT — see [LICENSE](LICENSE). Datasets: UCI Statlog (German Credit Data), CC BY 4.0, Hofmann 1994; NEAR mainnet history from the NEAR Public Lakehouse (`bigquery-public-data.crypto_near_mainnet_us`), public blockchain data. Fonts in `web/public/aset/`: Zodiak and Satoshi by the Indian Type Foundry via Fontshare (ITF Free Font License), not covered by the MIT license.

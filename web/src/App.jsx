@@ -106,7 +106,7 @@ function Home() {
       </section>
 
       <section className="block wrap">
-        <div className="row-head"><h2 className="sec">03 — Exhibits</h2><span>Task</span><span className="sig">Leader's signature</span><span className="right">Split A · observed</span><span className="right">Split B · at close</span><span className="right state">State</span></div>
+        <div className="row-head"><h2 className="sec">Exhibits</h2><span>Task</span><span className="sig">Leader's signature</span><span className="right">Split A · observed</span><span className="right">Split B · at close</span><span className="right state">State</span></div>
         {tasks.error && <Err error={tasks.error} reload={tasks.reload} />}
         {recent.map((t) => <ExhibitRow key={t.task_id} t={t} />)}
         {earlier.length > 0 && (
@@ -181,7 +181,7 @@ function Task({ id }) {
       <section className="block wrap g12" style={{ alignItems: "end" }}>
         <div className="c2"><span className={`numeral ${task.closed ? "accent" : ""}`} aria-hidden="true">{pad2(task.task_id)}</span></div>
         <div className="c6 stack" style={{ gap: 8 }}>
-          <a href="#/" className="mono mist">← Exhibits</a>
+          
           <h1 className="h2">Exhibit {pad2(task.task_id)}: <Title text={task.title} /></h1>
           <div className="mono mist">{task.slug} · {task.n_features} integer features · balanced accuracy · {task.closed ? `closed ${fmtDate(task.deadline_ns)}` : <Countdown ns={task.deadline_ns} />} · {task.submission_count} {task.submission_count === 1 ? "entrant" : "entrants"}{task.closed && task.winner != null && <> · champion #{task.winner}</>} {task.closed ? <Pill>closed</Pill> : <Pill kind="open">open</Pill>}</div>
         </div>

@@ -1,6 +1,6 @@
 # DEMO — naskah video 3 menit (D-3), versi kontrak final (4 Nov)
 
-Semua yang tampil adalah transaksi testnet asli di kontrak final **`laurel.laurel-team-mw0x0c8g.testnet`**. Rekam layar 1080p, terminal font besar, browser di **https://laurel-near.vercel.app** (UI bahasa Inggris, arah visual `docs/UI_DIRECTION.md`: pengunjung yang belum login melihat landing page di root, explorer bisa dibuka tanpa wallet lewat "Browse the exhibits without a wallet" atau deep link; login wallet testnet hanya perlu untuk shot beli kredit di 2:30; menu Exhibits / Method; tugas = *exhibit*, model = *specimen*, skor = *readings* pada skala split A dan B). Narasi di bawah berbahasa Inggris karena juri internasional; boleh diucapkan dalam bahasa Indonesia dengan subtitle Inggris.
+Semua yang tampil adalah transaksi testnet asli di kontrak final **`laurel.laurel-team-mw0x0c8g.testnet`**. Rekam layar 1080p, terminal font besar, browser di **https://laurel-near.vercel.app** (UI bahasa Inggris, arah visual `docs/UI_DIRECTION.md`: pengunjung yang belum login melihat landing page di root, explorer bisa dibuka tanpa wallet lewat "Browse without a wallet" (muncul setelah scroll pertama) atau deep link; login wallet testnet hanya perlu untuk shot beli kredit di 2:30; menu Exhibits / Method; tugas = *exhibit*, model = *specimen*, skor = *readings* pada skala split A dan B). Narasi di bawah berbahasa Inggris karena juri internasional; boleh diucapkan dalam bahasa Indonesia dengan subtitle Inggris.
 
 Id yang dipakai (sudah ada di kontrak, tidak perlu dibuat ulang):
 

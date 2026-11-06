@@ -75,7 +75,7 @@ export function StatusPill({ status }) {
   return <Pill kind={kind}>{t === "Scored" ? "scored in TEE" : t === "Pending" ? "in the TEE" : t.toLowerCase()}</Pill>;
 }
 /** Numbered section label (an h2 for structure, styled as the mono eyebrow). */
-export const Sec = ({ n, title }) => <h2 className="sec">{n} — {title}</h2>;
+export const Sec = ({ n, title }) => <h2 className="sec">{title}</h2>;
 export const Fig = ({ v, unit, l }) => (
   <div className="fig"><span className="v">{v}{unit && <small> {unit}</small>}</span><span className="l">{l}</span></div>
 );
