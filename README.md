@@ -4,7 +4,7 @@
 
 *Trained off-chain, ranked on a private TEE benchmark, served from a NEAR contract to agents and other contracts. The model that earns the laurel serves on-chain.*
 
-[![Laurel landing page, live data from the testnet contract](docs/img/landing.png)](https://laurel-near.vercel.app)
+[![Twenty seconds of the live site: landing, exhibit 05 on NEAR mainnet data, a specimen with its trees drawn from the on-chain bytes, the closed credit-risk exhibit, the Method and Connect pages](docs/img/walkthrough.gif)](https://laurel-near.vercel.app)
 
 | | |
 |---|---|
@@ -43,6 +43,8 @@ NEAR features used: own contract (near-sdk 5.30), cross-contract promises and ca
 | `open` (Open Innovation) | A model competition whose winner becomes **permissionless, composable infrastructure**: an address other contracts call in consensus | [docs/CONSUMER.md](docs/CONSUMER.md), `contracts/consumer-example` |
 
 ## How it works
+
+![Architecture: a model maker or agent submits a model as data; the contract stores it, pins the evaluator and asks OutLayer's TEE to score it on sealed splits; AI agents with function-call keys and other contracts then call predict_task and pay per call](docs/img/architecture.svg)
 
 ```mermaid
 sequenceDiagram
