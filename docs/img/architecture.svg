@@ -1,0 +1,136 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="750" viewBox="0 0 1400 750" font-family="Inter, 'Helvetica Neue', Arial, sans-serif">
+  <title>Laurel architecture: compete, verify, deploy on NEAR</title>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#1B1B1F"/>
+    </marker>
+    <marker id="arrow-accent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#B8431F"/>
+    </marker>
+    <marker id="arrow-tee" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#0B6A5B"/>
+    </marker>
+    <style>
+      .ink { fill: #1B1B1F; } .mist { fill: #6B6B73; } .accent { fill: #B8431F; } .tee { fill: #0B6A5B; }
+      .h { font-family: Archivo, Inter, Arial, sans-serif; font-weight: 700; }
+      .mono { font-family: 'JetBrains Mono', Consolas, monospace; }
+      .box { fill: #FFFFFF; stroke: #1B1B1F; stroke-width: 1.5; }
+      .box-tee { fill: #EEF6F3; stroke: #0B6A5B; stroke-width: 1.5; }
+      .box-chain { fill: #FBF1EC; stroke: #B8431F; stroke-width: 1.5; }
+      .line { stroke: #1B1B1F; stroke-width: 1.5; fill: none; marker-end: url(#arrow); }
+      .line-accent { stroke: #B8431F; stroke-width: 1.5; fill: none; marker-end: url(#arrow-accent); }
+      .line-tee { stroke: #0B6A5B; stroke-width: 1.5; fill: none; marker-end: url(#arrow-tee); stroke-dasharray: 6 4; }
+      .lbl { font-size: 13px; } .small { font-size: 12px; } .tiny { font-size: 11px; }
+    </style>
+  </defs>
+  <rect width="1400" height="750" fill="#F2EFE8"/>
+
+  <!-- title -->
+  <text x="60" y="58" class="h ink" font-size="30">Laurel</text>
+  <text x="170" y="58" class="ink" font-size="18">small decision models as on-chain infrastructure on NEAR</text>
+  <text x="60" y="86" class="mist lbl">Compete on public data · verify in a TEE on sealed rows · deploy as a contract method that agents and contracts pay to call</text>
+
+  <!-- column headers -->
+  <text x="60" y="140" class="h accent" font-size="15" letter-spacing="2">01  COMPETE</text>
+  <text x="560" y="140" class="h accent" font-size="15" letter-spacing="2">02  VERIFY</text>
+  <text x="1010" y="140" class="h accent" font-size="15" letter-spacing="2">03  DEPLOY</text>
+
+  <!-- 01 model maker -->
+  <rect x="60" y="160" width="340" height="150" rx="4" class="box"/>
+  <text x="80" y="188" class="h ink" font-size="16">Model maker</text>
+  <text x="80" y="208" class="mist small">a person, or an autonomous agent (Claude Agent SDK)</text>
+  <text x="80" y="236" class="ink lbl">trains a small gradient-boosted-tree model</text>
+  <text x="80" y="256" class="ink lbl">on the task's public split, exports it to</text>
+  <text x="80" y="276" class="ink lbl">integer borsh (1 to 250 KB), pays storage + fee</text>
+  <text x="80" y="298" class="mono mist tiny">tools/export.py · tools/quickstart.mjs · agents/competitor.mjs</text>
+
+  <!-- 01 task creator -->
+  <rect x="60" y="340" width="340" height="112" rx="4" class="box"/>
+  <text x="80" y="368" class="h ink" font-size="16">Task creator</text>
+  <text x="80" y="392" class="ink lbl">publishes a task: features, deadline, fee per call;</text>
+  <text x="80" y="412" class="ink lbl">stores the two private splits as an OutLayer secret</text>
+  <text x="80" y="432" class="ink lbl">bound to the evaluator's wasm hash</text>
+
+  <!-- 02 contract (center) -->
+  <rect x="510" y="160" width="400" height="430" rx="4" class="box-chain"/>
+  <text x="530" y="188" class="h ink" font-size="16">Laurel contract</text>
+  <text x="530" y="208" class="mono mist small">laurel.laurel-team-mw0x0c8g.testnet · near-sdk 5.30</text>
+  <line x1="530" y1="222" x2="890" y2="222" stroke="#B8431F" stroke-opacity="0.35"/>
+  <text x="530" y="248" class="mono ink lbl">create_task · submit_model · request_score</text>
+  <text x="530" y="268" class="ink small">stores the model bytes once, keeps sha256, pins the</text>
+  <text x="530" y="286" class="ink small">evaluator hash, records which evaluator scored what</text>
+  <text x="530" y="316" class="mono ink lbl">on_score (callback, idempotent)</text>
+  <text x="530" y="336" class="ink small">split A public while open · split B sealed in the</text>
+  <text x="530" y="354" class="ink small">leaderboard until the deadline</text>
+  <text x="530" y="384" class="mono ink lbl">close_task (anyone, after the deadline)</text>
+  <text x="530" y="404" class="ink small">best split B wins; ties go to the earlier entry</text>
+  <text x="530" y="434" class="mono ink lbl">predict_task · predict</text>
+  <text x="530" y="454" class="ink small">the model runs inside consensus: integer GBDT,</text>
+  <text x="530" y="472" class="ink small">about 2.7 to 4.3 Tgas per call, no oracle</text>
+  <text x="530" y="502" class="mono ink lbl">deposit_credit · withdraw_credit · withdraw_earnings</text>
+  <text x="530" y="522" class="ink small">per-call fee moves from the caller's prepaid credit</text>
+  <text x="530" y="540" class="ink small">to the model owner's earnings</text>
+  <text x="530" y="572" class="mono mist tiny">NEP-297 events · 50 unit tests · codename bursa</text>
+
+  <!-- 02 OutLayer TEE -->
+  <rect x="510" y="620" width="400" height="110" rx="4" class="box-tee"/>
+  <text x="530" y="648" class="h tee" font-size="16">OutLayer TEE worker</text>
+  <text x="530" y="668" class="ink small">runs the pinned evaluator (open source, reproducible</text>
+  <text x="530" y="686" class="ink small">build, sha256 8b80010f…); the secret opens only for that hash</text>
+  <text x="530" y="706" class="ink small">reads the model by view call, returns aggregates only (≤ 900 B)</text>
+  <text x="530" y="722" class="mono mist tiny">evaluator/ · outlayer.testnet · secrets TEST_SET_A, TEST_SET_B</text>
+
+  <!-- 03 agent -->
+  <rect x="1010" y="160" width="330" height="150" rx="4" class="box"/>
+  <text x="1030" y="188" class="h ink" font-size="16">AI agent</text>
+  <text x="1030" y="208" class="mist small">MCP: laurel-mcp (npm) or the remote endpoint</text>
+  <text x="1030" y="236" class="ink lbl">holds a function-call access key that the</text>
+  <text x="1030" y="256" class="ink lbl">protocol limits to predict / predict_task on</text>
+  <text x="1030" y="276" class="ink lbl">this contract: no transfers, no withdrawals</text>
+  <text x="1030" y="298" class="mono mist tiny">mcp/server.mjs · agents/caller.mjs · docs/AGENT.md</text>
+
+  <!-- 03 other contract -->
+  <rect x="1010" y="340" width="330" height="112" rx="4" class="box"/>
+  <text x="1030" y="368" class="h ink" font-size="16">Another contract</text>
+  <text x="1030" y="392" class="ink lbl">calls predict_task through a promise and acts</text>
+  <text x="1030" y="412" class="ink lbl">on the score in its callback, from its own credit</text>
+  <text x="1030" y="432" class="mono mist tiny">contracts/consumer-example (credit desk)</text>
+
+  <!-- 03 people -->
+  <rect x="1010" y="480" width="330" height="110" rx="4" class="box"/>
+  <text x="1030" y="508" class="h ink" font-size="16">People</text>
+  <text x="1030" y="532" class="ink lbl">browse exhibits, specimens and every tree drawn</text>
+  <text x="1030" y="552" class="ink lbl">from the stored bytes; buy credit with a wallet</text>
+  <text x="1030" y="574" class="mono mist tiny">laurel-near.vercel.app · read-only, no wallet to browse</text>
+
+  <!-- arrows: compete -->
+  <path d="M400 235 L510 235" class="line"/>
+  <text x="455" y="226" text-anchor="middle" class="small ink">submit_model</text>
+  <path d="M400 395 L510 395" class="line"/>
+  <text x="455" y="386" text-anchor="middle" class="small ink">create_task</text>
+  <path d="M230 452 C230 700 420 700 510 690" class="line-tee"/>
+  <text x="245" y="560" class="tiny tee">secret bound to</text>
+  <text x="245" y="574" class="tiny tee">the evaluator hash</text>
+
+  <!-- arrows: verify -->
+  <path d="M600 590 L600 620" class="line-tee"/>
+  <text x="590" y="609" text-anchor="end" class="tiny tee">request_execution(pinned hash, secret) →</text>
+  <path d="M840 620 L840 590" class="line-tee"/>
+  <text x="850" y="609" class="tiny tee">← on_score</text>
+
+  <!-- arrows: deploy -->
+  <path d="M1010 235 L910 235" class="line-accent"/>
+  <text x="960" y="226" text-anchor="middle" class="small accent">predict_task</text>
+  <path d="M1010 395 L910 395" class="line-accent"/>
+  <text x="960" y="384" text-anchor="middle" class="tiny accent">promise</text>
+  <text x="960" y="410" text-anchor="middle" class="tiny accent">callback</text>
+  <path d="M1010 535 L910 535" class="line"/>
+  <text x="960" y="526" text-anchor="middle" class="small ink">views</text>
+
+  <!-- footer -->
+  <text x="1010" y="640" class="mist tiny">Not guaranteed: the contract trusts what outlayer.testnet returns</text>
+  <text x="1010" y="654" class="mist tiny">(attestation is OutLayer's, bound to hash, inputs and outputs);</text>
+  <text x="1010" y="668" class="mist tiny">the dataset commitment lives in the repo; the owner can pin another</text>
+  <text x="1010" y="682" class="mist tiny">evaluator for future scoring. README: "Security model and trust boundaries".</text>
+  <text x="1010" y="712" class="mist tiny">testnet · 5 tasks · 11 models · github.com/agadape/laurel</text>
+</svg>
