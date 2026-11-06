@@ -12,7 +12,7 @@ const MCP = "https://laurel-near.vercel.app/api/mcp";
 const STEPS = [
   ["Submit a model as data", "A gradient-boosted tree model, exported to a few kilobytes of integers, is stored by the contract itself. No server, no API key, no hosting bill."],
   ["Judged inside a TEE", "An evaluator whose hash the contract pins runs in OutLayer's TEE on two private test splits that never leave the enclave."],
-  ["The sealed split decides", "Split A is public while a task is open. Split B stays sealed until close, so nobody can tune against it, and it alone picks the champion."],
+  ["The sealed split decides", "Split A is public while a task is open. Split B's rows never leave the enclave and its score is withheld from the leaderboard until close; it alone picks the champion."],
   ["Served and paid per call", "The champion answers predict_task for agents and other contracts. Every call is paid in NEAR, from prepaid credit, to the model's owner."],
 ];
 
@@ -43,7 +43,7 @@ export function renderPage(root, data) {
         <h2 class="rise">Exhibit ${pad2(open.task_id)}: ${titleOf(open)}</h2>
         <div class="until rise" style="--d:100ms">
           <div class="clock" id="clock" data-ns="${open.deadline_ns}"></div>
-          <p>until the sealed split opens</p>
+          <p>until the leaderboard shows split B</p>
         </div>
       </div>
       <p class="body rise" style="--d:120ms">${/^near-retention/.test(open.slug) ? `Each row is a fresh <span class="code">.near</span> account's first seven days on NEAR mainnet, taken from the public BigQuery dataset. The label is whether the account was still acting between day 30 and day 90.` : "Train on the public split, submit a model as data, and read its split-A score here once the TEE has judged it."}</p>
@@ -53,7 +53,7 @@ export function renderPage(root, data) {
           <span class="rank">${i + 1}</span><span class="id">#${r.submission_id}</span>
           <span class="glyph"><canvas data-forest="${r.submission_id}" width="440" height="88"></canvas></span>
           <span class="pub"><span class="bar"><i data-to="${scoreBar(r.score_a_bps)}" style="--d:${260 + i * 90}ms"></i></span><b>${bpsText(r.score_a_bps)}</b></span>
-          <span class="b-col"><span class="hatch"><em>Sealed</em></span></span></a>`).join("")}
+          <span class="b-col"><span class="hatch"><em>Withheld</em></span></span></a>`).join("")}
       </div>
       <div class="links rise"><a href="${APP}#/task/${open.task_id}">Open exhibit ${pad2(open.task_id)} ↗</a>${/^near-retention/.test(open.slug) ? `<a href="${REPO}/blob/main/tasks/near-retention/README.md" target="_blank" rel="noreferrer">The ${open.n_features} features and how the data was pulled ↗</a>` : ""}</div>
     </div></section>` : ""}
@@ -63,7 +63,7 @@ export function renderPage(root, data) {
       <div class="how-panel" id="panel">
         <div class="how-view v1"><div class="hex" id="hex" aria-hidden="true"></div><div class="hero-num"><b>${winRow?.bytes.toLocaleString("en-US")}</b><span>bytes, stored by the contract itself. This is model #${champ?.winner}.</span></div></div>
         <div class="how-view v2"><img src="${ASET}latar-balok.webp" alt="" /><div class="hero-num"><span>Evaluator hash pinned by the contract</span><code>${data.evaluator[1]}</code></div></div>
-        <div class="how-view v3"><div class="two"><div><span>Split A, public while open</span><i class="line a"></i></div><div><span>Split B, sealed until close</span><i class="line b"></i></div></div></div>
+        <div class="how-view v3"><div class="two"><div><span>Split A, public while open</span><i class="line a"></i></div><div><span>Split B, withheld until close</span><i class="line b"></i></div></div></div>
         <div class="how-view v4"><div class="ledger"><div><b>${fee}</b><span>NEAR per prediction</span></div><div><b>${winRow?.calls}</b><span>predictions served</span></div><div><b>${earned}</b><span>NEAR earned by its owner</span></div></div></div>
       </div>
     </div></section>
@@ -71,7 +71,7 @@ export function renderPage(root, data) {
     ${champ ? `<section class="l-sec proof-sec" id="proof"><i class="aura a3"></i><div class="l-wrap">
       <h2 class="rise">${leadA.submission_id === champ.winner ? `#${champ.winner} led the public split and held the sealed one.` : `#${leadA.submission_id} led the public split. #${champ.winner} won the sealed one.`}</h2>
       ${race(champ)}
-      <p class="body rise">Exhibit ${pad2(champ.task_id)}, read live. The sealed reading is the only one a model could not have been tuned against, so it decides.</p>
+      <p class="body rise">Exhibit ${pad2(champ.task_id)}, read live. Split B is the reading taken on rows no entrant has ever seen, so it decides.</p>
     </div></section>` : ""}
 
     <section class="l-sec sum-sec"><div class="l-wrap"><p class="sum" id="sum">${words.map((w) => Array.isArray(w) ? `<span class="w num">${w[1]}</span>` : w.split(" ").map((x) => `<span class="w">${x}</span>`).join(" ")).join(" ")}</p></div></section>

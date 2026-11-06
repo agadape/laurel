@@ -122,7 +122,7 @@ function Home() {
         <div className="c2"><Sec n="04" title="Method" /></div>
         <div className="c10 stack">
           <FlowDiagram />
-          <div className="flow"><span>submit a model as data</span><span className="arrow" aria-hidden="true">→</span><span>judged in a TEE by the pinned evaluator <span className="mono">{cfg.data ? shortHash(cfg.data.evaluator_hash) : "…"}</span></span><span className="arrow" aria-hidden="true">→</span><span>split A public, split B sealed until close</span><span className="arrow" aria-hidden="true">→</span><span>the champion serves <span className="mono">predict_task</span></span><a href="#/costs" className="mono">measured costs and guarantees →</a></div>
+          <div className="flow"><span>submit a model as data</span><span className="arrow" aria-hidden="true">→</span><span>judged in a TEE by the pinned evaluator <span className="mono">{cfg.data ? shortHash(cfg.data.evaluator_hash) : "…"}</span></span><span className="arrow" aria-hidden="true">→</span><span>split A public, split B withheld from the leaderboard until close</span><span className="arrow" aria-hidden="true">→</span><span>the champion serves <span className="mono">predict_task</span></span><a href="#/costs" className="mono">measured costs and guarantees →</a></div>
         </div>
       </section>
     </>
@@ -173,7 +173,7 @@ function Task({ id }) {
   const entriesA = rows.filter((r) => r.score_a_bps != null).map((r) => ({ id: r.submission_id, bps: r.score_a_bps, href: `#/model/${r.submission_id}`, label: `#${r.submission_id}${task.closed && r.submission_id !== task.winner && r.score_a_bps === bestA ? " · led" : ""}`, muted: task.closed && r.submission_id !== task.winner, accent: false }));
   const entriesB = rows.filter((r) => r.score_b_bps != null).map((r) => ({ id: r.submission_id, bps: r.score_b_bps, href: `#/model/${r.submission_id}`, label: r.submission_id === task.winner ? `#${r.submission_id} · champion` : `#${r.submission_id}`, accent: r.submission_id === task.winner, muted: r.submission_id !== task.winner }));
   const leadA = entriesA.slice().sort((a, b) => b.bps - a.bps)[0];
-  const sealedText = `sealed in the contract's leaderboard until ${fmtDate(task.deadline_ns)}`;
+  const sealedText = `withheld from the leaderboard until ${fmtDate(task.deadline_ns)}`;
   const one = rows.length === 1;
   const slopeEntries = rows.map((r) => ({ id: r.submission_id, a: r.score_a_bps, b: r.score_b_bps }));
   return (
@@ -199,7 +199,7 @@ function Task({ id }) {
           {task.closed && <Slopegraph entries={slopeEntries} winner={task.winner} drawn={revealed} />}
           <Scale variant="b" title={<><b className="accent-text">Split B</b> · observed once at close · decides the champion</>} note={task.closed ? `unsealed ${fmtDate(task.deadline_ns)}` : <Countdown ns={task.deadline_ns} />} entries={entriesB} sealed={task.closed ? null : sealedText} reveal={task.closed} onRevealed={() => setRevealed(true)} />
           {task.closed && champ && leadA && leadA.id !== champ.submission_id && (
-            <p className="ink2" style={{ fontSize: 15, maxWidth: 760 }}>The lines cross: #{leadA.id} led the public split, #{champ.submission_id} the sealed one, and the sealed reading is the only one a model could not have been tuned against, so it decides.</p>
+            <p className="ink2" style={{ fontSize: 15, maxWidth: 760 }}>The lines cross: #{leadA.id} led the public split, #{champ.submission_id} the sealed one, and split B is the reading taken on rows no entrant has ever seen, so it decides.</p>
           )}
           {!task.closed && <p className="ink2" style={{ fontSize: 15, maxWidth: 760 }}>Split A is the public reading. Split B is scored at the same time, but the leaderboard withholds it until the deadline passes and someone calls <span className="mono">close_task</span>; the champion is the best split-B reading.</p>}
         </div>
@@ -295,9 +295,9 @@ function Model({ id }) {
   const isChamp = !!task?.closed && task.winner === sub.submission_id;
   // split B is shown only once the task is closed, whatever the submission view returns
   const bVisible = sub.score_b_bps != null && !!task?.closed;
-  const rawShown = raw && !bVisible ? { ...raw, b: "sealed until the exhibit closes" } : raw;
+  const rawShown = raw && !bVisible ? { ...raw, b: "withheld until the exhibit closes" } : raw;
   const st = statusText(sub.status);
-  const sealedLine = task ? `sealed in the leaderboard until ${fmtDate(task.deadline_ns)}` : "sealed until the exhibit closes";
+  const sealedLine = task ? `withheld from the leaderboard until ${fmtDate(task.deadline_ns)}` : "withheld until the exhibit closes";
   return (
     <>
       <section className="block wrap g12" style={{ alignItems: "end" }}>
@@ -385,7 +385,7 @@ function Model({ id }) {
 }
 
 // ---------- Method / costs ----------
-const STAGES = ["submit as data", "validate", "request_score", "TEE evaluator", "A public · B sealed", "close → champion", "predict_task"];
+const STAGES = ["submit as data", "validate", "request_score", "TEE evaluator", "A public · B withheld", "close → champion", "predict_task"];
 function FlowDiagram() {
   return (
     <>
@@ -445,7 +445,7 @@ function Costs() {
           <li>The scoring evaluator is fixed by the contract (hash pinned by the owner), not chosen by participants. The secret opens only for that hash: any other build gets <span className="mono">TEST_SET_A missing</span> (tested 2 Nov).</li>
           <li>The model runs inside NEAR consensus: <span className="mono">predict</span> results are identical to the evaluator and to Python, vector by vector.</li>
           <li>The agent uses a function-call key: the protocol rejects <span className="mono">withdraw_credit</span>, deposits, other contracts and transfers from that key (see <span className="mono">docs/AGENT.md</span>).</li>
-          <li><b>Not guaranteed:</b> Sybil resistance (only the 3-per-account quota + submission fee), secrecy of split-B scores from OutLayer logs or from the <span className="mono">get_submission</span> view (the leaderboard withholds them; this site withholds them too), and secrecy of a dataset that is public anyway (both datasets are public: the private split protects against overfitting through feedback, not against downloading the original data).</li>
+          <li><b>Not guaranteed:</b> Sybil resistance (only the 3-per-account quota + submission fee), secrecy of split-B scores while a task is open: they are readable through the <span className="mono">get_submission</span> / <span className="mono">list_submissions</span> views and the OutLayer receipt of every <span className="mono">request_score</span> transaction (the leaderboard withholds them, and so do this site and the MCP tools; what stays sealed are the rows), and secrecy of a dataset that is public anyway (both datasets are public: the private split keeps the test rows out of training, not the original data out of reach).</li>
           <li>Two datasets. <b>UCI German Credit</b> (1994, Germany) is used as a <b>simulation</b>; this is not a tool for scoring real people's credit. <b>NEAR mainnet account retention</b> (exhibit 05) is real on-chain data: fresh <span className="mono">.near</span> accounts' first seven days, from the public BigQuery dataset (<a href={`${REPO}/blob/main/tasks/near-retention/README.md`} target="_blank" rel="noreferrer" className="mono">tasks/near-retention</a>).</li>
         </ul>
       </section>

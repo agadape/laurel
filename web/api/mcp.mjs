@@ -34,15 +34,15 @@ async function specimen(submission_id) {
   const task = await view("get_task", { task_id: sub.task_id });
   if (!task?.closed) {
     sub.score_b_bps = null; sub.f1_b_bps = null;
-    try { const raw = JSON.parse(sub.last_outlayer_raw); if (raw && "b" in raw) { raw.b = "sealed until the task closes"; sub.last_outlayer_raw = JSON.stringify(raw); } } catch {}
-    sub.split_b = "sealed until the task closes";
+    try { const raw = JSON.parse(sub.last_outlayer_raw); if (raw && "b" in raw) { raw.b = "withheld until the task closes"; sub.last_outlayer_raw = JSON.stringify(raw); } } catch {}
+    sub.split_b = "withheld until the task closes";
   }
   return { ...sub, task_closed: !!task?.closed, champion: !!task?.closed && task.winner === submission_id };
 }
 
 function buildServer() {
   const server = new McpServer({ name: "laurel", version: "0.1.0" }, {
-    instructions: `Laurel is a registry contract on NEAR testnet (${CONTRACT}) where small gradient-boosted-tree models are submitted as data, scored inside a TEE on a sealed private test set (split A public while a task is open, split B revealed only at close), and the champion is served on-chain through predict_task. This remote endpoint is read-only: list exhibits, read a leaderboard or a specimen, fetch a model's bytes, and run a model with the contract's integer arithmetic. To call the champion on-chain (predict_task) install the npm package laurel-mcp with a NEAR key. Features are integers in the task's feature order; a raw score > 0 means the positive class (credit-risk demo: 1 = bad credit).`,
+    instructions: `Laurel is a registry contract on NEAR testnet (${CONTRACT}) where small gradient-boosted-tree models are submitted as data, scored inside a TEE on a sealed private test set (split A public while a task is open; split B's rows never leave the enclave and its score is withheld from the leaderboard until close), and the champion is served on-chain through predict_task. This remote endpoint is read-only: list exhibits, read a leaderboard or a specimen, fetch a model's bytes, and run a model with the contract's integer arithmetic. To call the champion on-chain (predict_task) install the npm package laurel-mcp with a NEAR key. Features are integers in the task's feature order; a raw score > 0 means the positive class (credit-risk demo: 1 = bad credit).`,
   });
   server.tool("laurel_list_exhibits", "List the tasks (exhibits) on the Laurel contract with their state, deadline and entrant count.", {}, async () => {
     const tasks = await view("list_tasks", { from: 0, limit: 50 });
@@ -52,7 +52,7 @@ function buildServer() {
     const task = await view("get_task", { task_id });
     if (!task) return fail(`no task ${task_id} on ${CONTRACT}`);
     const leaderboard = await view("leaderboard", { task_id });
-    return text({ task, leaderboard, note: task.closed ? `closed; champion #${task.winner} serves predict_task(${task_id}, features)` : "open; split B is sealed in the contract's leaderboard until the deadline passes and close_task is called" });
+    return text({ task, leaderboard, note: task.closed ? `closed; champion #${task.winner} serves predict_task(${task_id}, features)` : "open; split B is withheld from the contract's leaderboard until the deadline passes and close_task is called" });
   });
   server.tool("laurel_specimen", "One submitted model: owner, size, status, split-A reading, evaluator record, calls served. Split B only when its task is closed.", { submission_id: z.number().int().positive() }, async ({ submission_id }) => {
     const s = await specimen(submission_id);

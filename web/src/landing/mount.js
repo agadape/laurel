@@ -66,7 +66,7 @@ root.innerHTML = `<a class="skip" href="#exhibits">Skip to exhibits</a>
       <div class="say scene-c" id="c"><h1 aria-label="Models, observed."></h1><p class="sub">An observatory of small models.</p></div>
       <span class="scroll-hint" id="hint">Scroll</span>
       <div class="say scene-wall" id="wall">
-        <div class="tally"><span><b id="n-checked">0</b>trees read</span><span class="blue"><b id="n-blue">0</b>champion</span><span class="orange"><b id="n-orange">0</b>still sealed</span></div>
+        <div class="tally"><span><b id="n-checked">0</b>trees read</span><span class="blue"><b id="n-blue">0</b>champion</span><span class="orange"><b id="n-orange">0</b>awaiting close</span></div>
         <p>Not an illustration: each pane is one decision tree, decoded from the bytes the contract stores. Each star is one of its leaves.</p>
       </div>
       <i class="stage-fade" id="sfade"></i>
