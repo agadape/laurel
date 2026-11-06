@@ -67,10 +67,10 @@ export function Lanes({ rows, closed, winner }) {
   const final = closed && stage === "b";
   const leadA = list[0];
   const win = list.find((r) => r.id === winner);
-  const title = !closed ? "Public split" : final ? "Split B, revealed at close" : stage === "seal" ? "Split B" : "Public split";
+  const title = !closed ? "Live score" : final ? "Final score" : stage === "seal" ? "Final score" : "Live score";
   const note = final && leadA && win
     ? (leadA.id === win.id ? `#${win.id} led the public split and kept the laurel.` : `#${leadA.id} fell ${pct(leadA.a - leadA.b)} points. #${win.id} fell ${pct(win.a - win.b)} and took the laurel.`)
-    : !closed ? "balanced accuracy on the public split, judged in the TEE" : "";
+    : !closed ? "the final score picks the winner at close" : "";
   if (!list.length) return <div className="x-race" ref={ref}><p className="x-mut">No entry has been scored yet.</p></div>;
   return (
     <div className={`x-race ${closed ? "closed" : "open"} st-${stage}`} ref={ref}>
@@ -89,7 +89,7 @@ export function Lanes({ rows, closed, winner }) {
                 {(closed ? r.id === (final ? winner : leadA.id) : r.id === leadA.id) && stage !== "idle" && <span className="x-crown" style={{ left: `${X(v) * 100}%` }}><LaurelIcon /></span>}
               </span>
               <b className="val">{stage === "idle" ? "—" : pct(v)}</b>
-              {!closed && <span className="x-hatch"><em>Withheld</em></span>}
+              {!closed && <span className="x-hatch"><em>Final at close</em></span>}
             </a>
           );
         })}
@@ -194,7 +194,7 @@ export function TreeExplorer({ model, featureNames = [], accent = false }) {
       <p className="x-rule" aria-live="polite">
         {leaf
           ? <>Tree {t + 1}: {rule.length ? rule.join(", then ") : "a single leaf"} → adds <b className={leaf.value >= 0 ? "pos" : "neg"}>{leafText(leaf.value)}</b> to the score{leaf.value >= 0 ? " (toward the positive class)" : ""}.</>
-          : <>Tree {t + 1} of {model.trees.length}: {leaves.length} leaves, depth {L.depth}. A call starts at the top and goes left when the feature is at most the threshold. Point at a leaf to read its rule.</>}
+          : <>Tree {t + 1} of {model.trees.length}. Point at a dot at the bottom to read its rule.</>}
       </p>
     </div>
   );
@@ -231,14 +231,14 @@ export function CostBars({ rows }) {
 }
 
 const STATIONS = [
-  ["Submit as data", "A few kilobytes of integers, stored by the contract. No server."],
-  ["Validated", "Size, tree count, child order and feature range are checked on-chain."],
-  ["request_score", "The contract asks OutLayer to run the evaluator whose hash it pinned."],
-  ["Judged in the TEE", "The evaluator reads the model through RPC and scores both private splits inside the enclave."],
-  ["A public, B withheld", "Split A shows on the leaderboard at once; split B is withheld until close."],
-  ["Close", "After the deadline anyone calls close_task; the best split B becomes the champion."],
-  ["predict_task", "Agents and contracts call the champion and pay its owner per call."],
-];
+  ["Submit", "A few KB of integers, stored on-chain."],
+  ["Validate", "Size and structure checked by the contract."],
+  ["Request score", "The contract calls OutLayer."],
+  ["Judged in the TEE", "Scored on hidden rows, inside the enclave."],
+  ["Live score", "Shown at once; the final score waits."],
+  ["Close", "Best final score wins."],
+  ["Paid per call", "Agents call the winner and pay its owner."],
+]
 
 /** The path a model travels, with a light that keeps moving along it. */
 export function Journey() {
@@ -254,3 +254,45 @@ export function Journey() {
     </ol>
   );
 }
+
+// ---------- plain-language visuals ----------
+
+const ICONS = {
+  model: <svg viewBox="0 0 48 48" aria-hidden="true"><g fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="24" cy="9" r="3.5" /><circle cx="13" cy="24" r="3" /><circle cx="35" cy="24" r="3" /><circle cx="7" cy="39" r="2.5" /><circle cx="19" cy="39" r="2.5" /><circle cx="29" cy="39" r="2.5" /><circle cx="41" cy="39" r="2.5" /><path d="M22 12l-7 9M26 12l7 9M11.5 27l-3.5 9.5M14.5 27l3.5 9.5M33.5 27l-3.5 9.5M36.5 27l3.5 9.5" /></g></svg>,
+  judge: <svg viewBox="0 0 48 48" aria-hidden="true"><g fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round"><rect x="8" y="20" width="32" height="22" rx="4" /><path d="M16 20v-6a8 8 0 0 1 16 0v6" /><circle cx="24" cy="31" r="3" /><path d="M24 34v3" strokeLinecap="round" /></g></svg>,
+  paid: <svg viewBox="0 0 48 48" aria-hidden="true"><g fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="24" cy="24" r="16" /><path d="M18 31V17l12 14V17" /></g></svg>,
+};
+
+/** What Laurel is, for someone who has never heard of it: three pictures, a few words each. */
+export function Explainer() {
+  const steps = [
+    ["model", "Submit a model", "A small AI model, uploaded as a few KB of data."],
+    ["judge", "Judged in secret", "Scored on test rows nobody can see."],
+    ["paid", "Paid per use", "Apps and agents pay the winner on every call."],
+  ];
+  return (
+    <ol className="x-explain">
+      {steps.map(([k, h, p], i) => (
+        <li key={k} className={k}>
+          <span className="ic">{ICONS[k]}</span>
+          <b>{h}</b>
+          <span className="x-mut">{p}</span>
+          {i < 2 && <i className="arrow" aria-hidden="true">→</i>}
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+/** A row of short facts as chips. items: [text, kind?] */
+export const Facts = ({ items }) => (
+  <ul className="x-facts">{items.filter(Boolean).map(([t, k], i) => <li key={i} className={k || ""}>{t}</li>)}</ul>
+);
+
+/** Key for the two scores. */
+export const ScoreKey = () => (
+  <div className="x-key">
+    <span><i className="live" />Live score: shown while the contest is open</span>
+    <span><i className="final" />Final score: revealed at close, picks the winner</span>
+  </div>
+);

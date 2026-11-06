@@ -177,7 +177,7 @@ export function Slopegraph({ entries, winner, drawn = true }) {
 
 /** One dot per test row, ordered by true class: filled = actually positive, ring = actually negative, orange = misjudged.
  *  `counts` null → ghost plate with `ghostText` (loading, sealed, or failed with `onRetry`). */
-export function DotPlate({ counts, caption, ghost = 150, ghostText, onRetry }) {
+export function DotPlate({ counts, caption, ghost = 150, ghostText, onRetry, compact = false }) {
   if (!counts) {
     return (
       <div className="stack" style={{ gap: 6 }}>
@@ -193,8 +193,11 @@ export function DotPlate({ counts, caption, ghost = 150, ghostText, onRetry }) {
     <div className="stack" style={{ gap: 6 }}>
       {caption && <div className="label">{caption}</div>}
       <div className="dots" role="img" aria-label={`${n} rows: ${counts.tp} true positive, ${counts.fn} missed positive, ${counts.tn} true negative, ${counts.fp} false alarm`}>{dots.map((c, i) => <i key={i} className={c} />)}</div>
+      {compact ? <div className="x-wrong"><b>{wrong}</b> of {n} rows wrong</div> : <>
+      <div className="x-wrong"><b>{wrong}</b> of {n} rows wrong</div>
       <div className="mono ink2">tp {counts.tp} · fn {counts.fn} · tn {counts.tn} · fp {counts.fp} → bal. acc. {bps(counts.bal_acc_bps)}{counts.f1_bps != null && <> · F1 {bps(counts.f1_bps)}</>} · {wrong} of {n} misjudged</div>
       <div className="mono mist key"><i className="pos" /> actually positive <i className="neg" /> actually negative <i className="pos x" /> misjudged</div>
+      </>}
     </div>
   );
 }

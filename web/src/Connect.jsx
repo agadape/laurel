@@ -107,7 +107,7 @@ export default function Connect() {
       <section className="block wrap g12" style={{ alignItems: "end" }}>
         <div className="c8 stack" style={{ gap: 12 }}>
           <h1 className="h2">Give the models to your agent.</h1>
-          <p className="ink2" style={{ maxWidth: 640 }}>Three steps: buy prediction credit with NEAR, give your agent a key that can only spend it on predictions, and plug Laurel into your agent through <a href="https://modelcontextprotocol.io" target="_blank" rel="noreferrer">MCP</a>. Browsing is free and needs no wallet; only predictions are paid, and every payment goes to the model's owner.</p>
+          <p className="x-lede">Three steps. Browsing stays free; only predictions are paid.</p>
         </div>
         <div className="c4 stack" style={{ gap: 6 }}>
           <span className="label">operating system</span>
@@ -133,10 +133,10 @@ export default function Connect() {
         <div className="step">
           <span className="num" aria-hidden="true">2</span>
           <div className="stack" style={{ gap: 10 }}>
-            <h3>A key your agent can only spend on predictions</h3>
-            <p className="ink2">Add a <b>function-call access key</b> to your account that is limited to <span className="mono">predict_task</span> and <span className="mono">predict</span> on <span className="mono">{C}</span>. The NEAR protocol itself rejects anything else from that key: no transfers, no withdrawals, no other contracts. Give that key to your agent, never your full-access key.</p>
+            <h3>Give your agent a key that can only buy predictions</h3>
+            <p className="ink2">NEAR itself blocks everything else from this key: no transfers, no withdrawals.</p>
             <Cmd>{`near account add-key <your account> grant-function-call-access --allowance '1 NEAR' --receiver-account-id ${C} --method-names 'predict_task,predict' autogenerate-new-keypair save-to-keychain network-config testnet sign-with-keychain send`}</Cmd>
-            <p className="mist">near-cli-rs prints the new key pair; the private part is what you put in <span className="mono">LAUREL_PRIVATE_KEY</span>. The repo's <span className="mono">tools/agent.mjs</span> does the same programmatically and proves the four protocol rejections (<a href="https://github.com/agadape/laurel/blob/main/docs/AGENT.md" target="_blank" rel="noreferrer">docs/AGENT.md</a>).</p>
+            <details><summary>More about this key</summary><p className="mist" style={{ marginTop: 8 }}>A function-call access key limited to <span className="mono">predict_task</span> and <span className="mono">predict</span> on <span className="mono">{C}</span>. near-cli-rs prints the key pair; put the private part in <span className="mono">LAUREL_PRIVATE_KEY</span>. <span className="mono">tools/agent.mjs</span> does the same and proves the protocol rejections (<a href="https://github.com/agadape/laurel/blob/main/docs/AGENT.md" target="_blank" rel="noreferrer">docs/AGENT.md</a>).</p></details>
           </div>
         </div>
 
@@ -155,9 +155,9 @@ export default function Connect() {
       <section className="block wrap">
         <h2 className="x-sec">What to ask</h2>
         <div className="stack" style={{ gap: 16 }}>
-          <p className="ink2">Once connected, your agent has seven tools (five on the remote endpoint). Tap a question to copy it:</p>
+          <p className="ink2">Tap a question to copy it, then ask your agent.</p>
           <ul className="x-asks">{ASKS.map((q) => <li key={q}><Ask q={q} /></li>)}</ul>
-          <p className="mist">Tools: <span className="mono">laurel_list_exhibits · laurel_exhibit · laurel_specimen · laurel_download_model · laurel_predict_local</span> (remote and local) · <span className="mono">laurel_credit · laurel_predict</span> (local package with a key). Split B of an open exhibit is withheld by the tools, like on this site. Package: <a href="https://www.npmjs.com/package/laurel-mcp" target="_blank" rel="noreferrer">laurel-mcp on npm</a> · source in <a href="https://github.com/agadape/laurel/tree/main/mcp" target="_blank" rel="noreferrer">mcp/</a>.</p>
+          <details><summary>All tools</summary><p className="mist" style={{ marginTop: 8 }}><span className="mono">laurel_list_exhibits · laurel_exhibit · laurel_specimen · laurel_download_model · laurel_predict_local</span> (remote and local) · <span className="mono">laurel_credit · laurel_predict</span> (local package with a key). Split B of an open exhibit is withheld by the tools, like on this site. Package: <a href="https://www.npmjs.com/package/laurel-mcp" target="_blank" rel="noreferrer">laurel-mcp on npm</a> · source in <a href="https://github.com/agadape/laurel/tree/main/mcp" target="_blank" rel="noreferrer">mcp/</a>.</p></details>
         </div>
       </section>
     </>
