@@ -1,6 +1,6 @@
 # Laurel — audit brief for an external model (built for Gemini)
 
-Generated 2026-11-06 06:49 UTC from the repository at commit `d76be7e` (https://github.com/agadape/laurel).
+Generated 2026-11-06 07:53 UTC from the repository at commit `5574bbb` (https://github.com/agadape/laurel).
 This single file contains everything: who we are, what we built, every claim we make, the whole source of the pieces
 that matter, and what we want from you. You do not need the repository; you do need the web.
 
@@ -62,7 +62,7 @@ Where you could not verify something, say "could not verify" instead of guessing
   u32 n_trees, per tree u32 n_nodes, per node (u16 feature, i64 threshold, u16 left, u16 right, i64 value)`, leaf =
   left == right == 0xFFFF, walk `x[feature] <= threshold ? left : right`, raw score = bias + one leaf per tree,
   label 1 iff raw > 0. The same arithmetic runs in the contract (`crates/gbdt-core`), in the evaluator, in Python
-  (`tools/export.py`) and in JS (`mcp/gbdt.mjs`, `web/src/model.js`).
+  (`tools/export.py`) and in JS (`mcp/gbdt.mjs`, BigInt). `web/src/model.js` only decodes the borsh trees for drawing.
 - **Metric:** balanced accuracy in basis points, integer arithmetic, rounded down to 50 bps; F1 shown, not used for ranking.
   Split A is public while a task is open; split B is sealed in the leaderboard until `close_task` and alone decides.
 - **Economics:** submission fee (0.1 NEAR) to the task creator; storage paid by the submitter; `request_score` deposits
@@ -77,7 +77,7 @@ Where you could not verify something, say "could not verify" instead of guessing
 ```json
 {
   "contract": "laurel.laurel-team-mw0x0c8g.testnet",
-  "read_at": "2026-11-06T06:49:44.379Z",
+  "read_at": "2026-11-06T07:53:51.270Z",
   "evaluator": [
     "https://nh-spike-wasm.vercel.app/8b80010fc79259c9f5d95183a660e79ad7a450fdfceed3e8ce0924f296b60ac3.wasm",
     "8b80010fc79259c9f5d95183a660e79ad7a450fdfceed3e8ce0924f296b60ac3"
@@ -247,6 +247,16 @@ Where you could not verify something, say "could not verify" instead of guessing
           "calls": 0
         },
         {
+          "id": 12,
+          "owner": "maker.laurel-team-mw0x0c8g.testnet",
+          "bytes": 6307,
+          "trees": 40,
+          "score_a_bps": 8300,
+          "score_b_bps": null,
+          "status": "Scored",
+          "calls": 0
+        },
+        {
           "id": 9,
           "owner": "laurel-team-mw0x0c8g.testnet",
           "bytes": 32087,
@@ -275,6 +285,7 @@ Where you could not verify something, say "could not verify" instead of guessing
 ## 3. Recent commits
 
 ```
+5574bbb 2026-11-06 docs/audit: single-file audit brief for an external model (Gemini), with its builder
 d76be7e 2026-11-06 Web: Dex's landing and dark theme, with escaped contract values and a labelled snapshot fallback
 6f39efd 2026-11-06 README: show the walkthrough GIF at the top and the architecture diagram under How it works
 6058156 2026-11-06 README: architecture diagram (SVG) and a 20-second walkthrough GIF of the live site
@@ -299,7 +310,6 @@ acb89be 2026-11-05 Project .mcp.json for Claude Code (env placeholders, no secre
 dbd6b66 2026-11-05 laurel-mcp: MCP server so AI agents can use the model (browse, download, run locally, predict on-chain)
 f6f468b 2026-11-05 Web: signatures from 4 large trees (index) and 8 (specimens); type scale collapsed to 12Â·13Â·15Â·17Â·20Â·26Â·34Â·54Â·76
 50b9773 2026-11-05 Web: pass-2 audit fixes (docs/audit/*_2.md)
-d50f264 2026-11-04 Web: fix the audit findings (docs/audit/), web only
 ```
 
 ## 4. Repository map
@@ -351,7 +361,7 @@ SPIKE_LOG.md              the spikes that de-risked each piece before building
 | **What Laurel does** | A registry contract where anyone publishes a *task* with a private test set and anyone submits a small gradient-boosted-tree model **as data**. An OutLayer TEE worker scores each model on two private splits that only the contract's pinned evaluator can read. Split A is public while the task is open; split B stays sealed until close and alone picks the champion. The champion is then served by the contract itself: `predict_task(task_id, features)` runs the model inside NEAR consensus and pays a fee to the model's owner. |
 | **Who uses it** | **Model makers** compete and earn per call. **AI agents** call the champion with a function-call key that the protocol limits to prediction. **Contracts** call it through a promise, like any other contract method. |
 | **Tasks** | Two datasets. **NEAR account retention** ([tasks/near-retention](tasks/near-retention/README.md)): real mainnet data, 22 integer features from a fresh `.near` account's first 7 days, label `1 = still acting between day 30 and day 90`; the private rows are accounts nobody can look up. **Credit risk** on UCI German Credit (**simulation only**, see Limits): 18 features, label `1 = bad`. Both: balanced accuracy, 150 private rows per split. |
-| **What is live (5 Nov 2026)** | 5 tasks and 9 submitted models on the final contract. Task 3 (credit risk) is closed: #5 led the public split (75.50 %), #4 won the sealed split (66.50 %) and became champion; #4 has served 19 paid predictions (0.019 NEAR to its owner). Task 5 (NEAR account retention, mainnet data) is open until 2026-11-12 12:00 UTC with three TEE-scored entries (83.50 / 82.50 / 82.00 % on split A, the smallest model leading); task 4 is open until 2026-11-25. Anyone can enter either. |
+| **What is live (6 Nov 2026)** | 5 tasks and 12 submitted models on the final contract. Task 3 (credit risk) is closed: #5 led the public split (75.50 %), #4 won the sealed split (66.50 %) and became champion; #4 has served 19 paid predictions (0.019 NEAR to its owner). Task 5 (NEAR account retention, mainnet data) is open until 2026-11-12 12:00 UTC with six TEE-scored entries (83.50 / 83.50 / 83.00 / 83.00 / 82.50 / 82.00 % on split A; the two leaders are the 1.6 KB baseline and the autonomous agent's 3 KB entry #10, #11 came from the one-command quickstart, #12 from the agent re-run after audit 2); task 4 is open until 2026-11-25. Anyone can enter either. |
 | **Cost of one prediction** | 4.3 Tgas for a 33 KB, 50-tree model (≈ 0.0005 NEAR of gas) plus the task's 0.001 NEAR fee. |
 
 ### Why on NEAR
@@ -497,7 +507,7 @@ A model that wins a task is **paid per prediction, in NEAR, on-chain**: the task
 
 The website is the surface for it: the landing page shows the live economics (calls served, earnings, gas per prediction); with a **NEAR wallet sign-in** (Meteor, Intear, Nightly; testnet) the site can *buy prediction credit* and withdraw credit or earnings; and the **Connect** page turns it into three steps: buy credit → give your agent a function-call key limited to `predict_task` (the "licence key": the protocol rejects everything else from it) → plug Laurel into the agent through MCP. Browsing the landing page, the explorer and the remote MCP endpoint is free and needs no wallet; only predictions are paid. First browser purchase: tx [`4YHqm8GP…`](https://testnet.nearblocks.io/txns/4YHqm8GPUpv6kvMSiBzUP3UwTnhLoWp6tK3BoKrj8rfd) (0.05 NEAR of credit via Meteor Wallet, 5 Nov).
 
-**Not built, on purpose (phase 2 after the hackathon):** a price per model set by its owner (today the fee is per task), delegated spending so a hosted service can bill a user's credit, and on-chain licences. Model bytes are public by design (`get_model_bytes`): what is sold is the verified prediction, not the file.
+**Not built, on purpose (phase 2 after the hackathon):** a price per model set by its owner (today the fee is per task), delegated spending so a hosted service can bill a user's credit, and on-chain licences. Model bytes are public by design (`get_model_bytes`): what is sold is a prediction computed in consensus with a public record, not the file: an off-chain agent can and should run the bytes locally for free (`laurel_predict_local`) and pays only when it needs an on-chain receipt, while another contract has no choice, because it cannot trust a score a caller computed off-chain.
 
 ### Security model and trust boundaries
 
@@ -514,6 +524,9 @@ What an attacker would try, and what stops it today. "Protocol" means NEAR itsel
 | Change the winner after the fact | `close_task` is permissionless and deterministic: best split-B score, ties to the earlier submission; it runs once | `close_task`, unit tests |
 | Spend from the agent's account | The agent's key is a function-call key limited to `predict_task`/`predict` on this contract with a gas allowance: the protocol rejects transfers, deposits, other methods and other contracts before any contract code runs (capability-based authorization at the protocol level) | docs/AGENT.md |
 | Drain prediction credit | Credit is per account, debited only by that account's own calls, withdrawable only by its owner | `deposit_credit`, `withdraw_credit` |
+| Read split B of an open task | **Not prevented in v1.** `leaderboard`, the site and the MCP tools withhold split B until close, but the contract's `get_submission` / `list_submissions` views return `score_b_bps`, `f1_b_bps` and `last_outlayer_raw` as soon as `on_score` stores them, and the OutLayer log is public. Sealing is a view-layer rule today; the fix (score B in a second TEE run, or return it encrypted to a key revealed at close) needs a contract change we did not make before the freeze | `get_submission`, `on_score` |
+| Drain an agent's credit with a hostile task | **Partly open.** `create_task` is permissionless and puts no ceiling on `fee_per_call`; credit is one balance per account across all tasks; a function-call key limits the *method*, not its arguments. An agent that can be talked into calling `predict`/`predict_task` on a stranger's submission pays that task's fee. Mitigations today: keep little credit on an agent account, or route calls through your own contract that hard-codes the task (as `credit-desk` does) | `create_task`, `predict`, docs/CONSUMER.md |
+| Close a task while a rival's score is in flight | **Edge case, documented.** `close_task` is callable the moment the deadline passes and does not wait for `Pending` submissions; `request_score` is allowed until the task is closed and `on_score` still records a late result. A score requested seconds before the deadline can settle after the winner is fixed and show a higher split B than the champion. Entries should be scored well before the deadline | `close_task`, `on_score` |
 
 What is **not** guaranteed, stated plainly: the contract trusts what `outlayer.testnet` returns (it verifies no TDX attestation itself; attestation is OutLayer's, bound to the wasm hash, inputs and outputs of each run); the dataset commitment (`tasks/german-credit/private_manifest.json`, sha256 of both private splits) lives in the repo, not on-chain; the owner can pin a different evaluator for future scoring; a public dataset can be trained on in full; no Sybil resistance beyond quota and cost.
 
@@ -608,7 +621,7 @@ Line numbers refer to the files at the hackathon submission commit (re-checked 4
 | 22 | The site lets a NEAR wallet buy prediction credit and withdraw credit/earnings (Meteor, Intear, Nightly; testnet) | `web/src/wallet.js` (wallet-selector, lazy-loaded; `deposit_credit`, `withdraw_credit`, `withdraw_earnings`), `web/src/Account.jsx`, `web/src/Connect.jsx` | browser-signed on 5 Nov 2026 from a team member's own testnet account through Meteor Wallet: `deposit_credit` 0.05 NEAR, tx `4YHqm8GPUpv6kvMSiBzUP3UwTnhLoWp6tK3BoKrj8rfd` (signer `smoothicon6710.testnet`, 2.07 Tgas, event `credit_deposited`, resulting credit 0.04917 NEAR after the credit-entry storage); the same methods are exercised by `tools/predict.mjs --deposit` and `tools/e2e.mjs` (docs/E2E.md step `withdraw_earnings`) |
 | 23 | A second task runs on **real NEAR mainnet data**: account retention, 22 integer features from a `.near` account's first 7 days, label = initiated an action between day 30 and day 90; population 4,407 activated accounts out of 43,927 registrar creations (8 Jun to 2 Aug 2026), sample 1,250, private splits 2 × 150 whose account ids are never published | `tasks/near-retention/sql/build_tables.sql` (BigQuery `bigquery-public-data.crypto_near_mainnet_us`), `fetch.py`, `build.py`, `features.json`, `private_manifest.json` (sha256 of the private files), `population.json` | task 5 `near-retention` on the final contract, `create_task` tx [`8jvk2PuJ…`](https://testnet.nearblocks.io/txns/8jvk2PuJJH2HF2UTue1APsrpMJ4H1BbdfHCkdtJSsFYJ) (5 Nov 2026, deadline 2026-11-12 12:00 UTC, `secrets_account` `nh-spike-mvp62mw4.testnet`, profile `near-retention`); secrets stored with `tools/secrets.sh` bound to evaluator `8b80010f…` |
 | 24 | Three models for task 5 were scored by the pinned evaluator inside OutLayer's TEE and the split-A readings equal the local evaluator run (wasmtime, same wasm) to the point: #7 (p1, 10 trees, 1,611 B) 8350 bps, #9 (team, 50 trees, 32,087 B) 8250 bps, #8 (p2, 30 trees, 10,051 B) 8200 bps; `scored_by` = `8b80010f…` on all three | `tools/submit.mjs`, `tools/eval_local.sh`, `tasks/near-retention/README.md` (results table) | `submit_model` / `request_score` txs: #7 [`Eft3TNRZ…`](https://testnet.nearblocks.io/txns/Eft3TNRZKqPKYvCDfypCXspDBgXcEcamPJsF1VLULwVr) / [`9Qiv5T7F…`](https://testnet.nearblocks.io/txns/9Qiv5T7FZ31ctoLfgVDrERX3GVwHsJ1mXWLiJUhSxeRp), #8 [`AurSmaL8…`](https://testnet.nearblocks.io/txns/AurSmaL8wNdfgMaRL8E2oxfZKDxS4PftMYkpHUikazxp) / [`8K5wJZvA…`](https://testnet.nearblocks.io/txns/8K5wJZvALwfRYw9QykULuTNcWsJDL14AH7177z2mH1PY), #9 [`GWxaZBK7…`](https://testnet.nearblocks.io/txns/GWxaZBK7opVfVYtHV8XwzyC2mUxmoArr8v1oyUFvatpo) / [`6GZNgJey…`](https://testnet.nearblocks.io/txns/6GZNgJeyJmhWaBf6ydP7pzzLvyp8vmostEbG5SJRbLwA); `leaderboard {task_id: 5}` and `get_submission` on `laurel.laurel-team-mw0x0c8g.testnet`; OutLayer execution blocks 276341818 / 276341861 / 276341893 (field `block` of `last_outlayer_raw`) |
-| 25 | Two autonomous agents built on the Claude Agent SDK use Laurel with no human in the loop: a **competitor** (account `maker.laurel-team-mw0x0c8g.testnet`, full-access key held only by the MCP subprocess) read exhibit 05, cross-validated 72 small GBDT configurations on the public rows, trained a 20 × depth-2 model (3,059 B), exported it with `tools/export.py`, entered it through `laurel_submit_model` and got **8350 bps on split A from the TEE** (submission #10, level with the leader), then declined its two remaining entries as noise-fitting; a **caller** (account `agent.laurel-team-mw0x0c8g.testnet`, function-call key limited to `predict`/`predict_task`) scored 3 holdout rows with #10 locally and on-chain with identical raw scores, 2.69 to 2.71 Tgas and 0.001 NEAR per call | `agents/competitor.mjs`, `agents/caller.mjs` (`canUseTool` policy, `permissionMode: default`, no bypass), `mcp/server.mjs` (`laurel_submit_model`, `laurel_wait_score`, `laurel_predict_model`), `tools/make_account.mjs` | transcripts `agents/out/competitor-2026-11-05T13-53-49.md` (+ `.jsonl`), `agents/out/caller-2026-11-05T13-57-13.md`; `submit_model` [`Hfv5cYC1…`](https://testnet.nearblocks.io/txns/Hfv5cYC1heKdf44SjKWrSwjZaEgkhjqSjYz3FTamJdW6), `request_score` [`2FcjpdGr…`](https://testnet.nearblocks.io/txns/2FcjpdGrxvteUucXm6LktstGCAThf3ZvBjBMzdrCKTPB), `predict` × 3 [`GAJmtrGQ…`](https://testnet.nearblocks.io/txns/GAJmtrGQhzuKF13iRtraa4kgQGyn5yUDVWKJ8se75j7N) [`5DPbPMtM…`](https://testnet.nearblocks.io/txns/5DPbPMtM833WCZkp8cZDtHMeeXZs2VvPuFeaTfQK8s8U) [`DiYjyuEX…`](https://testnet.nearblocks.io/txns/DiYjyuEXfyvYW1hfnPa4XSvDPsJNA9yd38phyfksaEhc); `get_submission {submission_id: 10}` (owner maker, `scored_by` `8b80010f…`); the first run (`competitor-2026-11-05T13-49-26.md`) was blocked by a policy bug and entered nothing, documented in [docs/AGENTS.md](docs/AGENTS.md) |
+| 25 | Two autonomous agents built on the Claude Agent SDK use Laurel with no human in the loop: a **competitor** (account `maker.laurel-team-mw0x0c8g.testnet`, full-access key held only by the MCP subprocess) read exhibit 05, cross-validated 72 small GBDT configurations on the public rows, trained a 20 × depth-2 model (3,059 B), exported it with `tools/export.py`, entered it through `laurel_submit_model` and got **8350 bps on split A from the TEE** (submission #10, level with the leader), then declined its two remaining entries as noise-fitting; a **caller** (account `agent.laurel-team-mw0x0c8g.testnet`, function-call key limited to `predict`/`predict_task`) scored 3 holdout rows with #10 locally and on-chain with identical raw scores, 2.69 to 2.71 Tgas and 0.001 NEAR per call | `agents/competitor.mjs`, `agents/caller.mjs` (`canUseTool` policy, `permissionMode: default`, no bypass), `mcp/server.mjs` (`laurel_submit_model`, `laurel_wait_score`, `laurel_predict_model`), `tools/make_account.mjs` | transcripts `agents/out/competitor-2026-11-05T13-53-49.md` (+ `.jsonl`), `agents/out/caller-2026-11-05T13-57-13.md`; `submit_model` [`Hfv5cYC1…`](https://testnet.nearblocks.io/txns/Hfv5cYC1heKdf44SjKWrSwjZaEgkhjqSjYz3FTamJdW6), `request_score` [`2FcjpdGr…`](https://testnet.nearblocks.io/txns/2FcjpdGrxvteUucXm6LktstGCAThf3ZvBjBMzdrCKTPB), `predict` × 3 [`GAJmtrGQ…`](https://testnet.nearblocks.io/txns/GAJmtrGQhzuKF13iRtraa4kgQGyn5yUDVWKJ8se75j7N) [`5DPbPMtM…`](https://testnet.nearblocks.io/txns/5DPbPMtM833WCZkp8cZDtHMeeXZs2VvPuFeaTfQK8s8U) [`DiYjyuEX…`](https://testnet.nearblocks.io/txns/DiYjyuEXfyvYW1hfnPa4XSvDPsJNA9yd38phyfksaEhc); `get_submission {submission_id: 10}` (owner maker, `scored_by` `8b80010f…`); the first run (`competitor-2026-11-05T13-49-26.md`) was blocked by a policy bug and entered nothing; after external audit 2 the agent was moved into a temp-folder workspace holding only public files and re-run on 6 Nov (`competitor-2026-11-06T07-05-20.md`): submission #12, 6,307 B, 8300 bps on split A, 0 denied calls, `submit_model` [`HygFCbMv…`](https://testnet.nearblocks.io/txns/HygFCbMvR1gJEaPMJ7uUh1SxuCiXR9QU9U65krZ4Yi4V), `request_score` [`DoKU6Rn6…`](https://testnet.nearblocks.io/txns/DoKU6Rn6HadWmmj1bh7bPrmQabk9iApzn1ZZoApmKoVD); findings and verdicts in [docs/audit/GEMINI_AUDIT_RESPONSE.md](docs/audit/GEMINI_AUDIT_RESPONSE.md) |
 | 26 | One command takes an outside participant from a funded testnet account to a TEE-scored entry: `tools/quickstart.mjs` checks Python and balance, reads the task and the account's remaining entries, trains on the public split, exports, has the contract validate the bytes and quote storage, then `submit_model` → `request_score` → waits for the reading and prints the rank | `tools/quickstart.mjs`, [docs/QUICKSTART.md](docs/QUICKSTART.md) (account setup, costs, invitation text) | run as `p2` on 5 Nov 2026: 15 trees × depth 3, 5,041 B, holdout 8305 bps, storage 0.053 NEAR + 0.1 fee; `submit_model` [`7oURSZhN…`](https://testnet.nearblocks.io/txns/7oURSZhNHyVoK8FKc8HfPx6okgJ6FaW37n3pW9RvWPgs) → submission #11, `request_score` [`HeitL6CN…`](https://testnet.nearblocks.io/txns/HeitL6CNLtTEVRnp7HEk18x5eBQeke1crc7LkHJkBDn6) → **8300 bps on split A**, rank 3 of 5 (OutLayer charged 0.00105 NEAR of the 0.1 deposit, rest refunded) |
 | 19 | Unit test counts | `#[test]` in `contracts/bursa` (50), `contracts/consumer-example` (3), `crates/gbdt-core` (4), `evaluator` (1) | `bash build.sh test` |
 
@@ -955,9 +968,9 @@ Config = { "owner", "outlayer", "evaluator_url", "evaluator_hash", "max_model_by
 Alasan `Failed{reason}` dari `on_score`: `evaluator: <error dari evaluator>` (output `ok:false`), `evaluator output is not JSON: …`, `evaluator output missing a.bal_acc_bps`, `outlayer: empty output`, `outlayer: promise error … (deposit returned to <payer>)` — pada kasus terakhir deposit yang memantul ke kontrak dikembalikan ke pemanggil oleh callback (`on_score(submission_id, payer, deposit, …)`); pada kegagalan di worker, OutLayer sendiri yang mengembalikan sisa deposit ke `payer_account_id`. Setelah `Failed`, pemilik boleh `request_score` lagi. Submission yang `Scored` menyimpan `scored_by` = hash evaluator yang menilainya. Catatan: kalau callback timeout dari request lama datang **setelah** request ulang, status menjadi `Failed` dan skor request kedua diabaikan — cukup `request_score` sekali lagi. Parser menerima `a.bal_acc_bps` (ABI) **atau** `a.score_bps` (format evaluator spike S30); nilai di-clamp ke 10000. `last_outlayer_raw` menyimpan ≤ 900 byte output mentah.
 
 Payload yang dikirim ke `outlayer.request_execution`: `source = {"WasmUrl":{"url":<evaluator_url>,"hash":<evaluator_hash>,"build_target":"wasm32-wasip2"}}`, `resource_limits = {"max_instructions":20000000000,"max_memory_mb":256,"max_execution_seconds":60}`, `input_data = {"contract":<bursa>,"submission_id":N,"task_slug":<slug>}`, `secrets_ref = {"profile":<task.secrets_profile>,"account_id":<task.secrets_account>}`, `response_format = "Text"`, `payer_account_id = <pemanggil>`. Gas: prepaid − 15 Tgas (callback) − 25 Tgas.
-| `close_task` | `{task_id}` | 0 | 50 Tgas | `winner: u32` | `no such task`, `before deadline`, `already closed`, `no scored submission`. Pemenang = skor final tertinggi (`score_b_bps`, kalau tidak ada `score_a_bps`), seri → submit lebih awal, lalu id lebih kecil. Event `task_closed {task_id, winner, final_score_bps, scored, by}` | ✅ C-4 |
+| `close_task` | `{task_id}` | 0 | 50 Tgas | `winner: u32`; tidak menunggu submission `Pending`, dan `on_score` yang mendarat setelahnya tetap dicatat (lihat README Security model) | `no such task`, `before deadline`, `already closed`, `no scored submission`. Pemenang = skor final tertinggi (`score_b_bps`, kalau tidak ada `score_a_bps`), seri → submit lebih awal, lalu id lebih kecil. Event `task_closed {task_id, winner, final_score_bps, scored, by}` | ✅ C-4 |
 | `deposit_credit` | `{}` | jumlah prabayar (> 0; deposit pertama dipotong storage baris ≈ 0,001 NEAR) | 10 Tgas | saldo baru (yoctoNEAR string) | `attach a deposit`, `deposit too small for storage` | ✅ C-5 |
-| `withdraw_credit` | `{amount}` | 0 | 20 Tgas | `Promise` transfer ke pemanggil | `insufficient credit: have …` | ✅ C-5 |
+| `withdraw_credit` | `{amount}` | 0 | 20 Tgas | `Promise` transfer ke pemanggil; baris kredit tetap ada walau saldo 0 (storage-nya ±0.001 NEAR tidak dikembalikan, catatan audit 6 Nov) | `insufficient credit: have …` | ✅ C-5 |
 | `predict` | `{submission_id, features:[i64…]}` | 0 (fee `task.fee_per_call` dipotong dari kredit pemanggil → `earnings[submission]`) | 30 Tgas (model ≤ 60 KB; 197 KB ≈ 13 Tgas) | `i64` skor mentah (`> 0` ⇒ positif) | `no such submission`, `not scored: status …`, `feature count: expected N, got M`, `insufficient credit: need …`, `predict: …` | ✅ C-5 |
 | `predict_task` | `{task_id, features}` | 0 | 30 Tgas | `i64` | `no such task`, `task not closed`, `no winner`, lalu seperti `predict` pada pemenang | ✅ C-5 |
 | `withdraw_earnings` | `{submission_id}` | 0 | 20 Tgas | `Promise` transfer ke pemilik submission | `no such submission`, `owner only`, `nothing to withdraw` | ✅ C-5 |
@@ -981,7 +994,7 @@ Semua method `predict*` adalah **change method** (butuh transaksi) karena dihitu
 | `get_credit` | `{account_id}` | yoctoNEAR string |
 | `get_earnings` | `{submission_id}` | yoctoNEAR string |
 | `list_submissions` | `{task_id}` | `Submission[]` urut waktu submit |
-| `validate_model` | `{task_id, bytes}` | tidak pernah panik: `{ok:true, bytes, trees, nodes, max_depth, n_features, storage_cost, submission_fee}` atau `{ok:false, error, n_features_expected?, n_features_model?}` |
+| `validate_model` | `{task_id, bytes}` | tidak pernah panik; `storage_cost` adalah **perkiraan** (`bytes + 400 B` × harga byte), struct Submission dan indeks task menambah sedikit di atasnya, jadi lampirkan slack 0.01–0.02 NEAR (dikembalikan) seperti `tools/submit.mjs`: `{ok:true, bytes, trees, nodes, max_depth, n_features, storage_cost, submission_fee}` atau `{ok:false, error, n_features_expected?, n_features_model?}` |
 
 Aturan struktur model yang diterima (`gbdt-core::Model::validate`): `version = 1`; `feature_scale`, `out_scale` > 0; tiap pohon 1..65534 node; node dalam punya `left`, `right` **lebih besar dari indeks node itu** dan < jumlah node (sehingga penelusuran selalu berhenti), `feature < n_features`; kedalaman < 64. `tools/export.py` menghasilkan format ini.
 
@@ -1080,7 +1093,7 @@ matters. One competes, one buys. No human typed a command between "start" and th
 
 | Agent | Account and key | What it may do | What it did |
 |---|---|---|---|
-| **Competitor** `agents/competitor.mjs` | `maker.laurel-team-mw0x0c8g.testnet`, full-access key held by the MCP subprocess only | read the repo; write under `agents/work/`; run `python agents/work/*.py`, `tasks/*/train.py`, `tools/export.py`; the Laurel MCP tools | run 2: trained, validated, exported and entered submission #10 (3,059 B, 20 × depth-2) in task 5; TEE split A 8350 bps, level with the leader; declined to spend its two remaining entries; $0.16 of API usage |
+| **Competitor** `agents/competitor.mjs` | `maker.laurel-team-mw0x0c8g.testnet`, full-access key held by the MCP subprocess only | read the repo; write under `agents/work/`; run `python agents/work/*.py`, `tasks/*/train.py`, `tools/export.py`; the Laurel MCP tools | run 2: trained, validated, exported and entered submission #10 (3,059 B, 20 × depth-2) in task 5; TEE split A 8350 bps, level with the leader; run 4, in the hardened workspace: #12 (6,307 B, 40 × depth-2), 8300 bps, zero denied calls; $0.16 and $0.34 of API usage |
 | **Caller** `agents/caller.mjs` | `agent.laurel-team-mw0x0c8g.testnet`, **function-call key** limited by the protocol to `predict` / `predict_task` | read `tasks/*/public_*`; the Laurel MCP tools | run 3: scored 3 holdout rows with #10 locally and on-chain, raw scores identical, 2.7 Tgas and 0.001 NEAR per call, credit debited by exactly 3 fees; $0.15 of API usage |
 
 ### Why this is the point of Laurel
@@ -1091,26 +1104,44 @@ TEE it does not control to score it on rows it cannot see. The caller is a consu
 key that the NEAR protocol restricts to two methods on one contract, so it can spend its prepaid credit on predictions and
 on nothing else. Neither needed a server of ours, an API key of ours, or a human in the loop.
 
-### How the agents are constrained
+### How the agents are constrained, and how they are not
 
 The Claude Agent SDK runs Claude Code's harness in-process. We do **not** use its bypass mode. Both scripts run in
-`permissionMode: "default"` with a `canUseTool` policy that is the whole of what the agent may do:
+`permissionMode: "default"` with a `canUseTool` policy, and the competitor runs inside a **throw-away workspace in the OS
+temp folder, outside the repository**, that contains only public files: `tools/export.py`, `tasks/<slug>/{features.json,
+public_train.csv, public_holdout.csv, train.py, README.md}` and an empty `work/`. There is no `.env`, no private split,
+no key and no other task in that tree.
 
-- MCP tools `mcp__laurel__*`: allowed (that is the product).
-- Competitor: `Read`/`Glob`/`Grep` inside the repository except `.env`, `private_*.json`, `sample_raw.csv`; `Write`/`Edit`
-  only under `agents/work/`; `Bash` only for `python agents/work/<script>.py`, `python tasks/<slug>/train.py`,
-  `python tools/export.py`, `ls`/`head`/`tail`/`wc`/`cat`, `mkdir agents/work/…`; one command at a time (no `;`, `&&`,
-  pipes or redirections) and nothing that names `.env`, a private key or a private split file. Anything else (`rm`, `git`,
-  `curl`, `npm`, `node`, …) is simply not on the list.
+- MCP tools `mcp__laurel__*`: allowed (that is the product). The MCP server is a separate process started from the
+  repository with the NEAR key in *its* environment; the agent only sees the tools.
+- Competitor: `Read`/`Glob`/`Grep` inside the workspace; `Write`/`Edit` only under `work/`, and the script text is refused
+  if it names a parent path, an absolute path, the environment, the network or subprocesses; `Bash` only for
+  `python work/<script>.py`, `python tasks/<slug>/train.py`, `python tools/export.py`, `ls`/`head`/`tail`/`wc`/`cat`,
+  `mkdir work/…`, one command at a time, relative paths only, no globs, no `..`, no `~`, no drive letters, no pipes or
+  redirections.
 - Caller: `Read`/`Glob`/`Grep` under `tasks/` public files only; no shell, no writes.
 - Both: `maxTurns`, `maxBudgetUsd`, `settingSources: []` (no user or project settings leak in), a scrubbed environment (the
   agent process never receives `.env`; the Anthropic key goes to the SDK, the NEAR key goes to the MCP subprocess).
 - Every denied call is logged in the transcript (`denied tool calls: N` in the result). Claude Code's harness also
-  approves on its own a few read-only shell commands (`ls`, `head`, `wc`, …) before our callback sees them; everything that
-  writes, trains or submits goes through the policy.
+  approves on its own a few read-only shell commands (`ls`, `head`, `wc`, …) before our callback sees them.
+
+**What this is not.** It is a policy on the model's tool calls plus a workspace with nothing secret in it; it is not
+OS-level isolation. Python runs as the local user, so a script could still open an absolute path on this machine or
+call the network through a module the text filter does not recognise. An external audit on 6 Nov pointed this out for the
+first version of the agent, which ran with `cwd` in the repository itself (the private splits and `.env` were readable by a
+Python script even though the model's `Read` tool was blocked). We checked both transcripts of that version: no tool input
+touched `.env`, a private file, the environment or the network. The workspace and the text filter were added the same
+day. A real sandbox (a container or a VM with only the workspace mounted) is the right next step for anyone running this
+agent on untrusted tasks.
 
 The system prompts state the rules of the game (what a model is, how it is scored, how much an entry costs, what the account
 may do). They do not say which model to train or what to predict with.
+
+**Data used for the entry.** The agent chose to refit its final model on *all* public rows (`public_train.csv` 800 +
+`public_holdout.csv` 150 = 950), which is legitimate, but it means the holdout figure in `tools/export.py`'s report for #10
+is in-sample, and that the baselines #7–#9 (trained on the 800 training rows only) had 16 % less data. The agent's own
+cross-validation (0.834 ± 0.025 over 5 × 3 folds) is the honest public-data estimate; the TEE's split-A reading is the
+one that counts. The system prompt now asks the agent to say which rows it trained on.
 
 ### Runs
 
@@ -1144,7 +1175,17 @@ scores identical: 1847056 (label 1, wrong), -1587678 and -2181536 (label 0, righ
 [`5DPbPMtM…`](https://testnet.nearblocks.io/txns/5DPbPMtM833WCZkp8cZDtHMeeXZs2VvPuFeaTfQK8s8U),
 [`DiYjyuEX…`](https://testnet.nearblocks.io/txns/DiYjyuEXfyvYW1hfnPa4XSvDPsJNA9yd38phyfksaEhc).
 
-Total API usage for the three runs: about $0.70.
+**Run 4, competitor in the hardened workspace (6 Nov 07:05 UTC, `agents/out/competitor-2026-11-06T07-05-20.md`)** — 14
+turns, 144 s, $0.34, **0 denied calls**, **submission #12 entered and scored**. Same agent after the audit fix: a temp-folder
+workspace with only the public files, relative glob-free shell arguments, script-text filter. It noticed its own earlier
+entry (#10) on the leaderboard, ran repeated 5 × 4 cross-validation on the 950 public rows, chose 40 trees × depth 2
+(subsample 0.7, 278 nodes, **6,307 bytes**), reported the honest numbers itself (holdout 8333 bps when trained on the
+800 training rows; 8472 bps for the entered model, flagged as in-sample), entered it and got **8300 bps on split A**,
+third of six, and declined the last entry for the same reason as before. Transactions: `submit_model`
+[`HygFCbMv…`](https://testnet.nearblocks.io/txns/HygFCbMvR1gJEaPMJ7uUh1SxuCiXR9QU9U65krZ4Yi4V), `request_score`
+[`DoKU6Rn6…`](https://testnet.nearblocks.io/txns/DoKU6Rn6HadWmmj1bh7bPrmQabk9iApzn1ZZoApmKoVD).
+
+Total API usage for the four runs: about $1.05.
 
 ### Reproduce
 
@@ -1400,7 +1441,7 @@ retained (raw score 1,007,503 > 0), which is one of its false positives.
 | Observation window | creation receipt + 7 days; **nothing after day 7 is used** |
 | Label window | day 30 to day 90 |
 
-The population summary with the retention rate of each large creator is in [population.json](population.json).
+The population summary (registrar creations by creator, activated accounts, the population retention rate, the `creator_class` codes) is in [population.json](population.json). It deliberately holds **no per-creator retention rate**: those were computed over the whole population, private rows included, in the first build and were removed on 6 Nov after an external audit flagged them as an aggregate label leak. The creator *frequency ranking* behind `creator_class` is also computed over the whole population (it depends only on who created the accounts, not on labels).
 
 ### Label
 
@@ -1426,7 +1467,7 @@ action counts, whatever its outcome: the account *acted*.
 | 6 | `initial_deposit_mnear` | NEAR transferred in the creation receipt, in milliNEAR, clipped at 32767 |
 | 7 | `tx_signed_7d` | receipts of actions the account initiated in days 0–7 (signed itself or through a relayer) |
 | 8 | `active_days_7d` | distinct UTC dates with an initiated action, 1–7 |
-| 9 | `days_to_first_tx` | whole days from creation to the first initiated action, 0–6 |
+| 9 | `days_to_first_tx` | whole 24-hour periods from creation to the first initiated action, 0–6 (`TIMESTAMP_DIFF(…, DAY)` on BigQuery TIMESTAMPs counts elapsed days, not UTC midnights: checked 6 Nov, `TIMESTAMP_DIFF('2026-06-09 00:01', '2026-06-08 23:59', DAY) = 0`) |
 | 10 | `unique_receivers_7d` | distinct receivers of those actions |
 | 11 | `fn_calls_7d` | `FUNCTION_CALL` actions the account initiated |
 | 12 | `distinct_methods_7d` | distinct method names among them |
@@ -1453,7 +1494,7 @@ features are sent to the contract as they are. The exact SQL is [sql/build_table
 | `private_a.json` | 150 | **no** (OutLayer secret `TEST_SET_A`) | leaderboard while the task is open |
 | `private_b.json` | 150 | **no** (OutLayer secret `TEST_SET_B`) | decides the champion at close |
 | `private_manifest.json` | — | yes | sha256, sizes and class counts of the private files (the commitment) |
-| `population.json` | — | yes | population size, retention rate, creator codes |
+| `population.json` | — | yes | registrar creations, population size and retention rate, creator codes (no per-creator rates) |
 
 ```bash
 python tasks/near-retention/fetch.py --project <your gcp project>   # BigQuery: population, labels, sample, features -> sample_raw.csv (gitignored) + population.csv
@@ -4226,7 +4267,8 @@ def main():
         "population_retained_rate": float(total.retained_rate),
         "sample_accounts": int(len(raw)), "sample_retained_rate": round(float(y.mean()), 4),
         "creator_codes": {**{c: i for c, i in codes.items()}, "other": N_CREATOR_CODES - 1},
-        "creators": [{"creator": r.creator, "accounts": int(r.n), "retained_rate": float(r.retained_rate), "code": codes.get(r.creator, N_CREATOR_CODES - 1)} for r in creators.itertuples()],
+        # no per-creator retained_rate: it would be an aggregate over private rows too (removed 6 Nov after an external audit)
+        "creators": [{"creator": r.creator, "accounts": int(r.n), "code": codes.get(r.creator, N_CREATOR_CODES - 1)} for r in creators.itertuples()],
     }
     json.dump(population, open(os.path.join(HERE, "population.json"), "w"), indent=2)
     print(json.dumps(manifest, indent=2))
@@ -4407,151 +4449,126 @@ if __name__ == "__main__":
     {
       "creator": "relayer.nearmobile.near",
       "accounts": 2785,
-      "retained_rate": 0.0402,
       "code": 0
     },
     {
       "creator": "meteor-relayer.near",
       "accounts": 793,
-      "retained_rate": 0.2648,
       "code": 1
     },
     {
       "creator": "free-name.herewallet.near",
       "accounts": 592,
-      "retained_rate": 0.2736,
       "code": 2
     },
     {
       "creator": "wallet-relay.intear.near",
       "accounts": 87,
-      "retained_rate": 0.1954,
       "code": 3
     },
     {
       "creator": "120c21f505041f8b9c49a377bec5dc3896307cbec8f8f0fb5849b13b5ed769a9",
       "accounts": 39,
-      "retained_rate": 0.2564,
       "code": 4
     },
     {
       "creator": "21cda971c5baa3d6e4eae9685cee07262b1b813b1ff156313bf37271b9d20c37",
       "accounts": 38,
-      "retained_rate": 0.3684,
       "code": 4
     },
     {
       "creator": "316c57120515512b5153be3680e19dc727f907559f558b3056f248855bfc20d2",
       "accounts": 31,
-      "retained_rate": 0.2581,
       "code": 4
     },
     {
       "creator": "terminus-vault.near",
       "accounts": 3,
-      "retained_rate": 0.3333,
       "code": 4
     },
     {
       "creator": "onboard.nearlegion.near",
       "accounts": 3,
-      "retained_rate": 0.3333,
       "code": 4
     },
     {
       "creator": "78c68a70255bc4771c8d678259033068d1558358e64d5ea1dfc1c09311b226bd",
       "accounts": 2,
-      "retained_rate": 0.5,
       "code": 4
     },
     {
       "creator": "axelar1j2uerwj2ktjej3htxnjc2t2n7cp4l5av5vrczmtrade.near",
       "accounts": 1,
-      "retained_rate": 0.0,
       "code": 4
     },
     {
       "creator": "bac247.near",
       "accounts": 1,
-      "retained_rate": 1.0,
       "code": 4
     },
     {
       "creator": "7d445daca745140111e11d8da4cc749ab9bc9564e3b68c7890d76fc742e7453a",
       "accounts": 1,
-      "retained_rate": 1.0,
       "code": 4
     },
     {
       "creator": "babami.near",
       "accounts": 1,
-      "retained_rate": 1.0,
       "code": 4
     },
     {
       "creator": "6c379f0bec7563a607ed663e3d5be642dd8de19c7a5dcac9acf1a9cbefb0a709",
       "accounts": 1,
-      "retained_rate": 0.0,
       "code": 4
     },
     {
       "creator": "7f0e150771a9e9eb54581107fbdd77b0ff8b2aeed25e4d6f2d18e1b95b3f6c43",
       "accounts": 1,
-      "retained_rate": 1.0,
       "code": 4
     },
     {
       "creator": "bybitpool.near",
       "accounts": 1,
-      "retained_rate": 0.0,
       "code": 4
     },
     {
       "creator": "34518da5f1b2522927f0ca100ebe3a1769c8bde53551a918fbaef37c2a39349b",
       "accounts": 1,
-      "retained_rate": 0.0,
       "code": 4
     },
     {
       "creator": "66972d18f3d4a3b9f04da7dc8f6fa0edb0ad1df031e9fe6c3f832e44ec0da6de",
       "accounts": 1,
-      "retained_rate": 0.0,
       "code": 4
     },
     {
       "creator": "hairy-pointer.near",
       "accounts": 1,
-      "retained_rate": 0.0,
       "code": 4
     },
     {
       "creator": "bdcddfa09050cddb634c80e2d75602d88206b877dfb9d8d4c6bd06e2e8d55cf8",
       "accounts": 1,
-      "retained_rate": 0.0,
       "code": 4
     },
     {
       "creator": "sponsor.trezu.near",
       "accounts": 1,
-      "retained_rate": 0.0,
       "code": 4
     },
     {
       "creator": "8f4e79793816d78e14174c693f52962f058db718f7badcff2c392fbb353397b6",
       "accounts": 1,
-      "retained_rate": 0.0,
       "code": 4
     },
     {
       "creator": "natsai.near",
       "accounts": 1,
-      "retained_rate": 1.0,
       "code": 4
     },
     {
       "creator": "44ee3045d1f7324b9ec0143bffa523e4d8dcba78341be7932bc3c782933db17c",
       "accounts": 1,
-      "retained_rate": 1.0,
       "code": 4
     }
   ]
@@ -4566,7 +4583,7 @@ if __name__ == "__main__":
     python tools/export.py --task german-credit --model ... --bias-shift -0.2      # shift decision threshold (log-odds)
     python tools/export.py --synthetic --trees 50 --depth 4 --out tools/out/gasprobe  # gas-probe model (no task)
 
-Outputs (in --out): model.bin (borsh), model.hex, vectors.json (>=200 rows from the task's public_holdout, raw
+Outputs (in --out): model.bin (borsh), model.hex, vectors.json (every row of the task's public_holdout, raw
 scores computed by the Python re-implementation of the integer model), report.json. The Rust unit test
 `gbdt-core::matches_python_vectors` reads tasks/german-credit/vectors.json (copy it there, or set GBDT_VECTORS).
 
@@ -4641,7 +4658,7 @@ def write_outputs(out, m, blob, Xq, y, extra):
     open(f"{out}/model.hex", "w").write(blob.hex())
     raw = np.array([raw_score(m, x) for x in Xq])
     labels = (raw > 0).astype(int)
-    n = min(len(Xq), max(200, len(Xq)))
+    n = len(Xq)  # every evaluation row (100 for german-credit, 150 for near-retention)
     vectors = {"model_hex": blob.hex(), "rows": [{"x": [int(v) for v in Xq[i]], "raw": int(raw[i]), "label": int(labels[i])} for i in range(n)]}
     json.dump(vectors, open(f"{out}/vectors.json", "w"))
     report = {**extra, "nodes": sum(len(t) for t in m["trees"]), "trees": len(m["trees"]), "model_bytes": len(blob),
@@ -5374,26 +5391,35 @@ export default async function handler(req, res) {
 
 ```javascript
 #!/usr/bin/env node
-// Laurel competitor agent — an autonomous participant built on the Claude Agent SDK, run under a strict tool policy.
+// Laurel competitor agent — an autonomous participant built on the Claude Agent SDK, run under a tool policy inside a
+// throw-away workspace that holds only public files.
 //
 //   node agents/competitor.mjs [--task 5] [--model claude-opus-5-5] [--max-turns 60] [--budget-usd 15] [--dry]
 //
-// The agent gets a read-only view of this repository, a sandboxed working folder (agents/work/), a short list of shell
-// commands (python for training, tools/export.py for the borsh export) and Laurel's MCP server (mcp/server.mjs). The
-// MCP server, not the agent, holds the maker account's key (MAKER_ACCOUNT_ID / MAKER_PRIVATE_KEY from .env, passed only
-// to that subprocess). Every tool call is checked by canUseTool below: anything outside the allow-list is denied and
-// logged. Every API message is appended to agents/out/competitor-<timestamp>.jsonl and a readable transcript to
-// agents/out/competitor-<timestamp>.md; those files are the evidence (CLAIMS row 25).
+// What the agent gets:
+//   - a workspace created for this run in the OS temp folder, OUTSIDE the repository, containing copies of the public
+//     files it needs (tools/export.py, tasks/<slug>/{features.json, public_train.csv, public_holdout.csv, train.py}) and
+//     an empty work/ folder. There is no .env, no private split, no key, no other task in that tree;
+//   - Laurel's MCP server (mcp/server.mjs), started as a separate process from the repository with the maker account's
+//     FULL-ACCESS key in ITS environment (MAKER_ACCOUNT_ID / MAKER_PRIVATE_KEY from .env). The agent never sees the key;
+//   - a canUseTool policy (below) that confines Read/Glob/Grep/Write/Edit to the workspace, allows only a short list of
+//     shell commands with relative, glob-free arguments, and refuses scripts whose text names secrets, absolute paths,
+//     parent directories, the network or the process environment.
+// What this is and is not: a policy on the model's tool calls plus a workspace that contains nothing secret. It is NOT
+// OS-level isolation: Python runs as the local user, so a script could still open an absolute path on this machine. The
+// workspace makes the obvious paths empty, the content filter catches the obvious attempts, and the transcript shows
+// every call (agents/out/, "denied tool calls"). The first run of this agent (13:49 UTC) was blocked by a bug in an
+// earlier version of this policy and is kept as evidence; see docs/AGENTS.md.
 //
 // Nothing here tells the agent WHICH model to train. The system prompt only states the rules of the game.
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { query } from "@anthropic-ai/claude-agent-sdk";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, "..");
-const work = path.join(here, "work");
 const args = process.argv.slice(2);
 const opt = (k, d) => { const i = args.indexOf(`--${k}`); return i >= 0 ? args[i + 1] : d; };
 const TASK = Number(opt("task", "5"));
@@ -5402,41 +5428,68 @@ const MAX_TURNS = Number(opt("max-turns", "60"));
 const BUDGET_USD = Number(opt("budget-usd", "15"));
 const DRY = args.includes("--dry");
 
-// .env: the agent process never receives it; the SDK gets only the Anthropic key, the MCP subprocess only the maker key.
+// .env is read here, once; the agent process gets none of it. The Anthropic key goes to the SDK, the NEAR key to the MCP subprocess.
 const env = Object.fromEntries(fs.readFileSync(path.join(root, ".env"), "utf8").split(/\r?\n/).filter((l) => /^[A-Z0-9_]+=/.test(l)).map((l) => [l.slice(0, l.indexOf("=")), l.slice(l.indexOf("=") + 1)]));
 for (const k of ["ANTHROPIC_API_KEY", "MAKER_ACCOUNT_ID", "MAKER_PRIVATE_KEY", "BURSA_CONTRACT_ID"]) if (!env[k]) throw new Error(`${k} missing in .env`);
 
+// ---- the task's dataset folder (public files only are copied) ------------------------------------------------------
+const slugOf = (id) => {
+  // tasks/<folder>/features.json whose slug matches the on-chain slug prefix; falls back to the folder named like the task
+  for (const d of fs.readdirSync(path.join(root, "tasks"))) {
+    const f = path.join(root, "tasks", d, "features.json");
+    if (fs.existsSync(f) && JSON.parse(fs.readFileSync(f, "utf8")).task_ids?.includes(id)) return d;
+  }
+  return { 1: "german-credit", 2: "german-credit", 3: "german-credit", 4: "german-credit", 5: "near-retention" }[id] || String(id);
+};
+const DS = slugOf(TASK);
+const PUBLIC_FILES = ["features.json", "public_train.csv", "public_holdout.csv", "train.py", "README.md"];
+
+// ---- workspace in the OS temp folder, outside the repository -------------------------------------------------------
 const stamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
+const ws = fs.mkdtempSync(path.join(os.tmpdir(), `laurel-agent-${stamp}-`));
+fs.mkdirSync(path.join(ws, "tools"), { recursive: true });
+fs.mkdirSync(path.join(ws, "tasks", DS), { recursive: true });
+fs.mkdirSync(path.join(ws, "work"), { recursive: true });
+fs.copyFileSync(path.join(root, "tools", "export.py"), path.join(ws, "tools", "export.py"));
+for (const f of PUBLIC_FILES) { const src = path.join(root, "tasks", DS, f); if (fs.existsSync(src)) fs.copyFileSync(src, path.join(ws, "tasks", DS, f)); }
+const wsFiles = fs.readdirSync(path.join(ws, "tasks", DS));
+
 fs.mkdirSync(path.join(here, "out"), { recursive: true });
-fs.mkdirSync(work, { recursive: true });
 const jsonl = path.join(here, "out", `competitor-${stamp}.jsonl`);
 const md = path.join(here, "out", `competitor-${stamp}.md`);
 const log = (s) => { process.stdout.write(s + "\n"); fs.appendFileSync(md, s + "\n"); };
 
 // ---- tool policy -------------------------------------------------------------------------------------------------
-const inside = (p, dir) => { const r = path.relative(dir, path.resolve(root, p)); return r !== "" && !r.startsWith("..") && !path.isAbsolute(r); };
+const inside = (p, dir) => { const r = path.relative(dir, path.resolve(ws, p)); return r !== "" && !r.startsWith("..") && !path.isAbsolute(r); };
+const ARG = String.raw`[\w.\-]+(?:[\\/][\w.\-]+)*`;                          // relative path or flag value: no globs, no "..", no drive letters
+const FLAG = String.raw`--?[\w\-]+(?:=[\w.\-]+)?`;
 const SHELL_OK = [
-  /^python3?(\.exe)? (-I )?agents[\\/]work[\\/][\w./\\-]+\.py( \S+)*$/,                           // the agent's own training scripts, any flags
-  /^python3?(\.exe)? (-I )?tasks[\\/][\w-]+[\\/]train\.py( \S+)*$/,                                // a task's baseline trainer
-  /^python3?(\.exe)? (-I )?tools[\\/]export\.py( \S+)*$/,                                         // export to borsh
-  /^(ls|dir|head|tail|wc|cat|type)( \S+)+$/,                                                     // look at files
-  /^mkdir( -p)? agents[\\/]work([\\/][\w-]+)*$/,
+  new RegExp(String.raw`^python3?(\.exe)? (-I )?work[\\/]${ARG}\.py( (?:${FLAG}|${ARG}))*$`),       // the agent's own scripts
+  new RegExp(String.raw`^python3?(\.exe)? (-I )?tasks[\\/][\w\-]+[\\/]train\.py( (?:${FLAG}|${ARG}))*$`),
+  new RegExp(String.raw`^python3?(\.exe)? (-I )?tools[\\/]export\.py( (?:${FLAG}|${ARG}))*$`),
+  new RegExp(String.raw`^(ls|dir|head|tail|wc|cat|type)( (?:${FLAG}|${ARG}))+$`),
+  new RegExp(String.raw`^mkdir( -p)? work([\\/][\w\-]+)*$`),
 ];
-// One command, no chaining or redirection, no secrets. (The first run of this agent was blocked on `--model agents`,
-// which contains "del " — hence word-level checks only.)
-const FORBIDDEN_IN_SHELL = /(\.env\b|\.ssh\b|\.near-credentials|private_[a-z_]*key|private_[ab]\.json|sample_raw|>|<|\||;|&&|\$\(|`)/i;
+const FORBIDDEN_IN_SHELL = /(\.\.|\.env\b|\.ssh\b|private_|sample_raw|[*?\[]|~|^[A-Za-z]:|[\\/]{2}|^[\\/]|>|<|\||;|&&|\$\(|`)/i;
+// Script contents: the obvious ways to reach outside the workspace or off the machine. A guardrail, not a sandbox.
+const FORBIDDEN_IN_CODE = /(\.\.[\\/]|[A-Za-z]:[\\/]|\\\\|os\.environ|getenv|\.env\b|private_|sample_raw|urllib|requests\b|socket|http\.client|subprocess|shutil|ctypes|importlib|__import__|open\(['"][\\/]|pathlib\.Path\(['"][\\/A-Za-z]:)/i;
 function decide(tool, input) {
   if (tool.startsWith("mcp__laurel__")) return { ok: true };
   if (["Read", "Glob", "Grep"].includes(tool)) {
-    const p = input.file_path || input.path || root;
-    if (/\.env|private_[ab]\.json|sample_raw\.csv/.test(String(p))) return { ok: false, why: "private file" };
-    return inside(p, root) || path.resolve(p) === root ? { ok: true } : { ok: false, why: "outside the repository" };
+    const p = input.file_path || input.path || ws;
+    return inside(p, ws) || path.resolve(p) === ws ? { ok: true } : { ok: false, why: "outside the workspace" };
   }
-  if (["Write", "Edit"].includes(tool)) return inside(input.file_path, work) ? { ok: true } : { ok: false, why: "writes only under agents/work/" };
+  if (["Write", "Edit"].includes(tool)) {
+    if (!inside(input.file_path, path.join(ws, "work"))) return { ok: false, why: "writes only under work/" };
+    const body = String(input.content ?? input.new_string ?? "");
+    const m = body.match(FORBIDDEN_IN_CODE);
+    return m ? { ok: false, why: `script text contains "${m[0]}" (no parent paths, absolute paths, environment, network or subprocess)` } : { ok: true };
+  }
   if (tool === "Bash") {
     const c = String(input.command || "").trim();
-    if (FORBIDDEN_IN_SHELL.test(c)) return { ok: false, why: "forbidden token in command" };
-    return SHELL_OK.some((re) => re.test(c)) ? { ok: true } : { ok: false, why: "command not on the allow-list (python agents/work/*.py, tasks/*/train.py, tools/export.py, ls/head/tail/wc/cat, mkdir agents/work/...)" };
+    const m = c.match(FORBIDDEN_IN_SHELL);
+    if (m) return { ok: false, why: `forbidden token "${m[0]}" in command` };
+    return SHELL_OK.some((re) => re.test(c)) ? { ok: true } : { ok: false, why: "command not on the allow-list (python work/*.py, python tasks/<slug>/train.py, python tools/export.py, ls/head/tail/wc/cat, mkdir work/...; relative paths only)" };
   }
   return { ok: false, why: `tool ${tool} is not available to this agent` };
 }
@@ -5450,34 +5503,38 @@ async function canUseTool(toolName, input) {
 }
 
 const SYSTEM = `You are an autonomous participant in Laurel, a model competition that lives on a NEAR smart contract
-(${env.BURSA_CONTRACT_ID}, testnet). You work in a checkout of the Laurel repository. Python 3 with scikit-learn, pandas and
-numpy is installed.
+(${env.BURSA_CONTRACT_ID}, testnet). Your working directory is a workspace made for this run: ${ws}
+It contains tools/export.py, tasks/${DS}/ (${wsFiles.join(", ")}) and an empty work/ folder. Python 3 with scikit-learn,
+pandas and numpy is installed. There is nothing else to find in it, and nothing outside it is yours to read.
 
 Your goal: enter the best model you can in task ${TASK} and get it scored by the TEE evaluator.
 
 Rules of the game (enforced by the contract and the evaluator; breaking them only wastes your deposit):
 - A model is a binary gradient-boosted-tree ensemble with integer thresholds, exported to the contract's borsh format by
-    python tools/export.py --task <dataset folder name> --model <pickle> --out <folder under agents/work>   -> <folder>/model.bin
-  The dataset folder of a task is tasks/<slug>: features.json describes the features, train.py is a baseline trainer you may
-  read, reuse (python tasks/<slug>/train.py ... writes the pickle next to it; pass --out with a name) or ignore, public_train.csv
-  and public_holdout.csv are the public data. tools/export.py needs a scikit-learn GradientBoostingClassifier pickle.
+    python tools/export.py --task ${DS} --model <pickle> --out work/<folder>     -> work/<folder>/model.bin
+  tasks/${DS}/features.json describes the features; train.py is a baseline trainer you may read, reuse (python tasks/${DS}/train.py
+  --trees N --depth D --out <name>.pkl writes the pickle into tasks/${DS}/) or ignore; public_train.csv and public_holdout.csv are
+  the public data. tools/export.py needs a scikit-learn GradientBoostingClassifier pickle and evaluates it on public_holdout.csv, so
+  if you train on the holdout too, its report is in-sample; say so in your report if you do.
 - Train on public data only. The private test splits are sealed inside the TEE; the public holdout is small, so do not over-trust it.
 - The score is balanced accuracy on split A (public while the task is open) and split B (sealed until close; it alone decides the champion).
-- Your account ${env.MAKER_ACCOUNT_ID} may enter at most 3 models in this task and holds a little over 1 NEAR: storage costs about
+- Your account ${env.MAKER_ACCOUNT_ID} may enter at most 3 models in this task and holds about 1 NEAR: storage costs about
   1 NEAR per 100 KB of model plus a 0.1 NEAR fee per entry, so keep models small (a few KB to a few tens of KB) and do not waste entries.
 - Tools: the Laurel MCP tools (laurel_list_exhibits, laurel_exhibit, laurel_specimen, laurel_download_model, laurel_predict_local,
-  laurel_submit_model, laurel_wait_score) for the competition; Read/Glob/Grep for the repository; Write/Edit only under agents/work/;
-  the shell only for: python agents/work/<script>.py, python tasks/<slug>/train.py, python tools/export.py, ls/head/tail/wc/cat, mkdir.
-  Anything else is denied by policy, so do not try it.
+  laurel_submit_model, laurel_wait_score) for the competition; Read/Glob/Grep inside the workspace; Write/Edit only under work/;
+  the shell only for: python work/<script>.py, python tasks/${DS}/train.py, python tools/export.py, ls/head/tail/wc/cat, mkdir work/...,
+  always with relative paths and no globs, pipes or chaining. Scripts must not touch parent directories, absolute paths, the
+  environment, the network or subprocesses. Anything else is denied by policy, so do not try it.
+- laurel_submit_model takes a path the MCP server can open: pass the ABSOLUTE path of your model.bin, i.e. ${ws.replace(/\\/g, "/")}/work/<folder>/model.bin.
 
 Work in this order: read the exhibit and the leaderboard, look at the data, decide on an approach, train and validate
 (holdout balanced accuracy, model size), export, enter ONE model with laurel_submit_model, wait for its TEE score, then decide
-whether a second entry is worth the NEAR. Finish with a short report: what you entered, its bytes, holdout and split-A scores,
-where it stands on the leaderboard, and the transaction links. Be concise.`;
+whether a second entry is worth the NEAR. Finish with a short report: what you entered, its bytes, which rows it was trained on,
+holdout and split-A scores, where it stands on the leaderboard, and the transaction links. Be concise.`;
 
 const PROMPT = `Enter task ${TASK} on Laurel and get the best split-A reading you can. Start by reading the exhibit.`;
 
-log(`# Laurel competitor agent — ${new Date().toISOString()}\n\n- model: ${MODEL}\n- task: ${TASK}\n- account: ${env.MAKER_ACCOUNT_ID}\n- contract: ${env.BURSA_CONTRACT_ID}\n- budget: $${BUDGET_USD}, max ${MAX_TURNS} turns\n- transcript: ${path.relative(root, jsonl)}\n`);
+log(`# Laurel competitor agent — ${new Date().toISOString()}\n\n- model: ${MODEL}\n- task: ${TASK} (dataset ${DS})\n- account: ${env.MAKER_ACCOUNT_ID}\n- contract: ${env.BURSA_CONTRACT_ID}\n- workspace: ${ws} (public files only: ${wsFiles.join(", ")})\n- budget: $${BUDGET_USD}, max ${MAX_TURNS} turns\n- transcript: ${path.relative(root, jsonl)}\n`);
 if (DRY) { log("(dry run: not calling the API)"); process.exit(0); }
 
 const q = query({
@@ -5485,7 +5542,7 @@ const q = query({
   options: {
     model: MODEL,
     systemPrompt: SYSTEM,
-    cwd: root,
+    cwd: ws,
     maxTurns: MAX_TURNS,
     maxBudgetUsd: BUDGET_USD,
     permissionMode: "default",
@@ -5521,7 +5578,7 @@ for await (const m of q) {
       log(`\n\`\`\`\n${short(c, 1500)}\n\`\`\``);
     }
   } else if (m.type === "result") {
-    log(`\n## Result: ${m.subtype}\n\n- turns: ${m.num_turns}\n- duration: ${Math.round(m.duration_ms / 1000)} s\n- cost: $${m.total_cost_usd?.toFixed(4)}\n- denied tool calls: ${denied.length}\n- usage: ${short(m.usage, 400)}\n${m.subtype === "success" ? `\n${m.result}\n` : `\n${(m.errors || []).join("\n")}\n`}`);
+    log(`\n## Result: ${m.subtype}\n\n- turns: ${m.num_turns}\n- duration: ${Math.round(m.duration_ms / 1000)} s\n- cost: $${m.total_cost_usd?.toFixed(4)}\n- denied tool calls: ${denied.length}\n- workspace kept at: ${ws}\n- usage: ${short(m.usage, 400)}\n${m.subtype === "success" ? `\n${m.result}\n` : `\n${(m.errors || []).join("\n")}\n`}`);
   }
 }
 log(`\n(transcript: ${path.relative(root, md)}, raw: ${path.relative(root, jsonl)})`);

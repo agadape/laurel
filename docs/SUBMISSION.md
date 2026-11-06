@@ -13,6 +13,13 @@ Aturan di [HACKATHON.md](../HACKATHON.md): submit **sekali** per repo, tidak bis
 - [ ] Repo GitHub dibuat publik (manusia), `git push`.
 - [ ] Post X oleh manusia: menyebut "built at NEAR HACKATHON", tag @NEARProtocol dan #NEARHackathon, lampirkan video. Simpan URL post.
 
+## 12 Nov, segera setelah 12:00 UTC (agent, dengan persetujuan)
+
+- [ ] `node tools/close_task.mjs 5` (siapa pun boleh; pemenang = split B terbaik). Catat tx, juara, skor B yang terungkap.
+- [ ] `node agents/caller.mjs --task 5 --submission <juara> --rows 3` lalu satu panggilan `predict_task(5, …)` lewat MCP (`laurel_predict`) supaya rute juara terbukti, bukan hanya `predict`.
+- [ ] Perbarui README (What is live, tabel bukti), CLAIMS (baris baru), tasks/near-retention/README.md (tabel hasil: kolom split B), docs/AGENTS.md. Commit, push.
+- [ ] Health check seperti 13 Nov di bawah bisa digabung di sini.
+
 ## 13 Nov (agent, dengan persetujuan)
 - [x] 4 Nov: `bash build.sh test` hijau (50+3+4+1); `node tools/e2e.mjs --funder TEAM --cleanup` hijau (run `mw1xpamc`, 23 langkah, 17/17, 232 s) → `docs/E2E.md`. Ulangi 13 Nov hanya kalau ada perubahan kode/kontrak.
 - [x] 4 Nov: `docs/AGENT.md`, `docs/CONSUMER.md` merujuk kontrak final (tugas 3); `docs/GAS.md` tetap pengukuran di kontrak dev dan menyebutnya.

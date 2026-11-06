@@ -95,7 +95,8 @@ def main():
         "population_retained_rate": float(total.retained_rate),
         "sample_accounts": int(len(raw)), "sample_retained_rate": round(float(y.mean()), 4),
         "creator_codes": {**{c: i for c, i in codes.items()}, "other": N_CREATOR_CODES - 1},
-        "creators": [{"creator": r.creator, "accounts": int(r.n), "retained_rate": float(r.retained_rate), "code": codes.get(r.creator, N_CREATOR_CODES - 1)} for r in creators.itertuples()],
+        # no per-creator retained_rate: it would be an aggregate over private rows too (removed 6 Nov after an external audit)
+        "creators": [{"creator": r.creator, "accounts": int(r.n), "code": codes.get(r.creator, N_CREATOR_CODES - 1)} for r in creators.itertuples()],
     }
     json.dump(population, open(os.path.join(HERE, "population.json"), "w"), indent=2)
     print(json.dumps(manifest, indent=2))

@@ -96,7 +96,7 @@ Where you could not verify something, say "could not verify" instead of guessing
   u32 n_trees, per tree u32 n_nodes, per node (u16 feature, i64 threshold, u16 left, u16 right, i64 value)`, leaf =
   left == right == 0xFFFF, walk `x[feature] <= threshold ? left : right`, raw score = bias + one leaf per tree,
   label 1 iff raw > 0. The same arithmetic runs in the contract (`crates/gbdt-core`), in the evaluator, in Python
-  (`tools/export.py`) and in JS (`mcp/gbdt.mjs`, `web/src/model.js`).
+  (`tools/export.py`) and in JS (`mcp/gbdt.mjs`, BigInt). `web/src/model.js` only decodes the borsh trees for drawing.
 - **Metric:** balanced accuracy in basis points, integer arithmetic, rounded down to 50 bps; F1 shown, not used for ranking.
   Split A is public while a task is open; split B is sealed in the leaderboard until `close_task` and alone decides.
 - **Economics:** submission fee (0.1 NEAR) to the task creator; storage paid by the submitter; `request_score` deposits

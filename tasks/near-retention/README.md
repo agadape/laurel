@@ -46,7 +46,7 @@ retained (raw score 1,007,503 > 0), which is one of its false positives.
 | Observation window | creation receipt + 7 days; **nothing after day 7 is used** |
 | Label window | day 30 to day 90 |
 
-The population summary with the retention rate of each large creator is in [population.json](population.json).
+The population summary (registrar creations by creator, activated accounts, the population retention rate, the `creator_class` codes) is in [population.json](population.json). It deliberately holds **no per-creator retention rate**: those were computed over the whole population, private rows included, in the first build and were removed on 6 Nov after an external audit flagged them as an aggregate label leak. The creator *frequency ranking* behind `creator_class` is also computed over the whole population (it depends only on who created the accounts, not on labels).
 
 ## Label
 
@@ -72,7 +72,7 @@ action counts, whatever its outcome: the account *acted*.
 | 6 | `initial_deposit_mnear` | NEAR transferred in the creation receipt, in milliNEAR, clipped at 32767 |
 | 7 | `tx_signed_7d` | receipts of actions the account initiated in days 0–7 (signed itself or through a relayer) |
 | 8 | `active_days_7d` | distinct UTC dates with an initiated action, 1–7 |
-| 9 | `days_to_first_tx` | whole days from creation to the first initiated action, 0–6 |
+| 9 | `days_to_first_tx` | whole 24-hour periods from creation to the first initiated action, 0–6 (`TIMESTAMP_DIFF(…, DAY)` on BigQuery TIMESTAMPs counts elapsed days, not UTC midnights: checked 6 Nov, `TIMESTAMP_DIFF('2026-06-09 00:01', '2026-06-08 23:59', DAY) = 0`) |
 | 10 | `unique_receivers_7d` | distinct receivers of those actions |
 | 11 | `fn_calls_7d` | `FUNCTION_CALL` actions the account initiated |
 | 12 | `distinct_methods_7d` | distinct method names among them |
@@ -99,7 +99,7 @@ features are sent to the contract as they are. The exact SQL is [sql/build_table
 | `private_a.json` | 150 | **no** (OutLayer secret `TEST_SET_A`) | leaderboard while the task is open |
 | `private_b.json` | 150 | **no** (OutLayer secret `TEST_SET_B`) | decides the champion at close |
 | `private_manifest.json` | — | yes | sha256, sizes and class counts of the private files (the commitment) |
-| `population.json` | — | yes | population size, retention rate, creator codes |
+| `population.json` | — | yes | registrar creations, population size and retention rate, creator codes (no per-creator rates) |
 
 ```bash
 python tasks/near-retention/fetch.py --project <your gcp project>   # BigQuery: population, labels, sample, features -> sample_raw.csv (gitignored) + population.csv

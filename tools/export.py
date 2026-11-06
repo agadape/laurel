@@ -4,7 +4,7 @@
     python tools/export.py --task german-credit --model ... --bias-shift -0.2      # shift decision threshold (log-odds)
     python tools/export.py --synthetic --trees 50 --depth 4 --out tools/out/gasprobe  # gas-probe model (no task)
 
-Outputs (in --out): model.bin (borsh), model.hex, vectors.json (>=200 rows from the task's public_holdout, raw
+Outputs (in --out): model.bin (borsh), model.hex, vectors.json (every row of the task's public_holdout, raw
 scores computed by the Python re-implementation of the integer model), report.json. The Rust unit test
 `gbdt-core::matches_python_vectors` reads tasks/german-credit/vectors.json (copy it there, or set GBDT_VECTORS).
 
@@ -79,7 +79,7 @@ def write_outputs(out, m, blob, Xq, y, extra):
     open(f"{out}/model.hex", "w").write(blob.hex())
     raw = np.array([raw_score(m, x) for x in Xq])
     labels = (raw > 0).astype(int)
-    n = min(len(Xq), max(200, len(Xq)))
+    n = len(Xq)  # every evaluation row (100 for german-credit, 150 for near-retention)
     vectors = {"model_hex": blob.hex(), "rows": [{"x": [int(v) for v in Xq[i]], "raw": int(raw[i]), "label": int(labels[i])} for i in range(n)]}
     json.dump(vectors, open(f"{out}/vectors.json", "w"))
     report = {**extra, "nodes": sum(len(t) for t in m["trees"]), "trees": len(m["trees"]), "model_bytes": len(blob),

@@ -6,7 +6,7 @@ matters. One competes, one buys. No human typed a command between "start" and th
 
 | Agent | Account and key | What it may do | What it did |
 |---|---|---|---|
-| **Competitor** `agents/competitor.mjs` | `maker.laurel-team-mw0x0c8g.testnet`, full-access key held by the MCP subprocess only | read the repo; write under `agents/work/`; run `python agents/work/*.py`, `tasks/*/train.py`, `tools/export.py`; the Laurel MCP tools | run 2: trained, validated, exported and entered submission #10 (3,059 B, 20 × depth-2) in task 5; TEE split A 8350 bps, level with the leader; declined to spend its two remaining entries; $0.16 of API usage |
+| **Competitor** `agents/competitor.mjs` | `maker.laurel-team-mw0x0c8g.testnet`, full-access key held by the MCP subprocess only | read the repo; write under `agents/work/`; run `python agents/work/*.py`, `tasks/*/train.py`, `tools/export.py`; the Laurel MCP tools | run 2: trained, validated, exported and entered submission #10 (3,059 B, 20 × depth-2) in task 5; TEE split A 8350 bps, level with the leader; run 4, in the hardened workspace: #12 (6,307 B, 40 × depth-2), 8300 bps, zero denied calls; $0.16 and $0.34 of API usage |
 | **Caller** `agents/caller.mjs` | `agent.laurel-team-mw0x0c8g.testnet`, **function-call key** limited by the protocol to `predict` / `predict_task` | read `tasks/*/public_*`; the Laurel MCP tools | run 3: scored 3 holdout rows with #10 locally and on-chain, raw scores identical, 2.7 Tgas and 0.001 NEAR per call, credit debited by exactly 3 fees; $0.15 of API usage |
 
 ## Why this is the point of Laurel
@@ -17,26 +17,44 @@ TEE it does not control to score it on rows it cannot see. The caller is a consu
 key that the NEAR protocol restricts to two methods on one contract, so it can spend its prepaid credit on predictions and
 on nothing else. Neither needed a server of ours, an API key of ours, or a human in the loop.
 
-## How the agents are constrained
+## How the agents are constrained, and how they are not
 
 The Claude Agent SDK runs Claude Code's harness in-process. We do **not** use its bypass mode. Both scripts run in
-`permissionMode: "default"` with a `canUseTool` policy that is the whole of what the agent may do:
+`permissionMode: "default"` with a `canUseTool` policy, and the competitor runs inside a **throw-away workspace in the OS
+temp folder, outside the repository**, that contains only public files: `tools/export.py`, `tasks/<slug>/{features.json,
+public_train.csv, public_holdout.csv, train.py, README.md}` and an empty `work/`. There is no `.env`, no private split,
+no key and no other task in that tree.
 
-- MCP tools `mcp__laurel__*`: allowed (that is the product).
-- Competitor: `Read`/`Glob`/`Grep` inside the repository except `.env`, `private_*.json`, `sample_raw.csv`; `Write`/`Edit`
-  only under `agents/work/`; `Bash` only for `python agents/work/<script>.py`, `python tasks/<slug>/train.py`,
-  `python tools/export.py`, `ls`/`head`/`tail`/`wc`/`cat`, `mkdir agents/work/…`; one command at a time (no `;`, `&&`,
-  pipes or redirections) and nothing that names `.env`, a private key or a private split file. Anything else (`rm`, `git`,
-  `curl`, `npm`, `node`, …) is simply not on the list.
+- MCP tools `mcp__laurel__*`: allowed (that is the product). The MCP server is a separate process started from the
+  repository with the NEAR key in *its* environment; the agent only sees the tools.
+- Competitor: `Read`/`Glob`/`Grep` inside the workspace; `Write`/`Edit` only under `work/`, and the script text is refused
+  if it names a parent path, an absolute path, the environment, the network or subprocesses; `Bash` only for
+  `python work/<script>.py`, `python tasks/<slug>/train.py`, `python tools/export.py`, `ls`/`head`/`tail`/`wc`/`cat`,
+  `mkdir work/…`, one command at a time, relative paths only, no globs, no `..`, no `~`, no drive letters, no pipes or
+  redirections.
 - Caller: `Read`/`Glob`/`Grep` under `tasks/` public files only; no shell, no writes.
 - Both: `maxTurns`, `maxBudgetUsd`, `settingSources: []` (no user or project settings leak in), a scrubbed environment (the
   agent process never receives `.env`; the Anthropic key goes to the SDK, the NEAR key goes to the MCP subprocess).
 - Every denied call is logged in the transcript (`denied tool calls: N` in the result). Claude Code's harness also
-  approves on its own a few read-only shell commands (`ls`, `head`, `wc`, …) before our callback sees them; everything that
-  writes, trains or submits goes through the policy.
+  approves on its own a few read-only shell commands (`ls`, `head`, `wc`, …) before our callback sees them.
+
+**What this is not.** It is a policy on the model's tool calls plus a workspace with nothing secret in it; it is not
+OS-level isolation. Python runs as the local user, so a script could still open an absolute path on this machine or
+call the network through a module the text filter does not recognise. An external audit on 6 Nov pointed this out for the
+first version of the agent, which ran with `cwd` in the repository itself (the private splits and `.env` were readable by a
+Python script even though the model's `Read` tool was blocked). We checked both transcripts of that version: no tool input
+touched `.env`, a private file, the environment or the network. The workspace and the text filter were added the same
+day. A real sandbox (a container or a VM with only the workspace mounted) is the right next step for anyone running this
+agent on untrusted tasks.
 
 The system prompts state the rules of the game (what a model is, how it is scored, how much an entry costs, what the account
 may do). They do not say which model to train or what to predict with.
+
+**Data used for the entry.** The agent chose to refit its final model on *all* public rows (`public_train.csv` 800 +
+`public_holdout.csv` 150 = 950), which is legitimate, but it means the holdout figure in `tools/export.py`'s report for #10
+is in-sample, and that the baselines #7–#9 (trained on the 800 training rows only) had 16 % less data. The agent's own
+cross-validation (0.834 ± 0.025 over 5 × 3 folds) is the honest public-data estimate; the TEE's split-A reading is the
+one that counts. The system prompt now asks the agent to say which rows it trained on.
 
 ## Runs
 
@@ -70,7 +88,17 @@ scores identical: 1847056 (label 1, wrong), -1587678 and -2181536 (label 0, righ
 [`5DPbPMtM…`](https://testnet.nearblocks.io/txns/5DPbPMtM833WCZkp8cZDtHMeeXZs2VvPuFeaTfQK8s8U),
 [`DiYjyuEX…`](https://testnet.nearblocks.io/txns/DiYjyuEXfyvYW1hfnPa4XSvDPsJNA9yd38phyfksaEhc).
 
-Total API usage for the three runs: about $0.70.
+**Run 4, competitor in the hardened workspace (6 Nov 07:05 UTC, `agents/out/competitor-2026-11-06T07-05-20.md`)** — 14
+turns, 144 s, $0.34, **0 denied calls**, **submission #12 entered and scored**. Same agent after the audit fix: a temp-folder
+workspace with only the public files, relative glob-free shell arguments, script-text filter. It noticed its own earlier
+entry (#10) on the leaderboard, ran repeated 5 × 4 cross-validation on the 950 public rows, chose 40 trees × depth 2
+(subsample 0.7, 278 nodes, **6,307 bytes**), reported the honest numbers itself (holdout 8333 bps when trained on the
+800 training rows; 8472 bps for the entered model, flagged as in-sample), entered it and got **8300 bps on split A**,
+third of six, and declined the last entry for the same reason as before. Transactions: `submit_model`
+[`HygFCbMv…`](https://testnet.nearblocks.io/txns/HygFCbMvR1gJEaPMJ7uUh1SxuCiXR9QU9U65krZ4Yi4V), `request_score`
+[`DoKU6Rn6…`](https://testnet.nearblocks.io/txns/DoKU6Rn6HadWmmj1bh7bPrmQabk9iApzn1ZZoApmKoVD).
+
+Total API usage for the four runs: about $1.05.
 
 ## Reproduce
 
