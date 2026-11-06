@@ -95,3 +95,7 @@ Following Dex's guide (`docs/design/RASA-DESAIN.md`: one object per page, no sma
 
 **Pass 3, readability (6 Nov, owner's request: "too much text, like reading a novel").** Copy cut to the essentials and moved into visuals: a three-picture explainer on Exhibits (submit → judged in secret → paid per use), facts as chips, plain labels (*Live score* for split A, *Final score* for split B, "Will a borrower repay?" for the credit simulation), a score key and a right/wrong dot key instead of captions, two doors ("I build models" / "I build agents"), and everything technical (commands, hashes, raw output, wallet tips, the full tool list) folded into drawers. Sections have more room (64–140 px) and body text is 17–20 px.
 
+## 12. Wallet gate again (6 Nov 2026, owner's decision)
+
+The owner wants the landing and the explorer clearly apart: the explorer is for people who connect a wallet. Guest mode is removed. Without a signed-in wallet every address, deep links included, shows the landing; the hash is kept, so the linked page opens as soon as the wallet connects. On the landing every way inside is a wallet sign-in: "Browse without a wallet", the board's links to models, "Open exhibit", the closing "See who won" and the footer's Explore links are gone or replaced by "Connect wallet". The hero's "See who won" stays, because it only scrolls to the proof section on the same page. Accepted trade-off: a judge without a testnet wallet sees only the landing; README "Try it" A.4 (curl) and the remote MCP endpoint remain wallet-free.
+

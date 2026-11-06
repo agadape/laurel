@@ -3,13 +3,13 @@
 import React, { useEffect, useRef } from "react";
 import { signIn } from "./wallet.js";
 
-export default function Landing({ onGuest }) {
+export default function Landing() {
   const root = useRef(null);
   useEffect(() => {
     document.title = "Laurel · small models, judged in a TEE, paid on-chain";
     let off = () => {}, left = false;
-    import("./landing/mount.js").then(({ mountLanding }) => { if (!left) off = mountLanding(root.current, { onGuest, signIn }); });
+    import("./landing/mount.js").then(({ mountLanding }) => { if (!left) off = mountLanding(root.current, { signIn }); });
     return () => { left = true; off(); };
-  }, [onGuest]);
+  }, []);
   return <div ref={root} style={{ minHeight: "100vh", background: "#0B0C0F" }} />;
 }

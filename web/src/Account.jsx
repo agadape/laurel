@@ -52,7 +52,7 @@ export function AccountPanel({ compact = false }) {
         <b style={{ fontFamily: "var(--display)", fontSize: 17 }}>Buy credit with your NEAR wallet</b>
         <p className="ink2">{feeHint}. Each call pays the model's owner.</p>
         <div><button className="wallet-btn" onClick={signIn} disabled={w.loading}>{w.loading ? "loading wallet…" : "Connect wallet"}</button>{w.error && <span className="err mono" style={{ marginLeft: 10 }}>{w.error}</span>}</div>
-        <details><summary>Wallet tips</summary><p className="mist" style={{ marginTop: 8 }}>Meteor, Intear or Nightly on {network}. Meteor opens a popup: allow popups for this site, or use its extension. Signing in creates no transaction; each purchase is approved in the wallet. Nothing on this site needs a wallet to read.</p></details>
+        <details><summary>Wallet tips</summary><p className="mist" style={{ marginTop: 8 }}>Meteor, Intear or Nightly on {network}. Meteor opens a popup: allow popups for this site, or use its extension. Signing in creates no transaction; each purchase is approved in the wallet.</p></details>
       </div>
     );
   }

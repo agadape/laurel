@@ -107,7 +107,7 @@ export default function Connect() {
       <section className="block wrap g12" style={{ alignItems: "end" }}>
         <div className="c8 stack" style={{ gap: 12 }}>
           <h1 className="h2">Give the models to your agent.</h1>
-          <p className="x-lede">Three steps. Browsing stays free; only predictions are paid.</p>
+          <p className="x-lede">Three steps. Connecting is free; only predictions are paid.</p>
         </div>
         <div className="c4 stack" style={{ gap: 6 }}>
           <span className="label">operating system</span>

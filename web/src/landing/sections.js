@@ -49,13 +49,13 @@ export function renderPage(root, data) {
       <p class="body rise" style="--d:120ms">${/^near-retention/.test(open.slug) ? `Each row is a fresh <span class="code">.near</span> account's first seven days on NEAR mainnet, taken from the public BigQuery dataset. The label is whether the account was still acting between day 30 and day 90.` : "Train on the public split, submit a model as data, and read its split-A score here once the TEE has judged it."}</p>
       <div class="board" role="table">
         <div class="brow head rise" role="row"><span></span><span>Model</span><span class="glyph">Trees</span><span>Public split</span><span class="b-col">Sealed split</span></div>
-        ${rows.map((r, i) => `<a class="brow rise" role="row" style="--d:${140 + i * 70}ms" href="${APP}#/model/${r.submission_id}" aria-label="Open model ${r.submission_id}">
+        ${rows.map((r, i) => `<div class="brow rise" role="row" style="--d:${140 + i * 70}ms">
           <span class="rank">${i + 1}</span><span class="id">#${r.submission_id}</span>
           <span class="glyph"><canvas data-forest="${r.submission_id}" width="440" height="88"></canvas></span>
           <span class="pub"><span class="bar"><i data-to="${scoreBar(r.score_a_bps)}" style="--d:${260 + i * 90}ms"></i></span><b>${bpsText(r.score_a_bps)}</b></span>
-          <span class="b-col"><span class="hatch"><em>Withheld</em></span></span></a>`).join("")}
+          <span class="b-col"><span class="hatch"><em>Withheld</em></span></span></div>`).join("")}
       </div>
-      <div class="links rise"><a href="${APP}#/task/${open.task_id}">Open exhibit ${pad2(open.task_id)} ↗</a>${/^near-retention/.test(open.slug) ? `<a href="${REPO}/blob/main/tasks/near-retention/README.md" target="_blank" rel="noreferrer">The ${open.n_features} features and how the data was pulled ↗</a>` : ""}</div>
+      <div class="links rise">${/^near-retention/.test(open.slug) ? `<a href="${REPO}/blob/main/tasks/near-retention/README.md" target="_blank" rel="noreferrer">The ${open.n_features} features and how the data was pulled ↗</a>` : ""}</div>
     </div></section>` : ""}
 
     <section class="l-sec how-sec"><i class="aura a2"></i><div class="l-wrap how">
@@ -95,9 +95,8 @@ export function renderPage(root, data) {
       <canvas id="wreath" width="1400" height="1400" aria-hidden="true"></canvas>
       <div class="close-in">
         <h2>Enter the observatory.</h2>
-        <p>Browse every exhibit, specimen and tree as a guest, or connect a NEAR testnet wallet to buy prediction credit for your agent.</p>
+        <p>Connect a NEAR testnet wallet to open every exhibit, model and tree. Signing in creates no transaction.</p>
         <div class="cta">
-          <a class="btn" href="${APP}#/task/${champ?.task_id}"><span>See who won</span><i aria-hidden="true">↗</i></a>
           <a class="btn solid" href="#/tasks" data-signin><span>Connect wallet to enter</span><i aria-hidden="true">↗</i></a>
         </div>
       </div>
@@ -105,7 +104,7 @@ export function renderPage(root, data) {
   </main>
   <footer class="foot"><div class="foot-grid">
     <p class="foot-line">Small models, judged in the dark, paid in the open.</p>
-    <nav aria-label="Explore"><b>Explore</b><a href="${APP}#/tasks">Exhibits</a><a href="${APP}#/costs">Costs</a><a href="${APP}#/connect">Connect an agent</a></nav>
+    <nav aria-label="Enter"><b>Enter</b><a href="#/tasks" data-signin>Connect wallet</a><span>Meteor, Intear or Nightly, on testnet</span></nav>
     <nav aria-label="Verify"><b>Verify</b><a href="${REPO}" target="_blank" rel="noreferrer">Source on GitHub</a><a href="${EXPLORER_ACCOUNT(contractId())}" target="_blank" rel="noreferrer">Contract on NearBlocks</a><a href="${MCP}" target="_blank" rel="noreferrer">Remote MCP</a></nav>
     <nav aria-label="Team"><b>Team</b><a href="${UNDO}" target="_blank" rel="noreferrer">Undo, our sister project</a><span>NEAR HACKATHON 2026</span></nav>
   </div>

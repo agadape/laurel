@@ -40,7 +40,7 @@ const FLICKER = [
   [0, 0, .2, 0, 0, .6, 0, .9, 1],
 ];
 
-export function mountLanding(root, { onGuest, signIn }) {
+export function mountLanding(root, { signIn }) {
 const $ = (q) => root.querySelector(q);
 root.classList.add("ld-root");
 root.innerHTML = `<a class="skip" href="#exhibits">Skip to exhibits</a>
@@ -73,7 +73,7 @@ root.innerHTML = `<a class="skip" href="#exhibits">Skip to exhibits</a>
       <div class="say scene-a" id="a">
         <h2><span class="ln"><span>Small models,</span></span><span class="ln"><span>judged in the dark,</span></span><span class="ln"><span>paid in the open.</span></span></h2>
         <p class="lede">Laurel is a registry on NEAR for small decision models. You submit a model as data, a TEE scores it on a test set nobody can read, and the best one becomes a contract method that agents and other contracts pay to call.</p>
-        <div class="cta"><a class="btn" href="#proof" id="see"><span>See who won</span><i aria-hidden="true">↗</i></a><a class="btn" href="#/tasks" data-guest><span>Browse without a wallet</span><i aria-hidden="true">↗</i></a></div>
+        <div class="cta"><a class="btn" href="#proof" id="see"><span>See who won</span><i aria-hidden="true">↗</i></a><a class="btn solid" href="#/tasks" data-signin><span>Connect wallet to enter</span><i aria-hidden="true">↗</i></a></div>
       </div>
     </div>
   </div>
@@ -263,7 +263,8 @@ const onClick = (e) => {
   const a = e.target.closest?.("a");
   if (!a) return;
   if (a.hasAttribute("data-signin")) { e.preventDefault(); signIn(); }
-  else if (a.hasAttribute("data-guest")) { e.preventDefault(); onGuest?.(); }
+  // nothing on this page leads inside without a wallet: any explorer link asks to connect instead
+  else if ((a.getAttribute("href") || "").startsWith("#/") && a.id !== "logo") { e.preventDefault(); signIn(); }
   else if (a.id === "logo") { e.preventDefault(); lenis.scrollTo(0, { duration: 1.4 }); }
   else if (a.classList.contains("skip")) { e.preventDefault(); lenis.scrollTo("#exhibits", { duration: 1.2 }); }
 };
