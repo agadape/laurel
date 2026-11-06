@@ -1,6 +1,6 @@
 # Laurel — audit brief for an external model (built for Gemini)
 
-Generated 2026-11-06 07:53 UTC from the repository at commit `5574bbb` (https://github.com/agadape/laurel).
+Generated 2026-11-06 08:09 UTC from the repository at commit `46f79b2` (https://github.com/agadape/laurel).
 This single file contains everything: who we are, what we built, every claim we make, the whole source of the pieces
 that matter, and what we want from you. You do not need the repository; you do need the web.
 
@@ -285,6 +285,9 @@ Where you could not verify something, say "could not verify" instead of guessing
 ## 3. Recent commits
 
 ```
+46f79b2 2026-11-06 Web + remote MCP: split B is "withheld from the leaderboard", not sealed
+7a583b2 2026-11-06 Split B: say 'rows sealed, score withheld from the leaderboard' everywhere; the score is on-chain in v1
+0c834f2 2026-11-06 Answer external audit 2 (Gemini): sandboxed competitor agent, security rows, dataset disclosures
 5574bbb 2026-11-06 docs/audit: single-file audit brief for an external model (Gemini), with its builder
 d76be7e 2026-11-06 Web: Dex's landing and dark theme, with escaped contract values and a labelled snapshot fallback
 6f39efd 2026-11-06 README: show the walkthrough GIF at the top and the architecture diagram under How it works
@@ -307,9 +310,6 @@ ff5236d 2026-11-05 Landing economics, NEAR wallet login (buy credit, withdraw), 
 76e8dbc 2026-11-05 Remote MCP endpoint + "Connect your agent" page for every OS and client
 acb89be 2026-11-05 Project .mcp.json for Claude Code (env placeholders, no secrets); MCP in the submission idea and DEMO prep
 8c38ea1 2026-11-05 laurel-mcp published to npm (0.1.0); README/MCP docs point at npx -y laurel-mcp
-dbd6b66 2026-11-05 laurel-mcp: MCP server so AI agents can use the model (browse, download, run locally, predict on-chain)
-f6f468b 2026-11-05 Web: signatures from 4 large trees (index) and 8 (specimens); type scale collapsed to 12Â·13Â·15Â·17Â·20Â·26Â·34Â·54Â·76
-50b9773 2026-11-05 Web: pass-2 audit fixes (docs/audit/*_2.md)
 ```
 
 ## 4. Repository map
@@ -378,7 +378,7 @@ NEAR features used: own contract (near-sdk 5.30), cross-contract promises and ca
 | Track | What Laurel contributes | Where to look |
 |---|---|---|
 | `agents` (Agent Economy) | Agents **pay for verified predictions** per call from prepaid credit, with a key the protocol restricts to `predict_task`; an MCP server gives any agent the exhibits, the model bytes, local inference and paid on-chain calls | [docs/AGENT.md](docs/AGENT.md), [docs/MCP.md](docs/MCP.md), `mcp/` |
-| `privacy` (Private AI, TEE) | The benchmark's test set never leaves the enclave and opens only for the pinned evaluator hash; the deciding split stays sealed until close | [docs/EVALUATOR.md](docs/EVALUATOR.md), SPIKE_LOG S30, `evaluator/` |
+| `privacy` (Private AI, TEE) | The benchmark's test set never leaves the enclave and opens only for the pinned evaluator hash; the deciding split's *rows* stay inside the enclave; its *score* is withheld from the leaderboard, the site and the MCP tools until close, but is readable on-chain in v1 (see Security model) | [docs/EVALUATOR.md](docs/EVALUATOR.md), SPIKE_LOG S30, `evaluator/` |
 | `open` (Open Innovation) | A model competition whose winner becomes **permissionless, composable infrastructure**: an address other contracts call in consensus | [docs/CONSUMER.md](docs/CONSUMER.md), `contracts/consumer-example` |
 
 ### How it works
@@ -398,7 +398,7 @@ sequenceDiagram
     P->>L: request_score
     L->>O: request_execution(pinned evaluator, task secret)
     O->>L: get_model_bytes (view), then on_score: split A + split B
-    Note over L: split A public, split B sealed until close
+    Note over L: split A public; split B withheld from the leaderboard until close (readable on-chain in v1)
     A->>L: close_task, by anyone after the deadline (best split B wins)
     A->>L: predict_task(task_id, features)
     L-->>A: raw score, computed in consensus
@@ -524,7 +524,7 @@ What an attacker would try, and what stops it today. "Protocol" means NEAR itsel
 | Change the winner after the fact | `close_task` is permissionless and deterministic: best split-B score, ties to the earlier submission; it runs once | `close_task`, unit tests |
 | Spend from the agent's account | The agent's key is a function-call key limited to `predict_task`/`predict` on this contract with a gas allowance: the protocol rejects transfers, deposits, other methods and other contracts before any contract code runs (capability-based authorization at the protocol level) | docs/AGENT.md |
 | Drain prediction credit | Credit is per account, debited only by that account's own calls, withdrawable only by its owner | `deposit_credit`, `withdraw_credit` |
-| Read split B of an open task | **Not prevented in v1.** `leaderboard`, the site and the MCP tools withhold split B until close, but the contract's `get_submission` / `list_submissions` views return `score_b_bps`, `f1_b_bps` and `last_outlayer_raw` as soon as `on_score` stores them, and the OutLayer log is public. Sealing is a view-layer rule today; the fix (score B in a second TEE run, or return it encrypted to a key revealed at close) needs a contract change we did not make before the freeze | `get_submission`, `on_score` |
+| Read split B of an open task | **Partly, since contract v1.1 (6 Nov).** `leaderboard`, `get_submission` and `list_submissions` all withhold `score_b_bps`, `f1_b_bps` and the `b` object of `last_outlayer_raw` while the task is open (v1.0 returned them from the two submission views; fixed by a code-only upgrade, no state change, deploy tx [`GU37HBpW…`](https://testnet.nearblocks.io/txns/GU37HBpW6aXVZ57dkDacTspfPLHdsjnCnByhgbBw6uFF)). **Still open:** the evaluator's whole output (both splits, confusion counts) is the **result value of OutLayer's receipt** in every `request_score` transaction, visible in any explorer (checked 6 Nov on submission #12). What is sealed is the *rows*; the score is withheld by the contract's views, not hidden from the chain. The real fix is a second TEE run at close or an encrypted split B (phase 2). Sealing is a view-layer rule today; the fix (score B in a second TEE run, or return it encrypted to a key revealed at close) needs a contract change we did not make before the freeze | `get_submission`, `on_score`, OutLayer receipt result |
 | Drain an agent's credit with a hostile task | **Partly open.** `create_task` is permissionless and puts no ceiling on `fee_per_call`; credit is one balance per account across all tasks; a function-call key limits the *method*, not its arguments. An agent that can be talked into calling `predict`/`predict_task` on a stranger's submission pays that task's fee. Mitigations today: keep little credit on an agent account, or route calls through your own contract that hard-codes the task (as `credit-desk` does) | `create_task`, `predict`, docs/CONSUMER.md |
 | Close a task while a rival's score is in flight | **Edge case, documented.** `close_task` is callable the moment the deadline passes and does not wait for `Pending` submissions; `request_score` is allowed until the task is closed and `on_score` still records a late result. A score requested seconds before the deadline can settle after the winner is fixed and show a higher split B than the champion. Entries should be scored well before the deadline | `close_task`, `on_score` |
 
@@ -567,7 +567,7 @@ Planning history, in Indonesian: [PLAN.md](PLAN.md), [IDEAS.md](IDEAS.md), [ARCH
 
 - **Simulation (credit risk).** German Credit is a 1973–75 German dataset with known biases; two sensitive attributes are dropped, `age` is kept. The decisions ("approve / require deposit") are illustrations, not a credit tool. [tasks/german-credit/README.md](tasks/german-credit/README.md).
 - **Mainnet data (retention).** Labels are observable on-chain, so the population is reconstructible from the published SQL; the private rows are 300 accounts out of 4,407 whose ids are never published, and a 250 KB model cannot memorise the population. The sample is enriched to 40 % retained; `creator_class` encodes which wallet created the account. [tasks/near-retention/README.md](tasks/near-retention/README.md).
-- **Private ≠ secret from everyone.** The credit-risk dataset is public, so a participant could train on all 1,000 rows. The private split protects against leaderboard-feedback overfitting (3 submissions per account, scores rounded to 50 bps, split B only used at close), not against downloading UCI. Split-B scores are visible in the OutLayer transaction log and in the `get_submission` view even though the leaderboard and the site hide them until close.
+- **Private ≠ secret from everyone.** The credit-risk dataset is public, so a participant could train on all 1,000 rows. The private split protects against leaderboard-feedback overfitting (3 submissions per account, scores rounded to 50 bps, split B only used at close), not against downloading UCI. Split-B scores are visible in the OutLayer receipt's result on-chain even though the leaderboard, the contract's submission views (since v1.1) and the site withhold them until close.
 - **No real Sybil resistance** beyond per-account quota and submission cost.
 - **Model class.** Binary GBDT with integer thresholds only; a 197 KB / 100-tree model costs 13 Tgas per call and 2 NEAR of storage.
 - **Trust assumptions.** The contract trusts what `outlayer.testnet` returns: it verifies no TEE attestation itself, so the "only the pinned evaluator can read the secret" guarantee is OutLayer's, not ours. The contract `owner` can call `set_evaluator` at any time (an `evaluator_set` event is emitted and every scored submission records `scored_by`), so participants trust the owner not to swap the scorer mid-task. The private test set for the demo task is an OutLayer secret owned by a team account.
@@ -594,22 +594,22 @@ Planning history, in Indonesian: [PLAN.md](PLAN.md), [IDEAS.md](IDEAS.md), [ARCH
 
 Project name: **Laurel** (contract codename `bursa`, see `docs/NAMING.md`).
 
-Line numbers refer to the files at the hackathon submission commit (re-checked 4 Nov 2026 with `grep -n "pub fn"`). Transactions are on NEAR **testnet** (https://testnet.nearblocks.io/txns/<hash>).
+Line numbers refer to the files at the hackathon submission commit (re-checked 6 Nov 2026 with `grep -n "pub fn"`, after contract v1.1 added the split-B view mask). Transactions are on NEAR **testnet** (https://testnet.nearblocks.io/txns/<hash>).
 
 | # | Claim (README) | Code | Verified by |
 |---|---|---|---|
-| 1 | The model runs inside the contract; `predict_task` returns a prediction in consensus | `contracts/bursa/src/lib.rs` `run_prediction` (~L572), `predict_task` (~L551); `crates/gbdt-core/src/lib.rs` `raw_score` (~L134) | unit tests `predict_charges_fee_and_credits_owner`, `matches_python_vectors`; tx `B9cHP7YV9qBbBKNjnZSn5ZfB8szyU4rj7TVJdrhSkDN2` on the final contract, task 3 (docs/AGENT.md, 4 Nov) |
+| 1 | The model runs inside the contract; `predict_task` returns a prediction in consensus | `contracts/bursa/src/lib.rs` `run_prediction` (~L574), `predict_task` (~L553); `crates/gbdt-core/src/lib.rs` `raw_score` (~L134) | unit tests `predict_charges_fee_and_credits_owner`, `matches_python_vectors`; tx `B9cHP7YV9qBbBKNjnZSn5ZfB8szyU4rj7TVJdrhSkDN2` on the final contract, task 3 (docs/AGENT.md, 4 Nov) |
 | 2 | One prediction with a 33 KB / 50-tree model costs 4.3 Tgas | same | docs/GAS.md row `predict` 50×4 → tx `6vgSqsuWWorm7MoSZwhLfeXJ35srxYWUWQ3XZncddSj5` (4.26 Tgas); docs/AGENT.md (final contract, 4 Nov) average 4.341 Tgas over 10 calls |
-| 3 | Scoring runs in a TEE via OutLayer and the result comes back on-chain | `request_score` (~L405) builds `request_execution`; `on_score` (~L442) stores the result | docs/E2E.md steps `request_score deep/shallow`; tx `ZE7mnNaNt1KiZoa8bRQpxCqKGj7ejPWn2Vcb6C3Dnd3` (SPIKE_LOG S30) |
-| 4 | The contract pins the evaluator hash; participants cannot choose the scorer | `request_score` uses `self.evaluator_url/hash` only; `set_evaluator` (~L254) owner-only | unit tests `set_evaluator_owner_only`, `set_evaluator_rejects_non_owner`; docs/E2E.md negative `set_evaluator by non-owner` |
+| 3 | Scoring runs in a TEE via OutLayer and the result comes back on-chain | `request_score` (~L407) builds `request_execution`; `on_score` (~L442) stores the result | docs/E2E.md steps `request_score deep/shallow`; tx `ZE7mnNaNt1KiZoa8bRQpxCqKGj7ejPWn2Vcb6C3Dnd3` (SPIKE_LOG S30) |
+| 4 | The contract pins the evaluator hash; participants cannot choose the scorer | `request_score` uses `self.evaluator_url/hash` only; `set_evaluator` (~L256) owner-only | unit tests `set_evaluator_owner_only`, `set_evaluator_rejects_non_owner`; docs/E2E.md negative `set_evaluator by non-owner` |
 | 5 | The test set secret is bound to the evaluator wasm hash; another build cannot read it | OutLayer secret row keyed `(wasm_hash, profile, owner)` — `tools/secrets.sh`, docs/EVALUATOR.md | SPIKE_LOG S30: run with hash `75f06a7d…` → `TEST_SET_A missing`; without `secrets_ref` tx `5v5TvhSk6LVrRPLRpYQtrjgxvWQpuTACsbATn57SXXbw` |
 | 6 | TEE scores equal the local evaluator and Python, bit for bit | `evaluator/src/main.rs` `run` (~L102) and `crates/gbdt-core` `confusion` (~L210) share one crate; `tools/export.py` `metrics` | docs/E2E.md `matches_local: true` for both models; docs/EVALUATOR.md table (local 7100/6650 & 7550/6150 = TEE = Python) |
-| 7 | Evaluator reads the model from the contract through the `view` host function | `evaluator/src/main.rs` ~L85 `near::rpc::api::view(contract, "get_model_bytes", …)`; `get_model_bytes` (~L663) | every `request_score` tx in docs/E2E.md (worker fetched 33 KB / 1.6 KB models) |
-| 8 | Models are validated on submission (size, trees, strictly increasing child indices, feature range) | `check_model` (~L391); `gbdt-core::validate` (~L80) | unit tests `validate_rejects_bad_structure`, `rejects_backward_child_index`, `rejects_feature_count_mismatch`, `rejects_garbage_bytes`; docs/E2E.md negatives `8 features`, `garbage bytes` |
-| 9 | Storage is charged precisely and the excess refunded; submission fee goes to the task creator | `settle_storage` (~L202); `submit_model` (~L335) | unit test `rejects_when_deposit_below_storage_plus_fee`; docs/GAS.md `submit_model` log `storage … yN`; tx `14BSwbzAViKnu7esMQTf9bN1L3vQiywjMQGqAEX5Tcmv` |
+| 7 | Evaluator reads the model from the contract through the `view` host function | `evaluator/src/main.rs` ~L85 `near::rpc::api::view(contract, "get_model_bytes", …)`; `get_model_bytes` (~L691) | every `request_score` tx in docs/E2E.md (worker fetched 33 KB / 1.6 KB models) |
+| 8 | Models are validated on submission (size, trees, strictly increasing child indices, feature range) | `check_model` (~L393); `gbdt-core::validate` (~L80) | unit tests `validate_rejects_bad_structure`, `rejects_backward_child_index`, `rejects_feature_count_mismatch`, `rejects_garbage_bytes`; docs/E2E.md negatives `8 features`, `garbage bytes` |
+| 9 | Storage is charged precisely and the excess refunded; submission fee goes to the task creator | `settle_storage` (~L204); `submit_model` (~L337) | unit test `rejects_when_deposit_below_storage_plus_fee`; docs/GAS.md `submit_model` log `storage … yN`; tx `14BSwbzAViKnu7esMQTf9bN1L3vQiywjMQGqAEX5Tcmv` |
 | 10 | Score state machine is idempotent; failures can be retried; `Pending` times out after 300 blocks | `on_score`, `request_score`, `PENDING_TIMEOUT_BLOCKS` | unit tests `on_score_ignores_duplicate_callback`, `on_score_failure_paths_then_retry`, `request_score_allowed_after_pending_timeout` |
-| 11 | Leaderboard hides split B until the task is closed; the winner is the best split-B score, ties to the earlier submission | `leaderboard` (~L637), `close_task` (~L485) | unit tests `close_task_picks_best_b_and_ties_go_to_earlier`, `close_task_falls_back_to_a_when_b_missing_and_skips_unscored`; docs/E2E.md `leaderboard (open; B hidden)` / `(closed; B shown)`; final contract `laurel.laurel-team-mw0x0c8g.testnet` task 3 (shallow #5 leads A 7550, deep #4 wins B 6650) |
-| 12 | Per-call fee is taken from prepaid credit and credited to the model owner, who withdraws it | `deposit_credit` (~L514), `run_prediction`, `withdraw_earnings` (~L560) | unit test `predict_charges_fee_and_credits_owner`; docs/E2E.md step `winner owner: withdraw_earnings` (0.003 NEAR); docs/AGENT.md fee total 0.01 NEAR |
+| 11 | Leaderboard hides split B until the task is closed; the winner is the best split-B score, ties to the earlier submission | `leaderboard` (~L665), `close_task` (~L487) | unit tests `close_task_picks_best_b_and_ties_go_to_earlier`, `close_task_falls_back_to_a_when_b_missing_and_skips_unscored`; docs/E2E.md `leaderboard (open; B hidden)` / `(closed; B shown)`; final contract `laurel.laurel-team-mw0x0c8g.testnet` task 3 (shallow #5 leads A 7550, deep #4 wins B 6650) |
+| 12 | Per-call fee is taken from prepaid credit and credited to the model owner, who withdraws it | `deposit_credit` (~L516), `run_prediction`, `withdraw_earnings` (~L560) | unit test `predict_charges_fee_and_credits_owner`; docs/E2E.md step `winner owner: withdraw_earnings` (0.003 NEAR); docs/AGENT.md fee total 0.01 NEAR |
 | 13 | An agent holds a function-call key limited to `predict_task`/`predict`; the protocol rejects everything else | `tools/agent.mjs` (`addFunctionCallAccessKey`) | docs/AGENT.md: `AccessKeyMethodNameMismatch`, `AccessKeyDepositWithFunctionCall`, `AccessKeyReceiverMismatch`, `AccessKeyRequiresFullAccess`; docs/E2E.md negatives `agent FC key: …` |
 | 14 | Another contract calls the model through a promise and pays from its own credit | `contracts/consumer-example/src/lib.rs` `fund` (~L69), `screen` (~L77), `on_prediction` (~L86) | docs/CONSUMER.md (final contract, `desk3.laurel-team-mw0x0c8g.testnet` → task 3, 4 Nov): tx `E4WHQDRvWaJnzrUmhkey9J9424WETpsdwzdPjr58gnh6`, `DaJeURvJPxN9Bj81jv1gPyashUkigXVahPxgjSWytAjQ`, `6RR8xrKu4fYthaNhR1UZhuxFptzuXyXvSi9te3uVtg8E`; error path `DtaaDVx9KhD1evMUTUCZ35T6gU5RBYs9ZTujtp3QRxYo` |
 | 15 | Whole journey reproducible from fresh accounts with 17/17 negative paths rejected | `tools/e2e.mjs` | docs/E2E.md (run `mw1xpamc` on 4 Nov from the team account, 23 steps, 232 s, `scores_match_local: true`; earlier run `mw0kvxh3` on 3 Nov: 228 s) |
@@ -623,6 +623,7 @@ Line numbers refer to the files at the hackathon submission commit (re-checked 4
 | 24 | Three models for task 5 were scored by the pinned evaluator inside OutLayer's TEE and the split-A readings equal the local evaluator run (wasmtime, same wasm) to the point: #7 (p1, 10 trees, 1,611 B) 8350 bps, #9 (team, 50 trees, 32,087 B) 8250 bps, #8 (p2, 30 trees, 10,051 B) 8200 bps; `scored_by` = `8b80010f…` on all three | `tools/submit.mjs`, `tools/eval_local.sh`, `tasks/near-retention/README.md` (results table) | `submit_model` / `request_score` txs: #7 [`Eft3TNRZ…`](https://testnet.nearblocks.io/txns/Eft3TNRZKqPKYvCDfypCXspDBgXcEcamPJsF1VLULwVr) / [`9Qiv5T7F…`](https://testnet.nearblocks.io/txns/9Qiv5T7FZ31ctoLfgVDrERX3GVwHsJ1mXWLiJUhSxeRp), #8 [`AurSmaL8…`](https://testnet.nearblocks.io/txns/AurSmaL8wNdfgMaRL8E2oxfZKDxS4PftMYkpHUikazxp) / [`8K5wJZvA…`](https://testnet.nearblocks.io/txns/8K5wJZvALwfRYw9QykULuTNcWsJDL14AH7177z2mH1PY), #9 [`GWxaZBK7…`](https://testnet.nearblocks.io/txns/GWxaZBK7opVfVYtHV8XwzyC2mUxmoArr8v1oyUFvatpo) / [`6GZNgJey…`](https://testnet.nearblocks.io/txns/6GZNgJeyJmhWaBf6ydP7pzzLvyp8vmostEbG5SJRbLwA); `leaderboard {task_id: 5}` and `get_submission` on `laurel.laurel-team-mw0x0c8g.testnet`; OutLayer execution blocks 276341818 / 276341861 / 276341893 (field `block` of `last_outlayer_raw`) |
 | 25 | Two autonomous agents built on the Claude Agent SDK use Laurel with no human in the loop: a **competitor** (account `maker.laurel-team-mw0x0c8g.testnet`, full-access key held only by the MCP subprocess) read exhibit 05, cross-validated 72 small GBDT configurations on the public rows, trained a 20 × depth-2 model (3,059 B), exported it with `tools/export.py`, entered it through `laurel_submit_model` and got **8350 bps on split A from the TEE** (submission #10, level with the leader), then declined its two remaining entries as noise-fitting; a **caller** (account `agent.laurel-team-mw0x0c8g.testnet`, function-call key limited to `predict`/`predict_task`) scored 3 holdout rows with #10 locally and on-chain with identical raw scores, 2.69 to 2.71 Tgas and 0.001 NEAR per call | `agents/competitor.mjs`, `agents/caller.mjs` (`canUseTool` policy, `permissionMode: default`, no bypass), `mcp/server.mjs` (`laurel_submit_model`, `laurel_wait_score`, `laurel_predict_model`), `tools/make_account.mjs` | transcripts `agents/out/competitor-2026-11-05T13-53-49.md` (+ `.jsonl`), `agents/out/caller-2026-11-05T13-57-13.md`; `submit_model` [`Hfv5cYC1…`](https://testnet.nearblocks.io/txns/Hfv5cYC1heKdf44SjKWrSwjZaEgkhjqSjYz3FTamJdW6), `request_score` [`2FcjpdGr…`](https://testnet.nearblocks.io/txns/2FcjpdGrxvteUucXm6LktstGCAThf3ZvBjBMzdrCKTPB), `predict` × 3 [`GAJmtrGQ…`](https://testnet.nearblocks.io/txns/GAJmtrGQhzuKF13iRtraa4kgQGyn5yUDVWKJ8se75j7N) [`5DPbPMtM…`](https://testnet.nearblocks.io/txns/5DPbPMtM833WCZkp8cZDtHMeeXZs2VvPuFeaTfQK8s8U) [`DiYjyuEX…`](https://testnet.nearblocks.io/txns/DiYjyuEXfyvYW1hfnPa4XSvDPsJNA9yd38phyfksaEhc); `get_submission {submission_id: 10}` (owner maker, `scored_by` `8b80010f…`); the first run (`competitor-2026-11-05T13-49-26.md`) was blocked by a policy bug and entered nothing; after external audit 2 the agent was moved into a temp-folder workspace holding only public files and re-run on 6 Nov (`competitor-2026-11-06T07-05-20.md`): submission #12, 6,307 B, 8300 bps on split A, 0 denied calls, `submit_model` [`HygFCbMv…`](https://testnet.nearblocks.io/txns/HygFCbMvR1gJEaPMJ7uUh1SxuCiXR9QU9U65krZ4Yi4V), `request_score` [`DoKU6Rn6…`](https://testnet.nearblocks.io/txns/DoKU6Rn6HadWmmj1bh7bPrmQabk9iApzn1ZZoApmKoVD); findings and verdicts in [docs/audit/GEMINI_AUDIT_RESPONSE.md](docs/audit/GEMINI_AUDIT_RESPONSE.md) |
 | 26 | One command takes an outside participant from a funded testnet account to a TEE-scored entry: `tools/quickstart.mjs` checks Python and balance, reads the task and the account's remaining entries, trains on the public split, exports, has the contract validate the bytes and quote storage, then `submit_model` → `request_score` → waits for the reading and prints the rank | `tools/quickstart.mjs`, [docs/QUICKSTART.md](docs/QUICKSTART.md) (account setup, costs, invitation text) | run as `p2` on 5 Nov 2026: 15 trees × depth 3, 5,041 B, holdout 8305 bps, storage 0.053 NEAR + 0.1 fee; `submit_model` [`7oURSZhN…`](https://testnet.nearblocks.io/txns/7oURSZhNHyVoK8FKc8HfPx6okgJ6FaW37n3pW9RvWPgs) → submission #11, `request_score` [`HeitL6CN…`](https://testnet.nearblocks.io/txns/HeitL6CNLtTEVRnp7HEk18x5eBQeke1crc7LkHJkBDn6) → **8300 bps on split A**, rank 3 of 5 (OutLayer charged 0.00105 NEAR of the 0.1 deposit, rest refunded) |
+| 27 | Contract v1.1 (6 Nov 2026): `get_submission` and `list_submissions` withhold split B (`score_b_bps`, `f1_b_bps`, the `b` object of `last_outlayer_raw`) while the task is open, like `leaderboard`; stored state unchanged, code-only upgrade of the same account, no `new`/migration | `contracts/bursa/src/lib.rs` `public_submission` (~L645), `get_submission` (~L637), `list_submissions` (~L727), `WITHHELD`; unit tests `views_withhold_split_b_while_open_and_show_it_after_close`, `view_withholds_split_b_even_when_raw_is_not_json` (52 tests in `bursa`) | deploy tx [`GU37HBpW…`](https://testnet.nearblocks.io/txns/GU37HBpW6aXVZ57dkDacTspfPLHdsjnCnByhgbBw6uFF) (`tools/upgrade.mjs`, wasm 289,634 B sha256 `9bd922f8…`, account code hash `BVNELFchTXxedNghd8vDWFncVWxstXjmjo3R6WeeoB65`, storage 495,942 → 496,608 B); after: `get_submission(12)` `b=null`, `list_submissions(5)` all `b=null`, closed task 3 `get_submission(4)` `b=6650`, leaderboard unchanged, paid `predict_task(3)` [`8QtfRae5…`](https://testnet.nearblocks.io/txns/8QtfRae5jDHdxTrAq9rJ9BybRsr1oz3N9jdoF1EMG1cU) raw 811014, 4.348 Tgas. Not fixed by this: the split-B score remains in the OutLayer receipt's result (README Security model) |
 | 19 | Unit test counts | `#[test]` in `contracts/bursa` (50), `contracts/consumer-example` (3), `crates/gbdt-core` (4), `evaluator` (1) | `bash build.sh test` |
 
 Not claimed (see README "Limits"): Sybil resistance, secrecy of split-B scores from OutLayer logs, secrecy of a public dataset, mainnet, audit, NFT ownership, sub-account per model, automatic royalties.
@@ -988,12 +989,12 @@ Semua method `predict*` adalah **change method** (butuh transaksi) karena dihitu
 | `get_task` | `{task_id}` | `Task \| null` |
 | `get_task_by_slug` | `{slug}` | `Task \| null` |
 | `list_tasks` | `{from, limit}` | `Task[]` |
-| `get_submission` | `{submission_id}` | `Submission \| null` |
+| `get_submission` | `{submission_id}` | `Submission \| null`; sejak v1.1 (6 Nov 2026) `score_b_bps`/`f1_b_bps` = `null` dan objek `b` di `last_outlayer_raw` diganti `"withheld until the task closes"` selama task masih terbuka (state tidak berubah; skor B tetap terbaca di hasil receipt OutLayer) |
 | `leaderboard` | `{task_id}` | `LeaderboardRow[]`; tugas terbuka: urut `score_a_bps` desc (belum diskor = 0, paling bawah), waktu submit asc, `score_b_bps` selalu `null`; tugas tertutup: urut skor final (B, kalau tidak ada A; bukan `Scored` = 0) desc, waktu asc, `score_b_bps` terisi. Tugas tak dikenal → `[]` |
 | `get_model_bytes` | `{submission_id}` (alias `{model_id}` untuk evaluator spike) | base64 model (dibaca evaluator lewat host `view`) |
 | `get_credit` | `{account_id}` | yoctoNEAR string |
 | `get_earnings` | `{submission_id}` | yoctoNEAR string |
-| `list_submissions` | `{task_id}` | `Submission[]` urut waktu submit |
+| `list_submissions` | `{task_id}` | `Submission[]` urut waktu submit; split B ditahan seperti `get_submission` selama task terbuka |
 | `validate_model` | `{task_id, bytes}` | tidak pernah panik; `storage_cost` adalah **perkiraan** (`bytes + 400 B` × harga byte), struct Submission dan indeks task menambah sedikit di atasnya, jadi lampirkan slack 0.01–0.02 NEAR (dikembalikan) seperti `tools/submit.mjs`: `{ok:true, bytes, trees, nodes, max_depth, n_features, storage_cost, submission_fee}` atau `{ok:false, error, n_features_expected?, n_features_model?}` |
 
 Aturan struktur model yang diterima (`gbdt-core::Model::validate`): `version = 1`; `feature_scale`, `out_scale` > 0; tiap pohon 1..65534 node; node dalam punya `left`, `right` **lebih besar dari indeks node itu** dan < jumlah node (sehingga penelusuran selalu berhenti), `feature < n_features`; kedalaman < 64. `tools/export.py` menghasilkan format ini.
@@ -1285,8 +1286,10 @@ the prediction from exactly those features. What you control is the model.
 
 ### What decides the winner
 
-Split A is 150 sealed rows you see the score of while the task is open. Split B is another 150 sealed rows nobody sees the
-score of until `close_task` runs after the deadline; **it alone picks the champion**. So a model tuned against split A's
+Split A is 150 sealed rows you see the score of while the task is open. Split B is another 150 sealed rows whose score the
+leaderboard, the site and the MCP tools withhold until `close_task` runs after the deadline; **it alone picks the champion**.
+(The raw split-B figure can still be dug out of the scoring transaction's receipt on-chain; the rows cannot. Tuning
+against it is pointless anyway: you cannot see which rows you got wrong.) So a model tuned against split A's
 leaderboard gains nothing on B. One row of a split is worth about 0.7 to 1.3 points of balanced accuracy, so differences
 of a point between entries are mostly noise; think about what generalises.
 
@@ -1411,8 +1414,12 @@ agent or contract: `predict_task(5, features)`.
 ### Results
 
 Three baseline models, trained on `public_train.csv` only, exported with `tools/export.py`, scored by the pinned evaluator
-(`8b80010f…`) inside OutLayer's TEE on 5 Nov 2026. Split A is public while the task is open; split B stays sealed in the
+(`8b80010f…`) inside OutLayer's TEE on 5 Nov 2026. Split A is public while the task is open; split B is withheld from the
 contract's leaderboard until the deadline, **12 Nov 2026 12:00 UTC**, when `close_task` reveals it and names the champion.
+Honest footnote (6 Nov): the split-B *score* is readable on-chain before close in the OutLayer receipt's result (and, until
+the v1.1 upgrade that afternoon, through `get_submission` too); the *rows* are what is sealed. The team has read those values while checking an audit finding
+and commits to make **no further team entries on task 5** (`p1`, `p2`, `laurel-team`, `maker`) so that knowledge cannot be
+used; see the README's Security model.
 
 | Submission | Model | Bytes | Public holdout (150 rows) | Split A, TEE | Split B, TEE | Local evaluator (wasmtime, same wasm) |
 |---|---|---|---|---|---|---|
@@ -1771,6 +1778,8 @@ pub const PENDING_TIMEOUT_BLOCKS: u64 = 300;
 pub const MAX_FEATURES: u16 = 64;
 pub const MAX_SLUG_LEN: usize = 40;
 pub const MAX_TITLE_LEN: usize = 80;
+/// What `get_submission` / `list_submissions` show in place of split B while a task is open.
+pub const WITHHELD: &str = "withheld until the task closes";
 
 #[derive(BorshStorageKey)]
 #[near]
@@ -2358,8 +2367,34 @@ impl Contract {
         self.task_ids.iter().skip(from as usize).take(limit as usize).filter_map(|id| self.tasks.get(id).cloned()).collect()
     }
 
+    /// Public view of a submission. While its task is open, split B is withheld here as it is in `leaderboard`:
+    /// `score_b_bps` / `f1_b_bps` are `None` and the `b` object inside `last_outlayer_raw` is replaced. The stored
+    /// state is untouched (added 6 Nov 2026, contract v1.1, after an external audit; the score is still readable in
+    /// the OutLayer receipt's result on-chain, see README "Security model").
     pub fn get_submission(&self, submission_id: u32) -> Option<Submission> {
-        self.submissions.get(&submission_id).cloned()
+        self.submissions.get(&submission_id).map(|s| self.public_submission(s))
+    }
+
+    fn public_submission(&self, s: &Submission) -> Submission {
+        let open = self.tasks.get(&s.task_id).map(|t| !t.closed).unwrap_or(false);
+        if !open {
+            return s.clone();
+        }
+        let mut p = s.clone();
+        p.score_b_bps = None;
+        p.f1_b_bps = None;
+        p.last_outlayer_raw = p.last_outlayer_raw.as_deref().map(|raw| match near_sdk::serde_json::from_str::<Value>(raw) {
+            Ok(mut v) => {
+                if let Some(o) = v.as_object_mut() {
+                    if o.contains_key("b") {
+                        o.insert("b".to_string(), Value::String(WITHHELD.to_string()));
+                    }
+                }
+                v.to_string()
+            }
+            Err(_) => WITHHELD.to_string(),
+        });
+        p
     }
 
     /// Open task: sorted by split-A score (unscored last), then submission time; split B hidden.
@@ -2429,7 +2464,7 @@ impl Contract {
     pub fn list_submissions(&self, task_id: u32) -> Vec<Submission> {
         self.task_submissions
             .get(&task_id)
-            .map(|v| v.iter().filter_map(|id| self.submissions.get(id).cloned()).collect())
+            .map(|v| v.iter().filter_map(|id| self.submissions.get(id).map(|s| self.public_submission(s))).collect())
             .unwrap_or_default()
     }
 
@@ -2737,7 +2772,7 @@ mod tests {
         testing_env!(callback_ctx().build());
         let st = c.on_score(1, accounts(2), MIN_SCORE_DEPOSIT, Ok(Some(EVAL_OK.into())));
         assert_eq!(st, Status::Scored);
-        let s = c.get_submission(1).unwrap();
+        let s = c.submissions.get(&1).unwrap().clone(); // stored state; the view withholds B while the task is open
         assert_eq!((s.score_a_bps, s.f1_a_bps, s.score_b_bps, s.f1_b_bps), (Some(7600), Some(6650), Some(7200), Some(6100)));
         assert_eq!(s.scored_by.as_deref(), Some(HASH));
         assert!(s.last_outlayer_raw.unwrap().contains("bal_acc_bps"));
@@ -2764,7 +2799,7 @@ mod tests {
         c.request_score(1);
         testing_env!(callback_ctx().build());
         assert_eq!(c.on_score(1, accounts(2), MIN_SCORE_DEPOSIT, Ok(Some(EVAL_SPIKE.into()))), Status::Scored);
-        let s = c.get_submission(1).unwrap();
+        let s = c.submissions.get(&1).unwrap().clone();
         assert_eq!((s.score_a_bps, s.f1_a_bps, s.score_b_bps), (Some(8850), None, Some(9100)));
     }
 
@@ -2840,6 +2875,44 @@ mod tests {
         testing_env!(callback_ctx().build());
         assert_eq!(c.on_score(id, accounts(2), MIN_SCORE_DEPOSIT, Ok(Some(eval_json(a, b)))), Status::Scored);
         id
+    }
+
+    #[test]
+    fn views_withhold_split_b_while_open_and_show_it_after_close() {
+        let mut c = setup_task(); // deadline 10_000
+        let s1 = submit_and_score(&mut c, accounts(2), 2_000, 9000, Some(7000));
+        // open: both views withhold B and mask the raw "b" object; A stays visible
+        let v = c.get_submission(s1).unwrap();
+        assert_eq!((v.score_a_bps, v.score_b_bps, v.f1_b_bps), (Some(9000), None, None));
+        let raw = v.last_outlayer_raw.clone().unwrap();
+        assert!(raw.contains(WITHHELD) && !raw.contains("\"b\":{"), "{raw}");
+        assert!(raw.contains("\"a\":"), "split A must stay in the raw record: {raw}");
+        let l = c.list_submissions(1);
+        assert_eq!(l.len(), 1);
+        assert!(l[0].score_b_bps.is_none() && l[0].last_outlayer_raw.as_deref().unwrap().contains(WITHHELD));
+        // stored state is untouched
+        assert_eq!(c.submissions.get(&s1).unwrap().score_b_bps, Some(7000));
+        // closed: everything visible
+        testing_env!(ctx(accounts(5), "0", 10_000).build());
+        assert_eq!(c.close_task(1), Some(s1));
+        let v = c.get_submission(s1).unwrap();
+        assert_eq!(v.score_b_bps, Some(7000));
+        assert!(v.last_outlayer_raw.unwrap().contains("\"b\":"));
+        assert_eq!(c.list_submissions(1)[0].score_b_bps, Some(7000));
+    }
+
+    #[test]
+    fn view_withholds_split_b_even_when_raw_is_not_json() {
+        let mut c = with_submission();
+        testing_env!(owner_ctx(100).build());
+        c.request_score(1);
+        testing_env!(callback_ctx().build());
+        assert_eq!(c.on_score(1, accounts(2), MIN_SCORE_DEPOSIT, Ok(Some(EVAL_OK.into()))), Status::Scored);
+        // tamper the stored raw into something that is not JSON; the view must still not leak anything
+        let mut s = c.submissions.get(&1).unwrap().clone();
+        s.last_outlayer_raw = Some("not json b 7200".to_string());
+        c.submissions.insert(1, s);
+        assert_eq!(c.get_submission(1).unwrap().last_outlayer_raw.as_deref(), Some(WITHHELD));
     }
 
     #[test]
@@ -5086,15 +5159,15 @@ async function modelOf(submission_id) {
   }
   return modelCache.get(submission_id);
 }
-/** The sealed rule, applied client-side too: split B of a submission is reported only once its task is closed. */
+/** The leaderboard rule, applied client-side too: split B of a submission is reported only once its task is closed. */
 async function specimen(submission_id) {
   const sub = await view("get_submission", { submission_id });
   if (!sub) return null;
   const task = await view("get_task", { task_id: sub.task_id });
   if (!task?.closed) {
     sub.score_b_bps = null; sub.f1_b_bps = null;
-    try { const raw = JSON.parse(sub.last_outlayer_raw); if (raw && "b" in raw) { raw.b = "sealed until the task closes"; sub.last_outlayer_raw = JSON.stringify(raw); } } catch {}
-    sub.split_b = "sealed until the task closes";
+    try { const raw = JSON.parse(sub.last_outlayer_raw); if (raw && "b" in raw) { raw.b = "withheld until the task closes"; sub.last_outlayer_raw = JSON.stringify(raw); } } catch {}
+    sub.split_b = "withheld until the task closes";
   }
   return { ...sub, task_closed: !!task?.closed, champion: !!task?.closed && task.winner === submission_id };
 }
@@ -5114,7 +5187,7 @@ server.tool("laurel_exhibit", "One task with its feature names and leaderboard. 
   const task = await view("get_task", { task_id });
   if (!task) return fail(`no task ${task_id} on ${CONTRACT}`);
   const leaderboard = await view("leaderboard", { task_id });
-  return text({ task, leaderboard, note: task.closed ? `closed; champion #${task.winner} serves predict_task(${task_id}, features)` : "open; split B is sealed in the contract's leaderboard until the deadline passes and close_task is called" });
+  return text({ task, leaderboard, note: task.closed ? `closed; champion #${task.winner} serves predict_task(${task_id}, features)` : "open; split B is withheld from the contract's leaderboard until the deadline passes and close_task is called" });
 });
 
 server.tool("laurel_specimen", "One submitted model: owner, size, status, split-A reading, evaluator record, calls served. Split B only when its task is closed.", { submission_id: z.number().int().positive() }, async ({ submission_id }) => {
@@ -5191,7 +5264,7 @@ server.tool("laurel_submit_model", "Enter a model in an OPEN task: validate the 
       out.request_score = txSummary(r2);
       const sub = await view("get_submission", { submission_id });
       out.status = sub.status; out.score_a_bps = sub.score_a_bps; out.f1_a_bps = sub.f1_a_bps;
-      out.note = sub.status === "Scored" ? "scored by the pinned evaluator inside the TEE; split B stays sealed until the task closes" : "scoring is asynchronous: call laurel_wait_score";
+      out.note = sub.status === "Scored" ? "scored by the pinned evaluator inside the TEE; split B stays withheld until the task closes" : "scoring is asynchronous: call laurel_wait_score";
     }
     return text(out);
   } catch (e) {
@@ -5331,15 +5404,15 @@ async function specimen(submission_id) {
   const task = await view("get_task", { task_id: sub.task_id });
   if (!task?.closed) {
     sub.score_b_bps = null; sub.f1_b_bps = null;
-    try { const raw = JSON.parse(sub.last_outlayer_raw); if (raw && "b" in raw) { raw.b = "sealed until the task closes"; sub.last_outlayer_raw = JSON.stringify(raw); } } catch {}
-    sub.split_b = "sealed until the task closes";
+    try { const raw = JSON.parse(sub.last_outlayer_raw); if (raw && "b" in raw) { raw.b = "withheld until the task closes"; sub.last_outlayer_raw = JSON.stringify(raw); } } catch {}
+    sub.split_b = "withheld until the task closes";
   }
   return { ...sub, task_closed: !!task?.closed, champion: !!task?.closed && task.winner === submission_id };
 }
 
 function buildServer() {
   const server = new McpServer({ name: "laurel", version: "0.1.0" }, {
-    instructions: `Laurel is a registry contract on NEAR testnet (${CONTRACT}) where small gradient-boosted-tree models are submitted as data, scored inside a TEE on a sealed private test set (split A public while a task is open, split B revealed only at close), and the champion is served on-chain through predict_task. This remote endpoint is read-only: list exhibits, read a leaderboard or a specimen, fetch a model's bytes, and run a model with the contract's integer arithmetic. To call the champion on-chain (predict_task) install the npm package laurel-mcp with a NEAR key. Features are integers in the task's feature order; a raw score > 0 means the positive class (credit-risk demo: 1 = bad credit).`,
+    instructions: `Laurel is a registry contract on NEAR testnet (${CONTRACT}) where small gradient-boosted-tree models are submitted as data, scored inside a TEE on a sealed private test set (split A public while a task is open; split B's rows never leave the enclave and its score is withheld from the leaderboard until close), and the champion is served on-chain through predict_task. This remote endpoint is read-only: list exhibits, read a leaderboard or a specimen, fetch a model's bytes, and run a model with the contract's integer arithmetic. To call the champion on-chain (predict_task) install the npm package laurel-mcp with a NEAR key. Features are integers in the task's feature order; a raw score > 0 means the positive class (credit-risk demo: 1 = bad credit).`,
   });
   server.tool("laurel_list_exhibits", "List the tasks (exhibits) on the Laurel contract with their state, deadline and entrant count.", {}, async () => {
     const tasks = await view("list_tasks", { from: 0, limit: 50 });
@@ -5349,7 +5422,7 @@ function buildServer() {
     const task = await view("get_task", { task_id });
     if (!task) return fail(`no task ${task_id} on ${CONTRACT}`);
     const leaderboard = await view("leaderboard", { task_id });
-    return text({ task, leaderboard, note: task.closed ? `closed; champion #${task.winner} serves predict_task(${task_id}, features)` : "open; split B is sealed in the contract's leaderboard until the deadline passes and close_task is called" });
+    return text({ task, leaderboard, note: task.closed ? `closed; champion #${task.winner} serves predict_task(${task_id}, features)` : "open; split B is withheld from the contract's leaderboard until the deadline passes and close_task is called" });
   });
   server.tool("laurel_specimen", "One submitted model: owner, size, status, split-A reading, evaluator record, calls served. Split B only when its task is closed.", { submission_id: z.number().int().positive() }, async ({ submission_id }) => {
     const s = await specimen(submission_id);

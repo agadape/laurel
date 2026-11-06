@@ -41,6 +41,8 @@ pub const PENDING_TIMEOUT_BLOCKS: u64 = 300;
 pub const MAX_FEATURES: u16 = 64;
 pub const MAX_SLUG_LEN: usize = 40;
 pub const MAX_TITLE_LEN: usize = 80;
+/// What `get_submission` / `list_submissions` show in place of split B while a task is open.
+pub const WITHHELD: &str = "withheld until the task closes";
 
 #[derive(BorshStorageKey)]
 #[near]
@@ -628,8 +630,34 @@ impl Contract {
         self.task_ids.iter().skip(from as usize).take(limit as usize).filter_map(|id| self.tasks.get(id).cloned()).collect()
     }
 
+    /// Public view of a submission. While its task is open, split B is withheld here as it is in `leaderboard`:
+    /// `score_b_bps` / `f1_b_bps` are `None` and the `b` object inside `last_outlayer_raw` is replaced. The stored
+    /// state is untouched (added 6 Nov 2026, contract v1.1, after an external audit; the score is still readable in
+    /// the OutLayer receipt's result on-chain, see README "Security model").
     pub fn get_submission(&self, submission_id: u32) -> Option<Submission> {
-        self.submissions.get(&submission_id).cloned()
+        self.submissions.get(&submission_id).map(|s| self.public_submission(s))
+    }
+
+    fn public_submission(&self, s: &Submission) -> Submission {
+        let open = self.tasks.get(&s.task_id).map(|t| !t.closed).unwrap_or(false);
+        if !open {
+            return s.clone();
+        }
+        let mut p = s.clone();
+        p.score_b_bps = None;
+        p.f1_b_bps = None;
+        p.last_outlayer_raw = p.last_outlayer_raw.as_deref().map(|raw| match near_sdk::serde_json::from_str::<Value>(raw) {
+            Ok(mut v) => {
+                if let Some(o) = v.as_object_mut() {
+                    if o.contains_key("b") {
+                        o.insert("b".to_string(), Value::String(WITHHELD.to_string()));
+                    }
+                }
+                v.to_string()
+            }
+            Err(_) => WITHHELD.to_string(),
+        });
+        p
     }
 
     /// Open task: sorted by split-A score (unscored last), then submission time; split B hidden.
@@ -699,7 +727,7 @@ impl Contract {
     pub fn list_submissions(&self, task_id: u32) -> Vec<Submission> {
         self.task_submissions
             .get(&task_id)
-            .map(|v| v.iter().filter_map(|id| self.submissions.get(id).cloned()).collect())
+            .map(|v| v.iter().filter_map(|id| self.submissions.get(id).map(|s| self.public_submission(s))).collect())
             .unwrap_or_default()
     }
 
@@ -1007,7 +1035,7 @@ mod tests {
         testing_env!(callback_ctx().build());
         let st = c.on_score(1, accounts(2), MIN_SCORE_DEPOSIT, Ok(Some(EVAL_OK.into())));
         assert_eq!(st, Status::Scored);
-        let s = c.get_submission(1).unwrap();
+        let s = c.submissions.get(&1).unwrap().clone(); // stored state; the view withholds B while the task is open
         assert_eq!((s.score_a_bps, s.f1_a_bps, s.score_b_bps, s.f1_b_bps), (Some(7600), Some(6650), Some(7200), Some(6100)));
         assert_eq!(s.scored_by.as_deref(), Some(HASH));
         assert!(s.last_outlayer_raw.unwrap().contains("bal_acc_bps"));
@@ -1034,7 +1062,7 @@ mod tests {
         c.request_score(1);
         testing_env!(callback_ctx().build());
         assert_eq!(c.on_score(1, accounts(2), MIN_SCORE_DEPOSIT, Ok(Some(EVAL_SPIKE.into()))), Status::Scored);
-        let s = c.get_submission(1).unwrap();
+        let s = c.submissions.get(&1).unwrap().clone();
         assert_eq!((s.score_a_bps, s.f1_a_bps, s.score_b_bps), (Some(8850), None, Some(9100)));
     }
 
@@ -1110,6 +1138,44 @@ mod tests {
         testing_env!(callback_ctx().build());
         assert_eq!(c.on_score(id, accounts(2), MIN_SCORE_DEPOSIT, Ok(Some(eval_json(a, b)))), Status::Scored);
         id
+    }
+
+    #[test]
+    fn views_withhold_split_b_while_open_and_show_it_after_close() {
+        let mut c = setup_task(); // deadline 10_000
+        let s1 = submit_and_score(&mut c, accounts(2), 2_000, 9000, Some(7000));
+        // open: both views withhold B and mask the raw "b" object; A stays visible
+        let v = c.get_submission(s1).unwrap();
+        assert_eq!((v.score_a_bps, v.score_b_bps, v.f1_b_bps), (Some(9000), None, None));
+        let raw = v.last_outlayer_raw.clone().unwrap();
+        assert!(raw.contains(WITHHELD) && !raw.contains("\"b\":{"), "{raw}");
+        assert!(raw.contains("\"a\":"), "split A must stay in the raw record: {raw}");
+        let l = c.list_submissions(1);
+        assert_eq!(l.len(), 1);
+        assert!(l[0].score_b_bps.is_none() && l[0].last_outlayer_raw.as_deref().unwrap().contains(WITHHELD));
+        // stored state is untouched
+        assert_eq!(c.submissions.get(&s1).unwrap().score_b_bps, Some(7000));
+        // closed: everything visible
+        testing_env!(ctx(accounts(5), "0", 10_000).build());
+        assert_eq!(c.close_task(1), Some(s1));
+        let v = c.get_submission(s1).unwrap();
+        assert_eq!(v.score_b_bps, Some(7000));
+        assert!(v.last_outlayer_raw.unwrap().contains("\"b\":"));
+        assert_eq!(c.list_submissions(1)[0].score_b_bps, Some(7000));
+    }
+
+    #[test]
+    fn view_withholds_split_b_even_when_raw_is_not_json() {
+        let mut c = with_submission();
+        testing_env!(owner_ctx(100).build());
+        c.request_score(1);
+        testing_env!(callback_ctx().build());
+        assert_eq!(c.on_score(1, accounts(2), MIN_SCORE_DEPOSIT, Ok(Some(EVAL_OK.into()))), Status::Scored);
+        // tamper the stored raw into something that is not JSON; the view must still not leak anything
+        let mut s = c.submissions.get(&1).unwrap().clone();
+        s.last_outlayer_raw = Some("not json b 7200".to_string());
+        c.submissions.insert(1, s);
+        assert_eq!(c.get_submission(1).unwrap().last_outlayer_raw.as_deref(), Some(WITHHELD));
     }
 
     #[test]

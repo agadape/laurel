@@ -66,12 +66,12 @@ Semua method `predict*` adalah **change method** (butuh transaksi) karena dihitu
 | `get_task` | `{task_id}` | `Task \| null` |
 | `get_task_by_slug` | `{slug}` | `Task \| null` |
 | `list_tasks` | `{from, limit}` | `Task[]` |
-| `get_submission` | `{submission_id}` | `Submission \| null` |
+| `get_submission` | `{submission_id}` | `Submission \| null`; sejak v1.1 (6 Nov 2026) `score_b_bps`/`f1_b_bps` = `null` dan objek `b` di `last_outlayer_raw` diganti `"withheld until the task closes"` selama task masih terbuka (state tidak berubah; skor B tetap terbaca di hasil receipt OutLayer) |
 | `leaderboard` | `{task_id}` | `LeaderboardRow[]`; tugas terbuka: urut `score_a_bps` desc (belum diskor = 0, paling bawah), waktu submit asc, `score_b_bps` selalu `null`; tugas tertutup: urut skor final (B, kalau tidak ada A; bukan `Scored` = 0) desc, waktu asc, `score_b_bps` terisi. Tugas tak dikenal → `[]` |
 | `get_model_bytes` | `{submission_id}` (alias `{model_id}` untuk evaluator spike) | base64 model (dibaca evaluator lewat host `view`) |
 | `get_credit` | `{account_id}` | yoctoNEAR string |
 | `get_earnings` | `{submission_id}` | yoctoNEAR string |
-| `list_submissions` | `{task_id}` | `Submission[]` urut waktu submit |
+| `list_submissions` | `{task_id}` | `Submission[]` urut waktu submit; split B ditahan seperti `get_submission` selama task terbuka |
 | `validate_model` | `{task_id, bytes}` | tidak pernah panik; `storage_cost` adalah **perkiraan** (`bytes + 400 B` × harga byte), struct Submission dan indeks task menambah sedikit di atasnya, jadi lampirkan slack 0.01–0.02 NEAR (dikembalikan) seperti `tools/submit.mjs`: `{ok:true, bytes, trees, nodes, max_depth, n_features, storage_cost, submission_fee}` atau `{ok:false, error, n_features_expected?, n_features_model?}` |
 
 Aturan struktur model yang diterima (`gbdt-core::Model::validate`): `version = 1`; `feature_scale`, `out_scale` > 0; tiap pohon 1..65534 node; node dalam punya `left`, `right` **lebih besar dari indeks node itu** dan < jumlah node (sehingga penelusuran selalu berhenti), `feature < n_features`; kedalaman < 64. `tools/export.py` menghasilkan format ini.

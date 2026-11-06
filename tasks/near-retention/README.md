@@ -18,8 +18,8 @@ agent or contract: `predict_task(5, features)`.
 Three baseline models, trained on `public_train.csv` only, exported with `tools/export.py`, scored by the pinned evaluator
 (`8b80010f…`) inside OutLayer's TEE on 5 Nov 2026. Split A is public while the task is open; split B is withheld from the
 contract's leaderboard until the deadline, **12 Nov 2026 12:00 UTC**, when `close_task` reveals it and names the champion.
-Honest footnote (6 Nov): in v1 the split-B *score* is readable on-chain before close, through `get_submission` and in the
-OutLayer receipt's result; the *rows* are what is sealed. The team has read those values while checking an audit finding
+Honest footnote (6 Nov): the split-B *score* is readable on-chain before close in the OutLayer receipt's result (and, until
+the v1.1 upgrade that afternoon, through `get_submission` too); the *rows* are what is sealed. The team has read those values while checking an audit finding
 and commits to make **no further team entries on task 5** (`p1`, `p2`, `laurel-team`, `maker`) so that knowledge cannot be
 used; see the README's Security model.
 
