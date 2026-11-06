@@ -7,7 +7,7 @@
       "compiler": "rustc 1.99.0",
       "builder": "cargo-near cargo-near-build 0.11.5"
     },
-    "wasm_hash": "FsZKH5v8Vw64fuS8JLvzXLvQWrSA6VJCxnuMMLJJ4UV4"
+    "wasm_hash": "BVNELFchTXxedNghd8vDWFncVWxstXjmjo3R6WeeoB65"
   },
   "body": {
     "functions": [
@@ -268,6 +268,7 @@
       },
       {
         "name": "get_submission",
+        "doc": " Public view of a submission. While its task is open, split B is withheld here as it is in `leaderboard`:\n `score_b_bps` / `f1_b_bps` are `None` and the `b` object inside `last_outlayer_raw` is replaced. The stored\n state is untouched (added 6 Nov 2026, contract v1.1, after an external audit; the score is still readable in\n the OutLayer receipt's result on-chain, see README \"Security model\").",
         "kind": "view",
         "params": {
           "serialization_type": "json",
