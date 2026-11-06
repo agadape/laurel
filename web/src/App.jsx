@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { view, contractId, yoctoToNear, bps, short, statusText, EXPLORER_ACCOUNT, EXPLORER_TX, modelBytes, parseRaw } from "./rpc.js";
-import { useView, useMedia, Err, Loading, Cmd, CopyBtn, Pill, StatusPill, Sec, Fig, Countdown, fmtDate, shortHash, Title, Scale, Slopegraph, DotPlate, Forest, statusDetail, useModelBytes, mainnetData } from "./components.jsx";
+import { view, contractId, yoctoToNear, statusText, EXPLORER_ACCOUNT, modelBytes, parseRaw, nsToDate } from "./rpc.js";
+import { decodeModel } from "./model.js";
+import { Lanes, Clock, TreeExplorer, CostBars, Journey, Btn, LaurelIcon } from "./inner.jsx";
+import { network } from "./wallet.js";
+import { useView, Err, Loading, Cmd, CopyBtn, StatusPill, Countdown, fmtDate, shortHash, DotPlate, Forest, statusDetail, useModelBytes, mainnetData } from "./components.jsx";
 import Connect from "./Connect.jsx";
 import { WalletButton, AccountPanel, useWallet } from "./Account.jsx";
 import Landing from "./Landing.jsx";
@@ -36,93 +39,64 @@ function useRoute() {
 const skipToMain = (e) => { e.preventDefault(); const m = document.getElementById("main"); m?.focus({ preventScroll: true }); m?.scrollIntoView(); };
 function useTitle(t) { useEffect(() => { document.title = t ? `${t} · Laurel` : "Laurel"; }, [t]); }
 
-// ---------- Home: exhibits ----------
-function LeaderSig({ taskId, closed }) {
-  const lb = useView("leaderboard", { task_id: taskId }, [taskId]);
-  const lead = lb.data?.[0];
-  const [bytes, retry] = useModelBytes(lead?.submission_id);
-  if (!lead) return <span className="mono mist">{lb.loading ? "…" : "no entries"}</span>;
+// ---------- shared bits ----------
+const pct = (bps) => (bps / 100).toFixed(2);
+const plain = (title) => (title || "").replace(/^\[\w+\]\s*/, "");
+const day = (ns) => nsToDate(ns).toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "UTC" });
+const bar = (bps) => (bps == null ? 0 : Math.max(0, Math.min(1, (bps - 5000) / 5000)));
+const Skel = () => <span className="sk" />;
+
+/** One split as a bar, or the withheld band while the exhibit is open. */
+function Reading({ name, bps: v, withheld, blue = false }) {
   return (
-    <div className="stack" style={{ gap: 4 }}>
-      <Forest bytes={bytes} trees={lead.trees} limit={4} cols={4} cell={80} accent={closed} onRetry={retry} />
-      <span className="mono mist">#{lead.submission_id} · {closed ? "champion" : "leads split A"} · {lead.trees > 4 ? `4 of ${lead.trees} trees` : `${lead.trees} trees`}</span>
+    <div className="x-reading">
+      <div className="top"><span>{name}</span>{withheld ? null : <b className={blue ? "x-blue" : ""}>{v != null ? <>{pct(v)}<small> %</small></> : <small>not scored</small>}</b>}</div>
+      {withheld ? <span className="x-hatch"><em>{withheld}</em></span> : <span className="x-track thin"><i className={`x-fill ${blue ? "blue" : ""}`} style={{ transform: `scaleX(${bar(v)})` }} /></span>}
     </div>
   );
 }
 
+// ---------- Home: exhibits ----------
 function Home() {
   useTitle("Exhibits");
   const tasks = useView("list_tasks", { from: 0, limit: 50 }, []);
   const cfg = useView("get_config", {}, []);
   const list = (tasks.data || []).slice().reverse();
   const champion = list.find((t) => t.closed && t.winner != null);
+  const open = list.find((t) => !t.closed && mainnetData(t.slug)) || list.find((t) => !t.closed);
   const winner = useView("get_submission", { submission_id: champion?.winner }, [champion?.winner], { skip: champion?.winner == null });
-  const [bytes, retry] = useModelBytes(champion?.winner);
   const earned = useView("get_earnings", { submission_id: champion?.winner }, [champion?.winner], { skip: champion?.winner == null });
   const recent = list.filter((t) => t.task_id > 2), earlier = list.filter((t) => t.task_id <= 2);
-  const feeNear = champion ? yoctoToNear(champion.fee_per_call, 4) : null;
+  const n = (v) => (v == null ? <Skel /> : <b>{v}</b>);
   return (
     <>
-      <section className="block wrap g12">
-        <div className="c6 stack" style={{ gap: 18, justifyContent: "space-between" }}>
-          <div className="stack" style={{ gap: 18 }}>
-            <h1>Models,<br />observed.</h1>
-            <p className="ink2" style={{ maxWidth: 520, fontSize: 17 }}>A registry on NEAR where small decision models are submitted as data, judged inside a TEE on a test set nobody can read, and the best one is served on-chain to agents and other contracts. Every number on this site is read from the contract.</p>
-          </div>
-          <div className="figs">
-            <Fig v={cfg.data ? cfg.data.task_count : <span className="sk" />} l="exhibits (tasks)" />
-            <Fig v={cfg.data ? cfg.data.submission_count : <span className="sk" />} l="models judged in a TEE" />
-            <Fig v="4.3" unit="Tgas" l="per on-chain prediction" />
-          </div>
+      <section className="block wrap x-head">
+        <div>
+          <h1>Models,<br />observed.</h1>
+          <p className="x-lede">A registry on NEAR where small decision models are submitted as data, judged inside a TEE on a test set nobody can read, and the best one is served on-chain to agents and other contracts.</p>
         </div>
-        <div className="c6 stack" style={{ gap: 10 }}>
-          <div className="between mono mist">
-            <span>{champion ? <>Specimen · entry #{champion.winner} · <span className="accent-text">champion</span> of exhibit {pad2(champion.task_id)}</> : "Specimen"}</span>
-            <span>{winner.data ? `${winner.data.trees} trees · ${winner.data.bytes.toLocaleString()} B · drawn from the bytes on-chain` : ""}</span>
-          </div>
-          <div className={`plate ${champion ? "accent" : ""}`} style={{ padding: 14 }}>
-            {champion ? <Forest bytes={bytes} trees={winner.data?.trees || 50} limit={50} cols={10} accent onRetry={retry} /> : <div className="mist mono">{tasks.loading ? "reading the contract…" : "no closed exhibit yet"}</div>}
-          </div>
-          <p className="mist" style={{ fontSize: 13 }}>Each glyph is one of the model's decision trees, decoded from the borsh bytes the contract stores: stroke = leaf weight, tone = split feature. <a href={champion ? `#/model/${champion.winner}` : "#/"}>Open the specimen</a> to read each tree's root split.</p>
-        </div>
-      </section>
-
-      <section className="block wrap g12 chapter">
-        <div className="c2"><Sec n="02" title="Economics" /></div>
-        <div className="c10 stack" style={{ gap: 18 }}>
-          <h2 className="h2" style={{ fontSize: 26 }}>A good model earns NEAR every time it is called.</h2>
-          <div className="figs" style={{ gridTemplateColumns: "repeat(4, minmax(0, 1fr))" }}>
-            <Fig v={feeNear ?? <span className="sk" />} unit="NEAR" l="fee per prediction, set by the task creator, paid to the model owner" />
-            <Fig v="≈ 0.0004" unit="NEAR" l="gas per prediction (4.3 Tgas at the base price)" />
-            <Fig v={winner.data ? winner.data.calls : <span className="sk" />} l={champion ? `predictions served by champion #${champion.winner}` : "predictions served"} />
-            <Fig v={earned.data ? yoctoToNear(earned.data, 3) : <span className="sk" />} unit="NEAR" l="earned by its owner so far (withdrawable on-chain)" />
-          </div>
-          <div className="g12" style={{ rowGap: 14 }}>
-            <div className="c6 stack" style={{ gap: 6 }}><span className="label">for model makers</span><p className="ink2" style={{ fontSize: 15 }}>Train on the public split, submit the model as data, get scored inside a TEE on a sealed test set. Win the exhibit and your model becomes <span className="mono">predict_task</span>: every call by an agent or another contract pays you the fee. Withdraw with <span className="mono">withdraw_earnings</span>, or from this site with your wallet.</p></div>
-            <div className="c6 stack" style={{ gap: 6 }}><span className="label">for users and agents</span><p className="ink2" style={{ fontSize: 15 }}>Prepay credit on the contract with NEAR, then call the champion from your agent (MCP, function-call key) or from your own contract. You pay per prediction, nothing else; the model, its score and its evaluator are all verifiable on-chain.</p></div>
-          </div>
-          <AccountPanel compact />
-        </div>
+        <p className="x-sum">{n(cfg.data?.task_count)} exhibits, {n(cfg.data?.submission_count)} models judged in a TEE.{champion && <> The champion of exhibit {pad2(champion.task_id)} has served {n(winner.data?.calls)} predictions and earned its owner {n(earned.data ? yoctoToNear(earned.data, 3) : null)} NEAR, at <b>4.3</b> Tgas a call.</>}</p>
       </section>
 
       <section className="block wrap">
-        <div className="row-head"><h2 className="sec">Exhibits</h2><span>Task</span><span className="sig">Leader's signature</span><span className="right">Split A · observed</span><span className="right">Split B · at close</span><span className="right state">State</span></div>
+        <h2 className="x-sec">Exhibits</h2>
         {tasks.error && <Err error={tasks.error} reload={tasks.reload} />}
-        {recent.map((t) => <ExhibitRow key={t.task_id} t={t} />)}
-        {earlier.length > 0 && (
-          <div className="flow" style={{ paddingTop: 12 }}>
-            <span className="label">earlier exhibits</span>
-            {earlier.map((t) => <a key={t.task_id} href={`#/task/${t.task_id}`} className="mono mist">{pad2(t.task_id)} · {t.slug} · {t.closed ? `closed · champion #${t.winner}` : "open"}</a>)}
-          </div>
-        )}
-        {tasks.data && tasks.data.length === 0 && <p className="mist" style={{ paddingTop: 12 }}>No tasks on this contract yet.</p>}
+        {tasks.loading && <Loading />}
+        <div className="x-board">{recent.map((t) => <ExhibitRow key={t.task_id} t={t} />)}</div>
+        {earlier.length > 0 && <div className="x-earlier"><span>Earlier exhibits</span>{earlier.map((t) => <a key={t.task_id} href={`#/task/${t.task_id}`}>{pad2(t.task_id)} · {t.closed ? `closed, champion #${t.winner}` : "open"}</a>)}</div>}
+        {tasks.data && tasks.data.length === 0 && <p className="x-mut">No tasks on this contract yet.</p>}
       </section>
 
-      <section className="block wrap g12" style={{ alignItems: "start" }}>
-        <div className="c2"><Sec n="04" title="Method" /></div>
-        <div className="c10 stack">
-          <FlowDiagram />
-          <div className="flow"><span>submit a model as data</span><span className="arrow" aria-hidden="true">→</span><span>judged in a TEE by the pinned evaluator <span className="mono">{cfg.data ? shortHash(cfg.data.evaluator_hash) : "…"}</span></span><span className="arrow" aria-hidden="true">→</span><span>split A public, split B withheld from the leaderboard until close</span><span className="arrow" aria-hidden="true">→</span><span>the champion serves <span className="mono">predict_task</span></span><a href="#/costs" className="mono">measured costs and guarantees →</a></div>
+      <section className="block wrap x-two">
+        <div className="x-panel stack" style={{ gap: 16 }}>
+          <h3>For model makers</h3>
+          <p className="ink2">Train on the public split, submit the model as data, and get scored inside a TEE on rows nobody has seen. Win the exhibit and every prediction an agent or contract buys pays you the task's fee, withdrawable on-chain.</p>
+          {open && <div><Btn href={`#/task/${open.task_id}`}>Enter exhibit {pad2(open.task_id)}</Btn></div>}
+        </div>
+        <div className="x-panel stack" style={{ gap: 16 }}>
+          <h3>For agents and contracts</h3>
+          <p className="ink2">Prepay credit with NEAR, hand your agent a key that can only spend it on predictions, and call the champion through MCP or from your own contract.{champion && <> A call costs {yoctoToNear(champion.fee_per_call, 4)} NEAR to the model's owner, plus about 0.0004 NEAR of gas.</>}</p>
+          <div><Btn href="#/connect">Connect your agent</Btn></div>
         </div>
       </section>
     </>
@@ -132,16 +106,24 @@ function Home() {
 function ExhibitRow({ t }) {
   const lb = useView("leaderboard", { task_id: t.task_id }, [t.task_id]);
   const rows = lb.data || [];
-  const leadA = rows.slice().sort((a, b) => (b.score_a_bps ?? -1) - (a.score_a_bps ?? -1))[0];
+  const leadA = rows.filter((r) => r.score_a_bps != null).sort((a, b) => b.score_a_bps - a.score_a_bps)[0];
   const win = rows.find((r) => r.submission_id === t.winner);
   return (
-    <a href={`#/task/${t.task_id}`} className="row">
-      <span className={`n ${t.closed ? "accent" : ""}`}>{pad2(t.task_id)}</span>
-      <span className="t"><b><Title text={t.title} /></b>{mainnetData(t.slug) && <span><Pill>real NEAR mainnet data</Pill></span>}<span className="mono mist">{t.slug} · {t.n_features} features · {t.closed ? `closed ${fmtDate(t.deadline_ns)}` : <Countdown ns={t.deadline_ns} />} · {t.submission_count} {t.submission_count === 1 ? "entrant" : "entrants"}</span></span>
-      <span className="sig"><LeaderSig taskId={t.task_id} closed={t.closed} /></span>
-      <span className="r" style={t.closed ? { color: "var(--mist)" } : undefined}><small className="ab">A</small>{leadA ? <>{bps(leadA.score_a_bps)}<span className="sub">#{leadA.submission_id}{t.closed && leadA.submission_id !== t.winner ? " led here" : ""}</span></> : <small>—</small>}</span>
-      <span className="r"><small className="ab">B</small>{t.closed ? (win ? <><span className="accent">{bps(win.score_b_bps)}</span><span className="sub">#{win.submission_id} decided here</span></> : <small>—</small>) : <Pill kind="sealed">not yet observed</Pill>}</span>
-      <span className="state">{t.closed ? <Pill>closed</Pill> : <Pill kind="open">open</Pill>}</span>
+    <a href={`#/task/${t.task_id}`} className={`x-ex ${t.closed ? "closed" : "open"}`}>
+      <span className="n" aria-hidden="true">{pad2(t.task_id)}</span>
+      <span>
+        <h3>{plain(t.title)}</h3>
+        <span className="meta">{mainnetData(t.slug) && <span className="tag">Real NEAR mainnet data · </span>}{t.n_features} features · {t.submission_count} {t.submission_count === 1 ? "entrant" : "entrants"} · {t.closed ? `closed ${day(t.deadline_ns)}` : "open"}</span>
+      </span>
+      <span className="lead">
+        <span className="top"><span>{leadA ? `#${leadA.submission_id} ${t.closed ? "led" : "leads"} the public split` : lb.loading ? "reading…" : "no scored entry yet"}</span><b>{leadA ? pct(leadA.score_a_bps) : "—"}</b></span>
+        <span className="x-track thin"><i className="x-fill" style={{ transform: `scaleX(${bar(leadA?.score_a_bps)})` }} /></span>
+      </span>
+      <span className="end">
+        {t.closed
+          ? (win ? <><span className="champ"><LaurelIcon />#{win.submission_id} · {pct(win.score_b_bps)}</span><span className="x-mut">champion on split B</span></> : <span className="x-mut">closed</span>)
+          : <><span className="x-hatch"><em>Split B withheld</em></span><span className="x-mut"><Countdown ns={t.deadline_ns} /></span></>}
+      </span>
     </a>
   );
 }
@@ -155,7 +137,6 @@ function Task({ id }) {
   useTitle(task ? `Exhibit ${pad2(task.task_id)} · ${task.slug}` : `Exhibit ${pad2(id || 0)}`);
   const [subs, setSubs] = useState({});
   const [retryN, setRetryN] = useState(0);
-  const [revealed, setRevealed] = useState(false);
   useEffect(() => {
     let alive = true;
     Promise.all(rows.map(async (r) => {
@@ -169,68 +150,60 @@ function Task({ id }) {
   if (t.error || !task) return <section className="block wrap"><Err error={t.error || `Exhibit ${id} does not exist on this contract.`} plain={!t.error} reload={t.reload} /></section>;
   const champ = rows.find((r) => r.submission_id === task.winner);
   const ds = datasetDir(task.slug);
-  const bestA = Math.max(-1, ...rows.map((x) => x.score_a_bps ?? -1));
-  const entriesA = rows.filter((r) => r.score_a_bps != null).map((r) => ({ id: r.submission_id, bps: r.score_a_bps, href: `#/model/${r.submission_id}`, label: `#${r.submission_id}${task.closed && r.submission_id !== task.winner && r.score_a_bps === bestA ? " · led" : ""}`, muted: task.closed && r.submission_id !== task.winner, accent: false }));
-  const entriesB = rows.filter((r) => r.score_b_bps != null).map((r) => ({ id: r.submission_id, bps: r.score_b_bps, href: `#/model/${r.submission_id}`, label: r.submission_id === task.winner ? `#${r.submission_id} · champion` : `#${r.submission_id}`, accent: r.submission_id === task.winner, muted: r.submission_id !== task.winner }));
-  const leadA = entriesA.slice().sort((a, b) => b.bps - a.bps)[0];
-  const sealedText = `withheld from the leaderboard until ${fmtDate(task.deadline_ns)}`;
-  const one = rows.length === 1;
-  const slopeEntries = rows.map((r) => ({ id: r.submission_id, a: r.score_a_bps, b: r.score_b_bps }));
+  const leadA = rows.filter((r) => r.score_a_bps != null).sort((a, b) => b.score_a_bps - a.score_a_bps)[0];
+  // split B is passed only for a closed exhibit, whatever the views return
+  const lanes = rows.map((r) => ({ id: r.submission_id, a: r.score_a_bps, b: task.closed ? r.score_b_bps : null, trees: r.trees, href: `#/model/${r.submission_id}` }));
+  const real = mainnetData(task.slug);
+  const about = task.description_url && !/^https:\/\/github\.com\/?$/.test(task.description_url) ? task.description_url : null;
+  const st = task.closed ? "closed" : "open";
   return (
     <>
-      <section className="block wrap g12" style={{ alignItems: "end" }}>
-        <div className="c2"><span className={`numeral ${task.closed ? "accent" : ""}`} aria-hidden="true">{pad2(task.task_id)}</span></div>
-        <div className="c6 stack" style={{ gap: 8 }}>
-          
-          <h1 className="h2">Exhibit {pad2(task.task_id)}: <Title text={task.title} /></h1>
-          <div className="mono mist">{task.slug} · {task.n_features} integer features · balanced accuracy · {task.closed ? `closed ${fmtDate(task.deadline_ns)}` : <Countdown ns={task.deadline_ns} />} · {task.submission_count} {task.submission_count === 1 ? "entrant" : "entrants"}{task.closed && task.winner != null && <> · champion #{task.winner}</>} {task.closed ? <Pill>closed</Pill> : <Pill kind="open">open</Pill>}</div>
+      <section className="block wrap x-head">
+        <div>
+          <span className={`x-num ${st}`} aria-hidden="true">{pad2(task.task_id)}</span>
+          <h1 className="h2">{plain(task.title)}</h1>
+          <p className="x-lede">
+            {real ? "Built from real NEAR mainnet data. " : ""}{task.n_features} integer features per row, scored by balanced accuracy; {task.submission_count} {task.submission_count === 1 ? "entrant" : "entrants"}. Judged in OutLayer's TEE by the evaluator <span className="mono">{cfg.data ? shortHash(cfg.data.evaluator_hash) : "…"}</span> that the contract pins; the private rows never leave the enclave.{about && <> <a href={about} target="_blank" rel="noreferrer">About the data</a>.</>}
+          </p>
         </div>
-        <div className="c4 stack aside" style={{ gap: 10, fontSize: 13 }}>
-          <div className="stack" style={{ gap: 2 }}><span className="label">Instrument</span><span>OutLayer TEE · evaluator <span className="mono tee">{cfg.data ? shortHash(cfg.data.evaluator_hash) : "…"}</span> pinned by the contract</span></div>
-          <div className="stack" style={{ gap: 2 }}><span className="label">Specimen set</span><span><span className="mono">{task.secrets_account} / {task.secrets_profile}</span> · two sealed splits, never leave the enclave</span></div>
-        </div>
-      </section>
-
-      <section className="block wrap g12 chapter">
-        <div className="c2"><Sec n="01" title="Readings" /></div>
-        <div className="c10 stack" style={{ gap: 18 }}>
-          {lb.error && <Err error={lb.error} reload={lb.reload} />}
-          <Scale variant="a" title={<><b>Split A</b> · observed in public while the exhibit is open</>} note="balanced accuracy, 50–100 %" entries={entriesA} />
-          {task.closed && <Slopegraph entries={slopeEntries} winner={task.winner} drawn={revealed} />}
-          <Scale variant="b" title={<><b className="accent-text">Split B</b> · observed once at close · decides the champion</>} note={task.closed ? `unsealed ${fmtDate(task.deadline_ns)}` : <Countdown ns={task.deadline_ns} />} entries={entriesB} sealed={task.closed ? null : sealedText} reveal={task.closed} onRevealed={() => setRevealed(true)} />
-          {task.closed && champ && leadA && leadA.id !== champ.submission_id && (
-            <p className="ink2" style={{ fontSize: 15, maxWidth: 760 }}>The lines cross: #{leadA.id} led the public split, #{champ.submission_id} the sealed one, and split B is the reading taken on rows no entrant has ever seen, so it decides.</p>
-          )}
-          {!task.closed && <p className="ink2" style={{ fontSize: 15, maxWidth: 760 }}>Split A is the public reading. Split B is scored at the same time, but the leaderboard withholds it until the deadline passes and someone calls <span className="mono">close_task</span>; the champion is the best split-B reading.</p>}
+        <div className="stack" style={{ gap: 10 }}>
+          {task.closed
+            ? <p className="x-sum">Closed on {day(task.deadline_ns)}. {champ ? <>Champion <b>#{champ.submission_id}</b>, {pct(champ.score_b_bps)} % on split B.</> : "No entry was scored."}</p>
+            : <><Clock ns={task.deadline_ns} /><p className="x-mut" style={{ margin: 0 }}>until the leaderboard shows split B and names the champion</p></>}
         </div>
       </section>
 
-      <section className="block wrap g12">
-        <div className="c2"><Sec n="02" title="Specimens" /></div>
-        <div className="c10 g12" style={{ rowGap: 28 }}>
-          {rows.length === 0 && !lb.loading && <p className="mist c12">no entries yet</p>}
+      <section className="block wrap">
+        <h2 className="x-sec">Readings</h2>
+        {lb.error && <Err error={lb.error} reload={lb.reload} />}
+        {lb.loading ? <Loading /> : <Lanes rows={lanes} closed={task.closed} winner={task.winner} />}
+        <p className="x-lede">{task.closed
+          ? (champ && leadA && leadA.submission_id !== champ.submission_id
+            ? <>The public split and the private one disagree: #{leadA.submission_id} led split A, #{champ.submission_id} won split B. Split B is the reading taken on rows no entrant has ever seen, so it decides.</>
+            : <>Split B is the reading taken on rows no entrant has ever seen, so it decides.</>)
+          : <>Split A is the public reading. Split B is scored at the same time, but the leaderboard withholds it until the deadline passes and someone calls <span className="mono">close_task</span>; the champion is the best split-B reading.</>}</p>
+      </section>
+
+      <section className="block wrap">
+        <h2 className="x-sec">Specimens</h2>
+        {rows.length === 0 && !lb.loading && <p className="x-mut">No entries yet.</p>}
+        <div className="x-cards">
           {rows.map((r) => {
             const s = subs[r.submission_id]; const raw = parseRaw(s?.sub?.last_outlayer_raw);
             const isChamp = task.closed && r.submission_id === task.winner;
             const split = task.closed ? "b" : "a"; const counts = raw ? raw[split] : null;
             const scored = statusText(r.status) === "Scored";
+            const cap = `Split ${split.toUpperCase()}, one dot per private test row`;
             return (
-              <a key={r.submission_id} href={`#/model/${r.submission_id}`} className={`spec ${one ? "c12 wide" : "c6"} ${isChamp ? "accent" : ""}`}>
-                <div className="head"><b>#{r.submission_id}{isChamp ? " · champion" : ""}</b><span className="mono mist">{short(r.owner, 12)} · {r.bytes.toLocaleString()} B · <StatusPill status={r.status} /></span></div>
-                <div className="body">
-                  <div>{scored
-                    ? (s === undefined
-                      ? <DotPlate counts={null} caption={`split ${split.toUpperCase()} · one dot per private test row`} ghostText="reading the evaluator record…" />
-                      : s.sub === null
-                        ? <DotPlate counts={null} caption={`split ${split.toUpperCase()} · one dot per private test row`} ghostText="could not read the evaluator output" onRetry={() => setRetryN((x) => x + 1)} />
-                        : <DotPlate counts={counts} caption={`split ${split.toUpperCase()} · ${counts?.n ?? "—"} rows · one dot per private test row`} />)
-                    : <div className="mist mono">{statusText(r.status) === "Failed" ? `failed: ${statusDetail(r.status)}` : statusText(r.status) === "Pending" ? "in the TEE…" : "not scored yet"}</div>}</div>
-                  <div className="stack" style={{ gap: 4 }}>
-                    <span className="label">signature</span>
-                    <Forest bytes={s === undefined ? null : s.bytes} trees={r.trees} limit={one ? 20 : 8} cols={one ? 10 : 4} cell={one ? 60 : 80} accent={isChamp} featureNames={task.feature_names} onRetry={() => setRetryN((x) => x + 1)} />
-                    <span className="mono mist">{r.trees} trees{s?.sub ? ` · ${s.sub.nodes.toLocaleString()} nodes` : ""}{r.trees > (one ? 20 : 8) ? ` · first ${one ? 20 : 8} shown` : ""}</span>
-                  </div>
-                </div>
+              <a key={r.submission_id} href={`#/model/${r.submission_id}`} className={`x-card ${isChamp ? "champ" : ""}`}>
+                <div className="top"><b>#{r.submission_id}</b>{isChamp ? <span className="x-state closed">champion</span> : <StatusPill status={r.status} />}</div>
+                <span className="who">{r.owner} · {r.trees} trees · {r.bytes.toLocaleString("en-US")} bytes</span>
+                <Forest bytes={s === undefined ? null : s.bytes} trees={r.trees} limit={10} cols={10} cell={60} accent={isChamp} featureNames={task.feature_names} onRetry={() => setRetryN((x) => x + 1)} />
+                {scored
+                  ? (s === undefined ? <DotPlate counts={null} caption={cap} ghostText="reading the evaluator record…" />
+                    : s.sub === null ? <DotPlate counts={null} caption={cap} ghostText="could not read the evaluator output" onRetry={() => setRetryN((x) => x + 1)} />
+                    : <DotPlate counts={counts} caption={cap} />)
+                  : <p className="x-mut">{statusText(r.status) === "Failed" ? `failed: ${statusDetail(r.status)}` : statusText(r.status) === "Pending" ? "in the TEE…" : "not scored yet"}</p>}
               </a>
             );
           })}
@@ -238,41 +211,48 @@ function Task({ id }) {
       </section>
 
       {task.closed && champ && (
-        <section className="block wrap g12" style={{ alignItems: "center" }}>
-          <div className="c2"><Sec n="03" title="In service" /></div>
-          <div className="c6 between"><span className="mono" style={{ fontSize: 15 }}>predict_task({task.task_id}, features) → #{champ.submission_id}</span><span className="mist" style={{ fontSize: 13 }}>agents with a function-call key · contracts via promise · ≈ 4.3 Tgas</span></div>
-          <div className="c4 figs-r">
-            <Fig v={champ.calls} l="predictions served" />
-            <Fig v={earnings.data ? yoctoToNear(earnings.data, 3) : <span className="sk" />} l={`NEAR earned by ${short(champ.owner, 8)}`} />
+        <section className="block wrap x-two" style={{ alignItems: "end" }}>
+          <div>
+            <h2 className="x-sec">In service</h2>
+            <p className="x-sum">#{champ.submission_id} has served <b>{champ.calls}</b> predictions and earned its owner <b>{earnings.data ? yoctoToNear(earnings.data, 3) : "…"}</b> NEAR.</p>
+          </div>
+          <div className="stack" style={{ gap: 12 }}>
+            <p className="ink2">Agents call it with a function-call key, contracts through a promise; about 4.3 Tgas a call, and {yoctoToNear(task.fee_per_call, 4)} NEAR to the owner.</p>
+            <Cmd>{`predict_task(${task.task_id}, features)   →   #${champ.submission_id}`}</Cmd>
           </div>
         </section>
       )}
 
-      <section className="block wrap g12">
-        <div className="c2"><Sec n={task.closed ? "04" : "03"} title="Enter" /></div>
-        <div className="c5 stack">
-          <dl className="kv">
-            <dt>features</dt><dd className="mono">{task.feature_names.join(", ")}</dd>
-            <dt>entry</dt><dd>{yoctoToNear(task.submission_fee, 2)} NEAR + model storage · {task.max_per_account} entries per account</dd>
-            <dt>fee per call</dt><dd>{yoctoToNear(task.fee_per_call, 4)} NEAR, paid from prepaid credit to the model owner</dd>
-            <dt>limits</dt><dd>≤ {cfg.data ? (cfg.data.max_model_bytes / 1024).toFixed(0) : "…"} KB · ≤ {cfg.data?.max_trees ?? "…"} trees · strictly increasing child indices</dd>
-            <dt>creator</dt><dd className="mono"><a href={EXPLORER_ACCOUNT(task.creator)} target="_blank" rel="noreferrer">{task.creator}</a></dd>
-          </dl>
-        </div>
-        <div className="c5 stack">
-          <span className="label">train on the public split, export, submit (no browser wallet; scripts in the repo)</span>
-          <Cmd>{`python tasks/${ds}/train.py --trees 50 --depth 4
+      <section className="block wrap">
+        <h2 className="x-sec">Enter this exhibit</h2>
+        <div className="x-two">
+          <div className="x-panel stack" style={{ gap: 18 }}>
+            <h3>What a model sees</h3>
+            <div className="x-chips">{task.feature_names.map((f) => <span key={f}>{f}</span>)}</div>
+            <dl className="x-terms">
+              <div><dt>Entry</dt><dd>{yoctoToNear(task.submission_fee, 2)} NEAR plus model storage, {task.max_per_account} entries per account</dd></div>
+              <div><dt>Fee per call</dt><dd>{yoctoToNear(task.fee_per_call, 4)} NEAR from prepaid credit, to the model's owner</dd></div>
+              <div><dt>Limits</dt><dd>up to {cfg.data ? (cfg.data.max_model_bytes / 1024).toFixed(0) : "…"} KB and {cfg.data?.max_trees ?? "…"} trees, child indices strictly increasing</dd></div>
+              <div><dt>Private rows</dt><dd><span className="mono">{task.secrets_account} / {task.secrets_profile}</span></dd></div>
+              <div><dt>Creator</dt><dd><a href={EXPLORER_ACCOUNT(task.creator)} target="_blank" rel="noreferrer">{task.creator}</a></dd></div>
+            </dl>
+          </div>
+          <div className="x-panel stack" style={{ gap: 14 }}>
+            <h3>Train, export, submit</h3>
+            <p className="x-mut">Scripts in the repo; no browser wallet needed.</p>
+            <Cmd>{`python tasks/${ds}/train.py --trees 50 --depth 4
 python tools/export.py --task ${ds} --model tasks/${ds}/model_baseline.pkl --out tasks/${ds}/out/mine
 node tools/submit.mjs ${task.task_id} tasks/${ds}/out/mine/model.bin --as TEAM      # contract: ${contractId()}`}</Cmd>
-          <details><summary>create a task like this (task creator)</summary>
-            <Cmd>{`python tasks/${ds}/split.py                                   # public data + private splits + sha256 manifest
+            <details><summary>Create a task like this one</summary>
+              <Cmd>{`python tasks/${ds}/split.py                                   # public data + private splits + sha256 manifest
 bash tools/secrets.sh ${ds} ${task.secrets_profile} <evaluator hash>   # (WSL) store the private test set, bound to the evaluator hash
 node tools/create_task.mjs ${ds} --slug-override ${task.slug} --minutes 1440 --as TEAM`}</Cmd>
-          </details>
-          {task.closed && <details><summary>call the champion from an agent</summary>
-            <Cmd>{`node tools/predict.mjs ${task.task_id} --row 0 --as AGENT --deposit 0.02     # prepay once; later calls only use the function-call key
-node tools/agent.mjs ${task.task_id} --rows 10                                 # 10 applicants + proof that the restricted key is rejected by the protocol`}</Cmd>
-          </details>}
+            </details>
+            {task.closed && <details><summary>Call the champion from an agent</summary>
+              <Cmd>{`node tools/predict.mjs ${task.task_id} --row 0 --as AGENT --deposit 0.02     # prepay once; later calls only use the function-call key
+node tools/agent.mjs ${task.task_id} --rows 10                                 # 10 rows + proof that the restricted key is rejected by the protocol`}</Cmd>
+            </details>}
+          </div>
         </div>
       </section>
     </>
@@ -287,7 +267,7 @@ function Model({ id }) {
   const e = useView("get_earnings", { submission_id: id }, [id]);
   const cfg = useView("get_config", {}, []);
   const [bytes, retry] = useModelBytes(sub ? id : null);
-  const narrow = useMedia("(max-width: 720px)");
+  const model = React.useMemo(() => { try { return bytes ? decodeModel(bytes) : null; } catch { return null; } }, [bytes]);
   useTitle(`Specimen #${id || ""}`);
   if (s.loading) return <section className="block wrap"><Loading /></section>;
   if (s.error || !sub) return <section className="block wrap"><Err error={s.error || `Specimen ${id} does not exist on this contract.`} plain={!s.error} reload={s.reload} /></section>;
@@ -298,86 +278,65 @@ function Model({ id }) {
   const rawShown = raw && !bVisible ? { ...raw, b: "withheld until the exhibit closes" } : raw;
   const st = statusText(sub.status);
   const sealedLine = task ? `withheld from the leaderboard until ${fmtDate(task.deadline_ns)}` : "withheld until the exhibit closes";
+  const reached = st === "Scored" ? 3 : st === "Pending" || st === "Failed" ? 2 : 1;
+  const nf = task?.n_features ?? model?.n_features ?? 18;
   return (
     <>
-      <section className="block wrap g12" style={{ alignItems: "end" }}>
-        <div className="c7 stack" style={{ gap: 8 }}>
-          <a href={`#/task/${sub.task_id}`} className="mono mist">← Exhibit {pad2(sub.task_id)}{task ? ` · ${task.slug}` : ""}</a>
-          <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}><h1 className="h2">Specimen <span className={isChamp ? "accent" : ""}>#{sub.submission_id}</span></h1>{isChamp && <Pill kind="champion">champion · in service</Pill>}<StatusPill status={sub.status} /></div>
-          <div className="mono mist"><a href={EXPLORER_ACCOUNT(sub.owner)} target="_blank" rel="noreferrer">{sub.owner}</a> · {sub.trees} trees · {sub.nodes.toLocaleString()} nodes · {sub.bytes.toLocaleString()} B · submitted {fmtDate(sub.submitted_at_ns)}</div>
+      <section className="block wrap x-head">
+        <div>
+          <h1 className="h2">Specimen <span className={isChamp ? "x-blue" : ""}>#{sub.submission_id}</span></h1>
+          <p className="x-lede">A {sub.trees}-tree model by <a href={EXPLORER_ACCOUNT(sub.owner)} target="_blank" rel="noreferrer">{sub.owner}</a>, {sub.bytes.toLocaleString("en-US")} bytes stored by the contract, entered in <a href={`#/task/${sub.task_id}`}>exhibit {pad2(sub.task_id)}</a>{task ? `, ${plain(task.title)}` : ""}, on {day(sub.submitted_at_ns)}.{isChamp && <> It is the champion and answers <span className="mono">predict_task({sub.task_id}, …)</span>.</>}</p>
         </div>
-        <div className="c5 stack" style={{ gap: 8 }}>
-          <span className="label">evaluation record</span>
-          <div className="stepper">
-            {["uploaded", "in the TEE", "scored"].map((step, i) => {
-              const reached = st === "Scored" ? 3 : st === "Pending" ? 2 : st === "Failed" ? 2 : 1;
-              const on = i < reached, bad = st === "Failed" && i === 1;
-              const col = on ? (bad ? "var(--fault)" : "var(--tee-text)") : "var(--rule)";
-              return (
-                <React.Fragment key={step}>
-                  {i > 0 && <span className="line" style={{ background: col }} />}
-                  <span className="step"><span className="dot" style={{ background: col }} /><span className="label" style={{ color: on ? col : undefined }}>{bad ? "failed" : step}</span></span>
-                </React.Fragment>
-              );
-            })}
-          </div>
-          <span className="mono mist">{raw ? `block ${raw.block} · eval_version ${raw.eval_version}` : st === "Failed" ? statusDetail(sub.status) : "no evaluator output yet"}{sub.scored_by ? ` · by evaluator ${shortHash(sub.scored_by)}` : ""}</span>
+        <div className="stack" style={{ gap: 18 }}>
+          <Reading name="Split A, public" bps={sub.score_a_bps} />
+          <Reading name="Split B, decides" bps={bVisible ? sub.score_b_bps : null} blue={isChamp} withheld={bVisible ? null : sealedLine} />
         </div>
       </section>
 
-      <section className="block wrap g12 chapter">
-        <div className="c2"><Sec n="01" title="Readings" /></div>
-        <div className="c10 g12">
-          <div className="c6 reading sep">
-            <span className="label">split A · open · balanced accuracy</span>
-            <span className="v" style={{ color: "var(--ink-2)" }}>{sub.score_a_bps != null ? <>{(sub.score_a_bps / 100).toFixed(2)}<small> %</small></> : <small>not scored</small>}</span>
-            <span className="mono mist">{raw?.a ? `F1 ${bps(sub.f1_a_bps)} · ${raw.a.n} rows · ${raw.a.n_pos} positive` : ""}</span>
-          </div>
-          <div className="c6 reading">
-            <span className="label accent-text">split B · final · balanced accuracy</span>
-            <span className="v accent">{bVisible ? <>{(sub.score_b_bps / 100).toFixed(2)}<small> %</small></> : <Pill kind="sealed">not yet observed · {sealedLine}</Pill>}</span>
-            <span className="mono mist">{bVisible && raw?.b ? `F1 ${bps(sub.f1_b_bps)} · ${raw.b.n} rows · ${raw.b.n_pos} positive · unsealed at close` : ""}</span>
-          </div>
+      <section className="block wrap" style={{ paddingTop: 0 }}>
+        <div className="x-steps">
+          {["uploaded", "in the TEE", "scored"].map((step, i) => (
+            <React.Fragment key={step}>
+              {i > 0 && <span className="sep" aria-hidden="true" />}
+              <span className={`${i < reached ? "on" : ""} ${st === "Failed" && i === 1 ? "bad" : ""}`}><i />{st === "Failed" && i === 1 ? "failed" : step}</span>
+            </React.Fragment>
+          ))}
+          <span className="x-mut">{raw ? `block ${raw.block}, evaluator ` : st === "Failed" ? statusDetail(sub.status) : "no evaluator output yet"}{raw && sub.scored_by && <><span className="mono">{shortHash(sub.scored_by)}</span>{cfg.data && (sub.scored_by === cfg.data.evaluator_hash ? ", the pinned one" : ", not the pinned one")}</>}</span>
         </div>
       </section>
 
-      <section className="block wrap g12">
-        <div className="c2"><Sec n="02" title="The model" /></div>
-        <div className="c10 stack">
-          <div className="between mono mist"><span>all {sub.trees} trees, drawn from the bytes on-chain</span><span>{isChamp ? <><span className="accent-text">champion</span>: orange roots</> : ""}</span></div>
-          <div className={`plate ${isChamp ? "accent" : ""}`} style={{ padding: 14 }}><Forest bytes={bytes} trees={sub.trees} limit={500} cols={narrow ? 5 : 10} draw featureNames={task?.feature_names || []} accent={isChamp} onRetry={retry} readout /></div>
+      <section className="block wrap">
+        <h2 className="x-sec">Walk through the model</h2>
+        {model ? <TreeExplorer model={model} featureNames={task?.feature_names || []} accent={isChamp} />
+          : bytes === undefined ? <Err error="model bytes unavailable" plain reload={retry} />
+          : bytes ? <Err error="could not decode the model" plain /> : <Loading what="reading the model bytes" />}
+      </section>
+
+      <section className="block wrap">
+        <h2 className="x-sec">Every private row it was judged on</h2>
+        <div className="x-two">
+          <DotPlate counts={raw?.a} caption="Split A, one dot per private test row" />
+          <DotPlate counts={bVisible ? raw?.b : null} caption="Split B, one dot per private test row" ghost={raw?.a?.n || 150} ghostText={bVisible ? undefined : sealedLine} />
         </div>
       </section>
 
-      <section className="block wrap g12">
-        <div className="c2"><Sec n="03" title="Specimen plates" /></div>
-        <div className="c10 g12">
-          <div className="c6"><DotPlate counts={raw?.a} caption="split A · one dot per private test row" /></div>
-          <div className="c6"><DotPlate counts={bVisible ? raw?.b : null} caption="split B · one dot per private test row" ghost={raw?.a?.n || 150} ghostText={bVisible ? undefined : sealedLine} /></div>
-        </div>
-      </section>
-
-      <section className="block wrap g12">
-        <div className="c2"><Sec n="04" title="Provenance" /></div>
-        <div className="c10 stack">
-          <dl className="kv">
-            <dt>model sha256</dt><dd className="mono">{sub.model_hash}<CopyBtn text={sub.model_hash} label="copy model hash" /></dd>
-            <dt>evaluator sha256</dt><dd className="mono tee">{cfg.data?.evaluator_hash ?? "…"}{cfg.data && <CopyBtn text={cfg.data.evaluator_hash} label="copy evaluator hash" />}</dd>
-            <dt>evaluator wasm</dt><dd className="mono"><a href={cfg.data?.evaluator_url} target="_blank" rel="noreferrer">{cfg.data ? cfg.data.evaluator_url.replace(/^https?:\/\//, "").slice(0, 60) + "…" : "…"}</a></dd>
-            <dt>scored by</dt><dd className="mono">{cfg.data ? `${cfg.data.outlayer} (TEE worker)` : "…"}{sub.scored_by ? ` · evaluator ${shortHash(sub.scored_by)}${cfg.data && sub.scored_by === cfg.data.evaluator_hash ? " = pinned" : " ≠ pinned"}` : ""}</dd>
-            <dt>owner</dt><dd className="mono"><a href={EXPLORER_ACCOUNT(sub.owner)} target="_blank" rel="noreferrer">{sub.owner}</a></dd>
-            <dt>calls · earnings</dt><dd>{sub.calls} · {e.data ? yoctoToNear(e.data, 3) : "…"} NEAR (owner withdraws via <span className="mono">withdraw_earnings</span>)</dd>
+      <section className="block wrap x-two">
+        <div className="x-panel stack" style={{ gap: 14 }}>
+          <h3>Provenance</h3>
+          <dl className="x-terms">
+            <div><dt>Model sha256</dt><dd className="mono">{sub.model_hash}<CopyBtn text={sub.model_hash} label="copy model hash" /></dd></div>
+            <div><dt>Evaluator sha256</dt><dd className="mono">{cfg.data?.evaluator_hash ?? "…"}{cfg.data && <CopyBtn text={cfg.data.evaluator_hash} label="copy evaluator hash" />}</dd></div>
+            <div><dt>Evaluator wasm</dt><dd><a href={cfg.data?.evaluator_url} target="_blank" rel="noreferrer">{cfg.data ? cfg.data.evaluator_url.replace(/^https?:\/\//, "").slice(0, 48) + "…" : "…"}</a></dd></div>
+            <div><dt>Scored by</dt><dd>{cfg.data ? `${cfg.data.outlayer} (TEE worker)` : "…"}</dd></div>
+            <div><dt>Calls, earnings</dt><dd>{sub.calls} calls, {e.data ? yoctoToNear(e.data, 3) : "…"} NEAR (the owner withdraws with <span className="mono">withdraw_earnings</span>)</dd></div>
           </dl>
-          <details><summary>raw evaluator output stored on-chain (≤ 900 B){!bVisible && raw ? " · split B withheld until close" : ""}</summary><pre>{rawShown ? JSON.stringify(rawShown, null, 2) : (sub.last_outlayer_raw || "not scored yet")}</pre></details>
+          <details><summary>Raw evaluator output stored on-chain{!bVisible && raw ? ", split B withheld until close" : ""}</summary><pre>{rawShown ? JSON.stringify(rawShown, null, 2) : (sub.last_outlayer_raw || "not scored yet")}</pre></details>
         </div>
-      </section>
-
-      <section className="block wrap g12">
-        <div className="c2"><Sec n="05" title="Call it" /></div>
-        <div className="c10 stack">
-          <p className="ink2" style={{ fontSize: 15 }}>Metered change method: the fee is taken from the caller's prepaid credit. Features are integers in the task's feature order. Raw score &gt; 0 ⇒ positive class.</p>
+        <div className="x-panel stack" style={{ gap: 14 }}>
+          <h3>Call it</h3>
+          <p className="ink2">A metered change method: the fee comes from the caller's prepaid credit. Features are {nf} integers in the task's feature order; a raw score above 0 means the positive class. Replace the zeros with your row.</p>
           <Cmd>{`node tools/predict.mjs ${sub.task_id} --submission ${sub.submission_id} --row 0 --as AGENT`}</Cmd>
-          <Cmd>{`near contract call-function as-transaction ${contractId()} predict json-args '{"submission_id":${sub.submission_id},"features":[0,24,2,3,2500,0,2,3,0,2,1,35,2,1,1,2,1,0]}' prepaid-gas '30 Tgas' attached-deposit '0 NEAR' sign-as <agent> network-config testnet`}</Cmd>
+          <Cmd>{`near contract call-function as-transaction ${contractId()} predict json-args '{"submission_id":${sub.submission_id},"features":[${Array(nf).fill(0).join(",")}]}' prepaid-gas '30 Tgas' attached-deposit '0 NEAR' sign-as <agent> network-config testnet`}</Cmd>
         </div>
       </section>
     </>
@@ -385,71 +344,56 @@ function Model({ id }) {
 }
 
 // ---------- Method / costs ----------
-const STAGES = ["submit as data", "validate", "request_score", "TEE evaluator", "A public · B withheld", "close → champion", "predict_task"];
-function FlowDiagram() {
-  return (
-    <>
-      <svg className="only-wide" viewBox="0 0 1000 110" role="img" aria-label="flow from submission to on-chain prediction">
-        {STAGES.map((s, i) => {
-          const x = 10 + i * 141, w = 128, sealed = i === 4, tee = i === 3, last = i === 6;
-          return (
-            <g key={s}>
-              <rect x={x} y={30} width={w} height={54} fill={last ? "var(--accent-text)" : "var(--plate)"} stroke={sealed ? "var(--sealed)" : tee ? "var(--tee-text)" : last ? "var(--accent-text)" : "var(--ink)"} strokeWidth={tee ? 2.5 : 1.5} strokeDasharray={sealed ? "4 3" : undefined} />
-              <text x={x + w / 2} y={61} textAnchor="middle" fontFamily="JetBrains Mono, monospace" fontSize="12" fill={last ? "var(--paper)" : tee ? "var(--tee-text)" : "var(--ink)"}>{s}</text>
-              {i < STAGES.length - 1 && <path d={`M${x + w} 57 l13 0`} stroke="var(--ink)" strokeWidth={1.5} />}
-            </g>
-          );
-        })}
-        <text x={10} y={104} fontFamily="JetBrains Mono, monospace" fontSize="12" fill="var(--mist)">participant → contract → OutLayer worker (TEE) → contract → anyone (close) → agents and contracts (calls, fee to the owner)</text>
-      </svg>
-      <ol className="flow-v only-narrow">{STAGES.map((s, i) => <li key={s} className={i === 4 ? "sealed" : i === 3 ? "tee" : i === 6 ? "last" : ""}>{s}</li>)}</ol>
-    </>
-  );
-}
+const COSTS = [
+  ["predict_task from an agent", "function-call key, German Credit 50 trees, 33 KB", 4.31, "4.31 Tgas", "8tTi9dbVnZfwMZkmqgMVG1FfXyihUs8MssCXraNELFMS"],
+  ["predict, a large model", "synthetic 100 trees × depth 6, 197 KB", 13.2, "13.20 Tgas", "F8Az4MKFdqRYHRw6Pq4RZDrSUs7RJ4nuZZ9qv46Tuqd8"],
+  ["submit_model", "validation and storage, 33 KB", 10.2, "10.20 Tgas", "14BSwbzAViKnu7esMQTf9bN1L3vQiywjMQGqAEX5Tcmv"],
+  ["request_score → TEE → callback", "33 KB, 2 × 150 private rows, about 10 s", 12.5, "12.5 Tgas", "593SvaUAZLXjrQ2f5XkCnpKTnW8EkYT7h1o1Xmski3oq"],
+  ["close_task", "picks the champion on split B", 2.23, "2.23 Tgas", "2VLWMbGvyKTJgtekf5Bd4q1F73oSyFpbsM61LAum2cZP"],
+  ["contract → predict_task → callback", "another contract pays from its own credit", 8.85, "8.85 Tgas", "BNR63PPUcD6RgjQyN8nQ1i2iP9uJQfGPcLrozsHAcGz6"],
+];
 
 function Costs() {
   useTitle("Method");
-  const cfg = useView("get_config", {}, []);
-  const rows = [
-    ["predict_task from an agent (function-call key)", "German Credit 50×4, 33 KB", "4.31", "8tTi9dbVnZfwMZkmqgMVG1FfXyihUs8MssCXraNELFMS"],
-    ["predict", "synthetic 100×6, 197 KB", "13.20", "F8Az4MKFdqRYHRw6Pq4RZDrSUs7RJ4nuZZ9qv46Tuqd8"],
-    ["submit_model (validation + storage)", "33 KB", "10.20", "14BSwbzAViKnu7esMQTf9bN1L3vQiywjMQGqAEX5Tcmv"],
-    ["request_score → OutLayer → callback", "33 KB, 2×150 rows", "12.5 total · ~10 s", "593SvaUAZLXjrQ2f5XkCnpKTnW8EkYT7h1o1Xmski3oq"],
-    ["close_task", "—", "2.23", "2VLWMbGvyKTJgtekf5Bd4q1F73oSyFpbsM61LAum2cZP"],
-    ["another contract → predict_task → callback (credit-desk)", "German Credit 50×4", "8.85 total", "BNR63PPUcD6RgjQyN8nQ1i2iP9uJQfGPcLrozsHAcGz6"],
-  ];
   return (
     <>
-      <section className="block wrap g12" style={{ alignItems: "end" }}>
-        <div className="c7 stack" style={{ gap: 12 }}><h1 className="h2">How a model becomes infrastructure.</h1><p className="ink2" style={{ fontSize: 15, maxWidth: 560 }}>Numbers below were measured on NEAR testnet on 2–4 Nov 2026; each row links to its transaction. 1 Tgas ≈ 0.0001 NEAR at the base gas price.</p></div>
-      </section>
-      <section className="block wrap g12">
-        <div className="c2"><Sec n="01" title="Flow" /></div>
-        <div className="c10"><FlowDiagram /></div>
-      </section>
-      <section className="block wrap g12">
-        <div className="c2"><Sec n="02" title="Measured cost" /></div>
-        <div className="c10 scrollx">
-          <table>
-            <thead><tr><th>Operation</th><th>Model</th><th className="num">Tgas (function receipt)</th><th>Proof</th></tr></thead>
-            <tbody>
-              {rows.map((r) => <tr key={r[0]}><td><span className="mono" style={{ fontSize: 13 }}>{r[0]}</span></td><td>{r[1]}</td><td className="num">{r[2]}</td><td><a href={EXPLORER_TX(r[3])} target="_blank" rel="noreferrer" className="mono">{shortHash(r[3], 6)}</a></td></tr>)}
-              <tr><td>end-to-end from a fresh account (23 steps, 17 negative tests)</td><td>—</td><td className="num">232 s</td><td><a href={`${REPO}/blob/main/docs/E2E.md`} target="_blank" rel="noreferrer" className="mono">docs/E2E.md</a></td></tr>
-            </tbody>
-          </table>
+      <section className="block wrap x-head">
+        <div>
+          <h1 className="h2">How a model becomes infrastructure.</h1>
+          <p className="x-lede">From a few kilobytes of integers to a contract method that agents pay to call. Every cost below was measured on NEAR testnet on 2–4 Nov 2026 and links to its transaction; 1 Tgas is about 0.0001 NEAR at the base gas price.</p>
         </div>
       </section>
-      <section className="block wrap g12">
-        <div className="c2"><Sec n="03" title="Guaranteed, and not" /></div>
-        <ul className="plain c10">
-          <li>The scoring evaluator is fixed by the contract (hash pinned by the owner), not chosen by participants. The secret opens only for that hash: any other build gets <span className="mono">TEST_SET_A missing</span> (tested 2 Nov).</li>
-          <li>The model runs inside NEAR consensus: <span className="mono">predict</span> results are identical to the evaluator and to Python, vector by vector.</li>
-          <li>The agent uses a function-call key: the protocol rejects <span className="mono">withdraw_credit</span>, deposits, other contracts and transfers from that key (see <span className="mono">docs/AGENT.md</span>).</li>
-          <li><b>Not guaranteed:</b> Sybil resistance (only the 3-per-account quota + submission fee), secrecy of split-B scores while a task is open: they are readable through the <span className="mono">get_submission</span> / <span className="mono">list_submissions</span> views and the OutLayer receipt of every <span className="mono">request_score</span> transaction (the leaderboard withholds them, and so do this site and the MCP tools; what stays sealed are the rows), and secrecy of a dataset that is public anyway (both datasets are public: the private split keeps the test rows out of training, not the original data out of reach).</li>
-          <li>Two datasets. <b>UCI German Credit</b> (1994, Germany) is used as a <b>simulation</b>; this is not a tool for scoring real people's credit. <b>NEAR mainnet account retention</b> (exhibit 05) is real on-chain data: fresh <span className="mono">.near</span> accounts' first seven days, from the public BigQuery dataset (<a href={`${REPO}/blob/main/tasks/near-retention/README.md`} target="_blank" rel="noreferrer" className="mono">tasks/near-retention</a>).</li>
-        </ul>
+      <section className="block wrap">
+        <h2 className="x-sec">The path of a model</h2>
+        <Journey />
       </section>
-      {cfg.data && <section className="block wrap"><p className="mono mist" style={{ overflowWrap: "anywhere" }}>contract {contractId()} · evaluator {shortHash(cfg.data.evaluator_hash, 10)}<CopyBtn text={cfg.data.evaluator_hash} label="copy evaluator hash" /> · model limits {cfg.data.max_model_bytes.toLocaleString()} B / {cfg.data.max_trees} trees · {cfg.data.outlayer}</p></section>}
+      <section className="block wrap">
+        <h2 className="x-sec">What each step costs</h2>
+        <CostBars rows={COSTS} />
+        <p className="x-lede">From a fresh account, the whole journey, 23 steps with 17 misuse attempts rejected, took 232 seconds (<a href={`${REPO}/blob/main/docs/E2E.md`} target="_blank" rel="noreferrer">docs/E2E.md</a>).</p>
+      </section>
+      <section className="block wrap">
+        <h2 className="x-sec">Guaranteed, and not</h2>
+        <div className="x-two">
+          <div className="x-panel blue">
+            <h3>Guaranteed</h3>
+            <ul className="x-guar">
+              <li>The contract fixes the scoring evaluator by its hash; participants cannot choose it. The private rows open only for that hash: any other build gets <span className="mono">TEST_SET_A missing</span> (tested 2 Nov).</li>
+              <li>The model runs inside NEAR consensus: <span className="mono">predict</span> gives the same result as the evaluator and as Python, vector by vector.</li>
+              <li>An agent's function-call key can only call <span className="mono">predict_task</span> and <span className="mono">predict</span>; the protocol rejects withdrawals, deposits, other contracts and transfers from it (<a href={`${REPO}/blob/main/docs/AGENT.md`} target="_blank" rel="noreferrer">docs/AGENT.md</a>).</li>
+            </ul>
+          </div>
+          <div className="x-panel orange">
+            <h3>Not guaranteed</h3>
+            <ul className="x-guar not">
+              <li>Sybil resistance: only a 3-per-account quota and the submission fee.</li>
+              <li>Secrecy of split-B scores while a task is open: they are readable through the <span className="mono">get_submission</span> / <span className="mono">list_submissions</span> views and the OutLayer receipt of every <span className="mono">request_score</span> transaction. The leaderboard withholds them, and so do this site and the MCP tools; what stays sealed are the rows.</li>
+              <li>Secrecy of a dataset that is public anyway: both datasets are public, so the private split keeps the test rows out of training, not the original data out of reach.</li>
+            </ul>
+          </div>
+        </div>
+        <p className="x-lede">Two datasets. UCI German Credit (1994, Germany) is used as a simulation; this is not a tool for scoring real people's credit. NEAR mainnet account retention (exhibit 05) is real on-chain data: fresh <span className="mono">.near</span> accounts' first seven days, from the public BigQuery dataset (<a href={`${REPO}/blob/main/tasks/near-retention/README.md`} target="_blank" rel="noreferrer">tasks/near-retention</a>).</p>
+      </section>
     </>
   );
 }
@@ -478,8 +422,8 @@ export default function App() {
         <div className="wrap">
           <div className="brand"><a href="#/">LAUREL</a><span>Observatory of small models</span></div>
           <nav aria-label="primary"><a href="#/" className={isExhibits ? "on" : ""} aria-current={isExhibits ? "page" : undefined}>Exhibits</a><a href="#/costs" className={isMethod ? "on" : ""} aria-current={isMethod ? "page" : undefined}>Method</a><a href="#/connect" className={isConnect ? "on" : ""} aria-current={isConnect ? "page" : undefined}>Connect your agent</a><a href={REPO} target="_blank" rel="noreferrer">Source</a></nav>
+          <span className="x-status"><i />Live on NEAR {network}</span>
           <WalletButton />
-          <span className="contract"><a href={EXPLORER_ACCOUNT(contractId())} target="_blank" rel="noreferrer">{contractId()}</a> · testnet · read-only</span>
         </div>
       </header>
       <main id="main" tabIndex={-1}>
@@ -489,7 +433,14 @@ export default function App() {
         {isMethod && <Costs />}
         {isConnect && <Connect />}
       </main>
-      <footer><div className="wrap"><span>Built at NEAR HACKATHON 2026 · every number is read live from <a href={EXPLORER_ACCOUNT(contractId())} target="_blank" rel="noreferrer" className="mono">{contractId()}</a> · no mock data · sister project: <a href={UNDO} target="_blank" rel="noreferrer">Undo</a> (same team)</span><a href={REPO} target="_blank" rel="noreferrer" className="mono">github.com/agadape/laurel</a></div></footer>
+      <footer className="x-foot"><div className="x-foot-grid">
+        <p className="x-foot-line">Small models, judged in the dark, paid in the open.</p>
+        <nav aria-label="Explore"><b>Explore</b><a href="#/tasks">Exhibits</a><a href="#/costs">Method</a><a href="#/connect">Connect your agent</a></nav>
+        <nav aria-label="Verify"><b>Verify</b><a href={REPO} target="_blank" rel="noreferrer">Source on GitHub</a><a href={EXPLORER_ACCOUNT(contractId())} target="_blank" rel="noreferrer">Contract on NearBlocks</a><a href="/api/mcp" target="_blank" rel="noreferrer">Remote MCP</a></nav>
+        <nav aria-label="Team"><b>Team</b><a href={UNDO} target="_blank" rel="noreferrer">Undo, our sister project</a><span>NEAR HACKATHON 2026</span></nav>
+      </div>
+      <p className="x-foot-note">Every number is read live from <span className="mono">{contractId()}</span> on NEAR {network}. No mock data.</p>
+      <div className="x-foot-word" aria-hidden="true">LAUREL</div></footer>
     </>
   );
 }

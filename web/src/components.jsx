@@ -226,7 +226,7 @@ export function Forest({ bytes, trees: treesHint, limit = 50, cols = 10, feature
     const map = { ArrowRight: current + 1, ArrowLeft: current - 1, ArrowDown: current + cols, ArrowUp: current - cols, Home: 0, End: list.length - 1 };
     if (e.key in map) { e.preventDefault(); move(map[e.key]); }
   };
-  const describe = (i) => { const r = list[i]?.nodes[0]; return r && r.left !== LEAF ? `tree ${i + 1} · root split: ${featureNames[r.feature] ?? "f" + r.feature} < ${r.threshold}` : `tree ${i + 1} · single leaf`; };
+  const describe = (i) => { const r = list[i]?.nodes[0]; return r && r.left !== LEAF ? `tree ${i + 1} · root split: ${featureNames[r.feature] ?? "f" + r.feature} ≤ ${r.threshold}` : `tree ${i + 1} · single leaf`; };
   return (
     <div className={`forest ${draw ? "draw" : ""}`}>
       <svg viewBox={`0 0 ${cols * cell} ${rows * ch}`} role={readout ? "group" : "img"} aria-label={`${model.trees.length} decision trees of this model${readout ? "; arrow keys move between trees" : ""}`} style={box} onKeyDown={readout ? onKey : undefined}>

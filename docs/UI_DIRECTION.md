@@ -83,3 +83,13 @@ The owner approved Dex Bennett's front end (`docs/design/DESIGN.md`, `docs/desig
 
 Integration notes: every contract value the landing renders is escaped or coerced to a number in `landing/data.js` (`?contract=` makes them untrusted). If RPC is slower than 2.6 s on the default contract, the landing uses `web/public/aset/snapshot.json` (refresh with `python tools/landing_snapshot.py`) and its footer says it is a saved copy and when it was taken.
 
+## 11. Inner pages in the landing's world (6 Nov 2026)
+
+Following Dex's guide (`docs/design/RASA-DESAIN.md`: one object per page, no small text above headings, no rows of figure boxes, mono only for code and hashes), the explorer pages were rebuilt with `web/src/inner.jsx` and `web/src/inner.css` (classes prefixed `x-` so they never meet the landing's unscoped ones):
+- **Exhibits:** live figures become one sentence; the index is a board: outlined numeral (orange open, blue closed), split-A leader bar, split B *Withheld* with a countdown or the champion with its laurel.
+- **Exhibit:** the readings are a race (`Lanes`). Open: split A only, split B withheld. Closed: split A runs, the seal passes, everyone settles on split B, the laurel moves; *Run it again* replays it. Specimens are glass cards with their trees and private-row plate.
+- **Specimen:** split A / B bars, the evaluation steps, and a tree explorer (`TreeExplorer`): pick any tree decoded from the on-chain bytes; idle, a call walks from root to a leaf; point at a leaf to read its rule (left when `x ≤ threshold`, as in `gbdt-core`) and its signed contribution.
+- **Method:** the path of a model as seven stations with a travelling light, measured gas as bars linked to their transactions, and "Guaranteed, and not" as two panels.
+- **Connect:** outlined step numerals, glass panels, the account's figures as one sentence, and example prompts that copy on tap.
+- Header carries "Live on NEAR testnet"; the footer matches the landing's.
+

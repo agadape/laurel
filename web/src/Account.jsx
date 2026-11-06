@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { view, yoctoToNear, EXPLORER_ACCOUNT, EXPLORER_TX } from "./rpc.js";
 import { onWallet, restore, signIn, signOut, buyCredit, withdrawCredit, withdrawEarnings, network } from "./wallet.js";
-import { Fig, Err } from "./components.jsx";
+import { Err } from "./components.jsx";
 
 export function useWallet() {
   const [w, setW] = useState({ accountId: null, ready: false, loading: false, error: null });
@@ -50,32 +50,28 @@ export function AccountPanel({ compact = false }) {
     return (
       <div className="panel stack">
         <div className="between"><b style={{ fontFamily: "var(--display)", fontSize: 17 }}>Buy prediction credit with your NEAR wallet</b><span className="mono mist">{network}</span></div>
-        <p className="ink2" style={{ fontSize: 14 }}>Credit is prepaid on the contract and spent by <span className="mono">predict_task</span>: each call pays the model owner. Sign in to deposit from the browser; the CLI path (<span className="mono">tools/predict.mjs … --deposit</span>) does the same thing.</p>
+        <p className="ink2">Credit is prepaid on the contract and spent by <span className="mono">predict_task</span>: each call pays the model owner. Sign in to deposit from the browser; the CLI path (<span className="mono">tools/predict.mjs … --deposit</span>) does the same thing.</p>
         <div><button className="wallet-btn" onClick={signIn} disabled={w.loading}>{w.loading ? "loading wallet…" : "Connect wallet"}</button>{w.error && <span className="err mono" style={{ marginLeft: 10 }}>{w.error}</span>}</div>
-        <p className="mist" style={{ fontSize: 12 }}>{feeHint}. Works with Meteor (opens a popup window: allow popups for this site, or use the Meteor browser extension), Intear and Nightly on {network}. Use a normal browser window, not an embedded preview. Signing in creates no transaction; each purchase is approved in the wallet. Nothing on this site needs a wallet to read.</p>
+        <p className="mist">{feeHint}. Works with Meteor (opens a popup window: allow popups for this site, or use the Meteor browser extension), Intear and Nightly on {network}. Use a normal browser window, not an embedded preview. Signing in creates no transaction; each purchase is approved in the wallet. Nothing on this site needs a wallet to read.</p>
       </div>
     );
   }
   return (
     <div className="panel stack">
       <div className="between"><b style={{ fontFamily: "var(--display)", fontSize: 17 }}>Your account</b><span className="mono"><a href={EXPLORER_ACCOUNT(w.accountId)} target="_blank" rel="noreferrer">{w.accountId}</a> · {network}</span></div>
-      <div className="figs" style={{ borderTop: 0, paddingTop: 0 }}>
-        <Fig v={credit == null ? <span className="sk" /> : yoctoToNear(credit, 3)} unit="NEAR" l="prediction credit on the contract" />
-        <Fig v={owned.length} l={owned.length === 1 ? "model you own" : "models you own"} />
-        <Fig v={owned.length ? yoctoToNear(owned.reduce((a, s) => a + BigInt(s.earnings), 0n).toString(), 3) : "0.000"} unit="NEAR" l="earnings waiting to be withdrawn" />
-      </div>
+      <p className="x-sum" style={{ fontSize: "clamp(22px, 2vw, 30px)" }}>You have <b>{credit == null ? "…" : yoctoToNear(credit, 3)}</b> NEAR of prediction credit on the contract. You own <b>{owned.length}</b> {owned.length === 1 ? "model" : "models"}, with <b>{owned.length ? yoctoToNear(owned.reduce((a, s) => a + BigInt(s.earnings), 0n).toString(), 3) : "0.000"}</b> NEAR waiting to be withdrawn.</p>
       <div className="buy">
         <label className="label" htmlFor="buy-amt">buy credit (NEAR)</label>
         <input id="buy-amt" type="number" min="0.001" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} className="mono" />
         <button className="wallet-btn" disabled={busy || !(Number(amount) > 0)} onClick={() => run(`deposit_credit ${amount} NEAR`, () => buyCredit(amount))}>Buy credit</button>
         {credit != null && BigInt(credit) > 0n && <button className="retry" disabled={busy} onClick={() => run("withdraw_credit", () => withdrawCredit(yoctoToNear(credit, 6)))}>withdraw all credit</button>}
       </div>
-      <p className="mist" style={{ fontSize: 12 }}>{feeHint}. The wallet shows the exact deposit before you sign.</p>
+      <p className="mist">{feeHint}. The wallet shows the exact deposit before you sign.</p>
       {owned.length > 0 && !compact && (
         <div className="stack" style={{ gap: 6 }}>
           <span className="label">your models</span>
           {owned.map((s) => (
-            <div key={s.submission_id} className="between mono" style={{ fontSize: 13 }}>
+            <div key={s.submission_id} className="between mono">
               <span><a href={`#/model/${s.submission_id}`}>#{s.submission_id}</a> · task {s.task_id} · {s.calls} calls · earned {yoctoToNear(s.earnings, 4)} NEAR</span>
               {BigInt(s.earnings) > 0n && <button className="retry" disabled={busy} onClick={() => run(`withdraw_earnings #${s.submission_id}`, () => withdrawEarnings(s.submission_id))}>withdraw</button>}
             </div>
