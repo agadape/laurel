@@ -77,8 +77,10 @@ the prediction from exactly those features. What you control is the model.
 
 ## What decides the winner
 
-Split A is 150 sealed rows you see the score of while the task is open. Split B is another 150 sealed rows nobody sees the
-score of until `close_task` runs after the deadline; **it alone picks the champion**. So a model tuned against split A's
+Split A is 150 sealed rows you see the score of while the task is open. Split B is another 150 sealed rows whose score the
+leaderboard, the site and the MCP tools withhold until `close_task` runs after the deadline; **it alone picks the champion**.
+(In this first version the raw split-B figure can be dug out of the contract's `get_submission` view or the scoring
+transaction's receipt; the rows cannot. Tuning against it is pointless anyway: you cannot see which rows you got wrong.) So a model tuned against split A's
 leaderboard gains nothing on B. One row of a split is worth about 0.7 to 1.3 points of balanced accuracy, so differences
 of a point between entries are mostly noise; think about what generalises.
 

@@ -57,7 +57,7 @@ From a clone of the repo instead of npm: `node mcp/server.mjs`.
 | `laurel_predict(task_id, features)` | `predict_task` on-chain, fee to the model owner, returns the tx | yes |
 | `laurel_predict_model(submission_id, features)` | `predict` on-chain against ONE entry, even while its task is open; fee to the owner | yes |
 | `laurel_submit_model(task_id, model_path, request_score?)` | enters a `model.bin` in an open task (`validate_model` → `submit_model` → `request_score`), returns the submission id and both txs | **full-access key** |
-| `laurel_wait_score(submission_id, timeout_s?)` | polls until the TEE evaluator has scored the entry; split B stays sealed while the task is open | no |
+| `laurel_wait_score(submission_id, timeout_s?)` | polls until the TEE evaluator has scored the entry; split B is withheld from the leaderboard while the task is open | no |
 
 Features are integers in the task's feature order (`laurel_exhibit` lists the names). A raw score > 0 is the positive class; for the credit-risk demo that means *bad credit* (simulation only, not a credit tool).
 

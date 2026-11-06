@@ -39,7 +39,7 @@ NEAR features used: own contract (near-sdk 5.30), cross-contract promises and ca
 | Track | What Laurel contributes | Where to look |
 |---|---|---|
 | `agents` (Agent Economy) | Agents **pay for verified predictions** per call from prepaid credit, with a key the protocol restricts to `predict_task`; an MCP server gives any agent the exhibits, the model bytes, local inference and paid on-chain calls | [docs/AGENT.md](docs/AGENT.md), [docs/MCP.md](docs/MCP.md), `mcp/` |
-| `privacy` (Private AI, TEE) | The benchmark's test set never leaves the enclave and opens only for the pinned evaluator hash; the deciding split stays sealed until close | [docs/EVALUATOR.md](docs/EVALUATOR.md), SPIKE_LOG S30, `evaluator/` |
+| `privacy` (Private AI, TEE) | The benchmark's test set never leaves the enclave and opens only for the pinned evaluator hash; the deciding split's *rows* stay inside the enclave; its *score* is withheld from the leaderboard, the site and the MCP tools until close, but is readable on-chain in v1 (see Security model) | [docs/EVALUATOR.md](docs/EVALUATOR.md), SPIKE_LOG S30, `evaluator/` |
 | `open` (Open Innovation) | A model competition whose winner becomes **permissionless, composable infrastructure**: an address other contracts call in consensus | [docs/CONSUMER.md](docs/CONSUMER.md), `contracts/consumer-example` |
 
 ## How it works
@@ -59,7 +59,7 @@ sequenceDiagram
     P->>L: request_score
     L->>O: request_execution(pinned evaluator, task secret)
     O->>L: get_model_bytes (view), then on_score: split A + split B
-    Note over L: split A public, split B sealed until close
+    Note over L: split A public; split B withheld from the leaderboard until close (readable on-chain in v1)
     A->>L: close_task, by anyone after the deadline (best split B wins)
     A->>L: predict_task(task_id, features)
     L-->>A: raw score, computed in consensus
@@ -185,7 +185,7 @@ What an attacker would try, and what stops it today. "Protocol" means NEAR itsel
 | Change the winner after the fact | `close_task` is permissionless and deterministic: best split-B score, ties to the earlier submission; it runs once | `close_task`, unit tests |
 | Spend from the agent's account | The agent's key is a function-call key limited to `predict_task`/`predict` on this contract with a gas allowance: the protocol rejects transfers, deposits, other methods and other contracts before any contract code runs (capability-based authorization at the protocol level) | docs/AGENT.md |
 | Drain prediction credit | Credit is per account, debited only by that account's own calls, withdrawable only by its owner | `deposit_credit`, `withdraw_credit` |
-| Read split B of an open task | **Not prevented in v1.** `leaderboard`, the site and the MCP tools withhold split B until close, but the contract's `get_submission` / `list_submissions` views return `score_b_bps`, `f1_b_bps` and `last_outlayer_raw` as soon as `on_score` stores them, and the OutLayer log is public. Sealing is a view-layer rule today; the fix (score B in a second TEE run, or return it encrypted to a key revealed at close) needs a contract change we did not make before the freeze | `get_submission`, `on_score` |
+| Read split B of an open task | **Not prevented in v1, and not fixable by a view change.** `leaderboard`, the site and the MCP tools withhold split B until close, but the contract's `get_submission` / `list_submissions` views return `score_b_bps`, `f1_b_bps` and `last_outlayer_raw` as soon as `on_score` stores them, and, more fundamentally, the evaluator's whole output (both splits, confusion counts) is the **result value of OutLayer's receipt** in the `request_score` transaction, visible in any explorer (checked 6 Nov on submission #12). What is sealed in v1 is the *rows*, not the *score*; the score is a convention the leaderboard keeps. Masking the views would hide the easy path only. Sealing is a view-layer rule today; the fix (score B in a second TEE run, or return it encrypted to a key revealed at close) needs a contract change we did not make before the freeze | `get_submission`, `on_score`, OutLayer receipt result |
 | Drain an agent's credit with a hostile task | **Partly open.** `create_task` is permissionless and puts no ceiling on `fee_per_call`; credit is one balance per account across all tasks; a function-call key limits the *method*, not its arguments. An agent that can be talked into calling `predict`/`predict_task` on a stranger's submission pays that task's fee. Mitigations today: keep little credit on an agent account, or route calls through your own contract that hard-codes the task (as `credit-desk` does) | `create_task`, `predict`, docs/CONSUMER.md |
 | Close a task while a rival's score is in flight | **Edge case, documented.** `close_task` is callable the moment the deadline passes and does not wait for `Pending` submissions; `request_score` is allowed until the task is closed and `on_score` still records a late result. A score requested seconds before the deadline can settle after the winner is fixed and show a higher split B than the champion. Entries should be scored well before the deadline | `close_task`, `on_score` |
 

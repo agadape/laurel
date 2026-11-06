@@ -32,15 +32,15 @@ async function modelOf(submission_id) {
   }
   return modelCache.get(submission_id);
 }
-/** The sealed rule, applied client-side too: split B of a submission is reported only once its task is closed. */
+/** The leaderboard rule, applied client-side too: split B of a submission is reported only once its task is closed. */
 async function specimen(submission_id) {
   const sub = await view("get_submission", { submission_id });
   if (!sub) return null;
   const task = await view("get_task", { task_id: sub.task_id });
   if (!task?.closed) {
     sub.score_b_bps = null; sub.f1_b_bps = null;
-    try { const raw = JSON.parse(sub.last_outlayer_raw); if (raw && "b" in raw) { raw.b = "sealed until the task closes"; sub.last_outlayer_raw = JSON.stringify(raw); } } catch {}
-    sub.split_b = "sealed until the task closes";
+    try { const raw = JSON.parse(sub.last_outlayer_raw); if (raw && "b" in raw) { raw.b = "withheld until the task closes"; sub.last_outlayer_raw = JSON.stringify(raw); } } catch {}
+    sub.split_b = "withheld until the task closes";
   }
   return { ...sub, task_closed: !!task?.closed, champion: !!task?.closed && task.winner === submission_id };
 }
@@ -60,7 +60,7 @@ server.tool("laurel_exhibit", "One task with its feature names and leaderboard. 
   const task = await view("get_task", { task_id });
   if (!task) return fail(`no task ${task_id} on ${CONTRACT}`);
   const leaderboard = await view("leaderboard", { task_id });
-  return text({ task, leaderboard, note: task.closed ? `closed; champion #${task.winner} serves predict_task(${task_id}, features)` : "open; split B is sealed in the contract's leaderboard until the deadline passes and close_task is called" });
+  return text({ task, leaderboard, note: task.closed ? `closed; champion #${task.winner} serves predict_task(${task_id}, features)` : "open; split B is withheld from the contract's leaderboard until the deadline passes and close_task is called" });
 });
 
 server.tool("laurel_specimen", "One submitted model: owner, size, status, split-A reading, evaluator record, calls served. Split B only when its task is closed.", { submission_id: z.number().int().positive() }, async ({ submission_id }) => {
@@ -137,7 +137,7 @@ server.tool("laurel_submit_model", "Enter a model in an OPEN task: validate the 
       out.request_score = txSummary(r2);
       const sub = await view("get_submission", { submission_id });
       out.status = sub.status; out.score_a_bps = sub.score_a_bps; out.f1_a_bps = sub.f1_a_bps;
-      out.note = sub.status === "Scored" ? "scored by the pinned evaluator inside the TEE; split B stays sealed until the task closes" : "scoring is asynchronous: call laurel_wait_score";
+      out.note = sub.status === "Scored" ? "scored by the pinned evaluator inside the TEE; split B stays withheld until the task closes" : "scoring is asynchronous: call laurel_wait_score";
     }
     return text(out);
   } catch (e) {
