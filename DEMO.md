@@ -27,10 +27,10 @@ Id yang dipakai (sudah ada di kontrak):
 |---|---|---|
 | Exhibit data mainnet (terbuka) | **task 5** `near-retention` | 6 entri (#7–#12), semua split B *Withheld*; #7 dan #10 memimpin split A 83.50; #10 dan #12 dibuat agen otonom |
 | Exhibit tertutup (cerita menang-kalah) | **task 3** `credit-risk` | #5 shallow memimpin split A (75.50) tetapi kalah di B (61.50); #4 deep menang di B (66.50) → champion |
-| Exhibit untuk submit live | **task 4** `credit-risk-open` | berisi #6; akun TEAM punya 0 dari 3 entri, saldo 8.4 NEAR; ±0.33 NEAR per take, sebagian kembali |
+| Exhibit untuk submit live | **task 4** `credit-risk-open` | berisi #6 (baseline 33 KB, 71.00) dan #13 (agen otonom, 12.5 KB, 74.50, memimpin); akun TEAM punya 0 dari 3 entri, saldo 8.4 NEAR; ±0.33 NEAR per take, sebagian kembali |
 | Champion yang dipanggil | **submission #4** | halaman `#/model/4`; `predict_task(3, …)` |
 | Agen pemanggil | `agent.laurel-team-mw0x0c8g.testnet` | function-call key hanya `predict`/`predict_task`; kredit 0.079 NEAR (±79 prediksi) |
-| Agen pembuat model | `maker.laurel-team-mw0x0c8g.testnet` | pemilik #10 dan #12 di task 5 |
+| Agen pembuat model | `maker.laurel-team-mw0x0c8g.testnet` | pemilik #10 dan #12 di task 5, dan #13 di task 4 (run 5, 9 Nov) |
 | Kontrak konsumen | `desk3.laurel-team-mw0x0c8g.testnet` | sudah didanai; `consumer.mjs 3` memakainya |
 
 ## Siapkan sebelum rekam (±10 menit, sekali saja)

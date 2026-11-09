@@ -6,7 +6,7 @@ matters. One competes, one buys. No human typed a command between "start" and th
 
 | Agent | Account and key | What it may do | What it did |
 |---|---|---|---|
-| **Competitor** `agents/competitor.mjs` | `maker.laurel-team-mw0x0c8g.testnet`, full-access key held by the MCP subprocess only | read the repo; write under `agents/work/`; run `python agents/work/*.py`, `tasks/*/train.py`, `tools/export.py`; the Laurel MCP tools | run 2: trained, validated, exported and entered submission #10 (3,059 B, 20 × depth-2) in task 5; TEE split A 8350 bps, level with the leader; run 4, in the hardened workspace: #12 (6,307 B, 40 × depth-2), 8300 bps, zero denied calls; $0.16 and $0.34 of API usage |
+| **Competitor** `agents/competitor.mjs` | `maker.laurel-team-mw0x0c8g.testnet`, full-access key held by the MCP subprocess only | read the repo; write under `agents/work/`; run `python agents/work/*.py`, `tasks/*/train.py`, `tools/export.py`; the Laurel MCP tools | run 2: trained, validated, exported and entered submission #10 (3,059 B, 20 × depth-2) in task 5; TEE split A 8350 bps, level with the leader; run 4, in the hardened workspace: #12 (6,307 B, 40 × depth-2), 8300 bps, zero denied calls; run 5 on task 4 (German Credit): #13 (12,539 B, 80 × depth-2), 7450 bps, first of two, zero denied calls; $0.16, $0.34 and $0.30 of API usage |
 | **Caller** `agents/caller.mjs` | `agent.laurel-team-mw0x0c8g.testnet`, **function-call key** limited by the protocol to `predict` / `predict_task` | read `tasks/*/public_*`; the Laurel MCP tools | run 3: scored 3 holdout rows with #10 locally and on-chain, raw scores identical, 2.7 Tgas and 0.001 NEAR per call, credit debited by exactly 3 fees; $0.15 of API usage |
 
 ## Why this is the point of Laurel
@@ -98,7 +98,22 @@ third of six, and declined the last entry for the same reason as before. Transac
 [`HygFCbMv…`](https://testnet.nearblocks.io/txns/HygFCbMvR1gJEaPMJ7uUh1SxuCiXR9QU9U65krZ4Yi4V), `request_score`
 [`DoKU6Rn6…`](https://testnet.nearblocks.io/txns/DoKU6Rn6HadWmmj1bh7bPrmQabk9iApzn1ZZoApmKoVD).
 
-Total API usage for the four runs: about $1.05.
+**Run 5, competitor on a different task (9 Nov 10:11 UTC, `agents/out/competitor-2026-11-09T10-11-58.md`)** — 13 turns, 217 s,
+$0.30, **0 denied calls**, **submission #13 entered and scored in task 4** (`credit-risk-open`, the UCI German Credit simulation,
+18 features: a dataset the agent had not seen in any earlier run). Same code, only `--task 4`. It read the exhibit, `features.json`,
+`train.py` and `tools/export.py`, wrote a repeated 5 × 4 cross-validation over small GBDT settings on the 700 public rows (all
+within one standard deviation, 0.713 to 0.719 balanced accuracy), chose 80 trees × depth 2 (learning rate 0.05, subsample 0.7,
+at least 10 rows per leaf, class weight 2.33 on the minority class) because it varied least between folds, reported the honest
+figure itself (0.7286 on the public holdout when trained on `public_train` only; 0.8095 in-sample for the model it entered,
+which it flagged as meaningless), exported it (**12,539 bytes**), entered it and got **7450 bps on split A, first of two**, ahead
+of the 33 KB baseline #6 at 7100. It then declined its two remaining entries with the same reasoning as before, citing the
+README's own shallow-model example (7550 on A, 6150 on B) as the reason split A is not worth chasing. A first attempt on 8 Nov
+(`competitor-2026-11-08T13-34-04.md`) was cut off by us while its grid search was still running and entered nothing.
+Transactions: `submit_model` [`8N1t4RT4…`](https://testnet.nearblocks.io/txns/8N1t4RT423etaJ5cwS9JGYaXVotjyazKvEHmnZjU9gh6)
+(8.29 Tgas), `request_score` [`8csH53zA…`](https://testnet.nearblocks.io/txns/8csH53zAs8UCa7DU26ahsfaRWaMTEVpzRwELyTvF2yse)
+(13.23 Tgas; the OutLayer `execution_completed` event is in the receipt logs). Maker balance 0.994 → 0.762 NEAR.
+
+Total API usage for the five runs: about $1.35.
 
 ## Reproduce
 
