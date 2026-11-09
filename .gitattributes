@@ -5,5 +5,3 @@
 *.wasm binary
 *.bin binary
 *.zst binary
-# shell scripts must keep LF even on Windows checkouts, or bash chokes on 
-*.sh text eol=lf
