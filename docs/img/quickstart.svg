@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="420" viewBox="0 0 1400 420" font-family="Inter, 'Helvetica Neue', Arial, sans-serif">
+  <title>Laurel quickstart: four steps from nothing to a TEE-scored entry</title>
+  <defs>
+    <marker id="qa" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#1B1B1F"/>
+    </marker>
+    <style>
+      .ink { fill: #1B1B1F; } .mist { fill: #6B6B73; } .accent { fill: #B8431F; } .tee { fill: #0B6A5B; }
+      .box { fill: #FFFFFF; stroke: #1B1B1F; stroke-width: 2; }
+      .boxa { fill: #FBF1EC; stroke: #B8431F; stroke-width: 2; }
+      .boxt { fill: #EAF4F1; stroke: #0B6A5B; stroke-width: 2; }
+      .num { font-size: 44px; font-weight: 700; }
+      .h { font-size: 24px; font-weight: 700; }
+      .p { font-size: 16px; }
+      .mono { font-family: 'JetBrains Mono', Consolas, Menlo, monospace; font-size: 15px; }
+      .small { font-size: 14px; }
+      .line { stroke: #1B1B1F; stroke-width: 2; fill: none; marker-end: url(#qa); }
+    </style>
+  </defs>
+  <rect width="1400" height="420" fill="#F7F5F0"/>
+  <text x="40" y="52" class="h ink" font-size="28">Enter the competition in four steps · about 10 minutes · free testnet NEAR</text>
+
+  <!-- step 1 -->
+  <rect x="40" y="90" width="300" height="250" rx="14" class="box"/>
+  <text x="64" y="146" class="num mist">1</text>
+  <text x="110" y="134" class="h ink">Testnet account</text>
+  <text x="110" y="160" class="p mist">2 minutes</text>
+  <text x="64" y="200" class="p ink">Meteor Wallet → create →</text>
+  <text x="64" y="224" class="p ink">switch to <tspan font-weight="700">testnet</tspan> → export key</text>
+  <text x="64" y="262" class="small mist">Free account, free NEAR.</text>
+  <text x="64" y="284" class="small mist">Key starts with ed25519:</text>
+  <text x="64" y="318" class="small accent">Only the key stays on your machine.</text>
+
+  <path d="M340,215 L380,215" class="line"/>
+
+  <!-- step 2 -->
+  <rect x="380" y="90" width="300" height="250" rx="14" class="box"/>
+  <text x="404" y="146" class="num mist">2</text>
+  <text x="450" y="134" class="h ink">Get the repo</text>
+  <text x="450" y="160" class="p mist">3 minutes</text>
+  <text x="404" y="200" class="mono ink">git clone github.com/</text>
+  <text x="404" y="222" class="mono ink">  agadape/laurel</text>
+  <text x="404" y="262" class="small mist">Needs Node 18+ and Python 3.10+.</text>
+  <text x="404" y="284" class="small mist">The script installs the rest.</text>
+
+  <path d="M680,215 L720,215" class="line"/>
+
+  <!-- step 3 -->
+  <rect x="720" y="90" width="340" height="250" rx="14" class="boxa"/>
+  <text x="744" y="146" class="num accent">3</text>
+  <text x="790" y="134" class="h ink">One script</text>
+  <text x="790" y="160" class="p mist">2 to 4 minutes</text>
+  <text x="744" y="196" class="mono ink">quickstart.ps1   (Windows)</text>
+  <text x="744" y="218" class="mono ink">quickstart.sh    (mac, Linux)</text>
+  <text x="744" y="252" class="small ink">installs → asks for your account once →</text>
+  <text x="744" y="272" class="small ink">trains a small model on public rows →</text>
+  <text x="744" y="292" class="small ink">contract validates and quotes the cost →</text>
+  <text x="744" y="312" class="small ink">you type <tspan font-weight="700">yes</tspan> → stored on-chain → TEE scores it</text>
+
+  <path d="M1060,215 L1100,215" class="line"/>
+
+  <!-- step 4 -->
+  <rect x="1100" y="90" width="260" height="250" rx="14" class="boxt"/>
+  <text x="1124" y="146" class="num tee">4</text>
+  <text x="1170" y="134" class="h ink">See it</text>
+  <text x="1170" y="160" class="p mist">live</text>
+  <text x="1124" y="200" class="p ink">laurel-near.vercel.app</text>
+  <text x="1124" y="224" class="small mist">connect the same wallet,</text>
+  <text x="1124" y="244" class="small mist">open the exhibit: your model</text>
+  <text x="1124" y="264" class="small mist">on the public split today,</text>
+  <text x="1124" y="284" class="small mist">the sealed split at close</text>
+  <text x="1124" y="318" class="small tee">Split B alone picks the champion.</text>
+
+  <text x="40" y="385" class="small mist">Costs on testnet: about 0.3 NEAR per entry (storage for a small model, 0.1 fee to the task creator, 0.1 deposit for the TEE run that is partly refunded). Three entries per account per task.</text>
+  <text x="40" y="405" class="small mist">What you control is the model (trees, depth, learning rate, or your own scikit-learn pickle). Feature engineering is not possible: the contract computes the prediction from the task's features.</text>
+</svg>

@@ -4,7 +4,7 @@ Aturan di [HACKATHON.md](../HACKATHON.md): submit **sekali** per repo, tidak bis
 
 ## Sebelum hari H (manusia)
 - [x] Nama project final (lihat `docs/NAMING.md`) dan rename selesai.
-- [ ] Akun NEAR **mainnet** tim untuk payout (buat di wallet mana pun; jangan pernah dibuat oleh agent).
+- [ ] Akun NEAR **mainnet** tim untuk payout (buat di wallet mana pun; jangan pernah dibuat oleh agent). **Keputusan 9 Nov: tidak ada deploy ke mainnet**; kontrak tetap di testnet, akun mainnet hanya dipakai sebagai alamat payout di payload.
 - [x] 4 Nov: akun tim `laurel-team-mw0x0c8g.testnet` terisi 21,79 NEAR → kontrak final `laurel.laurel-team-mw0x0c8g.testnet` dideploy (evaluator dipin lewat `new`), tugas 3 `credit-risk` (demo, ditutup) dengan 2 model terskor, tugas 4 `credit-risk-open` (untuk juri, sampai 25 Nov) dengan 1 model (tugas 1/2 berjudul Indonesia digantikan); `close_task` + 5 `predict_task` oleh agent. Rincian di `docs/TESTNET.md`.
 - [x] Default `web/src/rpc.js` → `laurel.laurel-team-mw0x0c8g.testnet`; web dideploy ulang 4 Nov.
 - [ ] README Undo menyebut project ini, dan README ini menyebut Undo dengan tautan repo (Q-015).
