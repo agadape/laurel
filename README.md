@@ -1,5 +1,7 @@
 # Laurel — small decision models as on-chain infrastructure on NEAR
 
+[![test](https://github.com/agadape/laurel/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/agadape/laurel/actions/workflows/test.yml)
+
 **Nobody grades their own test.** Laurel is an open competition on NEAR where small models are scored on a private test set in a TEE, and AI agents pay per prediction for the winner. Every AI model reports its own benchmark, and buyers just believe it; here the test rows are a secret that only the evaluator pinned in the contract can read, and the winning model lives in the contract as data, so inference runs on-chain and each prediction fee goes to the model's owner.
 
 *Compete. Verify. Deploy. Trained off-chain, ranked on a private TEE benchmark, served from a NEAR contract to agents and other contracts. The model that earns the laurel serves on-chain.*
@@ -88,7 +90,7 @@ sequenceDiagram
 | A browser wallet buys prediction credit on the contract | tx [`4YHqm8GP…`](https://testnet.nearblocks.io/txns/4YHqm8GPUpv6kvMSiBzUP3UwTnhLoWp6tK3BoKrj8rfd) (0.05 NEAR via Meteor Wallet, 5 Nov) |
 | Gas and storage costs | [docs/GAS.md](docs/GAS.md); 10 agent calls on the final contract (4 Nov): function receipt **4.340 to 4.341 Tgas**, whole transaction **4.652 to 4.653 Tgas** burnt (`tools/out/agent.json`), i.e. about 0.00047 NEAR of gas plus the 0.001 NEAR fee per prediction at the base gas price |
 
-Unit tests: 52 in `contracts/bursa`, 3 in `contracts/consumer-example`, 4 in `crates/gbdt-core`, 1 in `evaluator` (`bash build.sh test`).
+Unit tests: 52 in `contracts/bursa`, 3 in `contracts/consumer-example`, 4 in `crates/gbdt-core`, 1 in `evaluator` (`bash build.sh test`). The same tests run on every push, together with wasm compile checks, a syntax check of every Node script and the web build: [`.github/workflows/test.yml`](.github/workflows/test.yml).
 
 ## Try it
 
