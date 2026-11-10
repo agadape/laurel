@@ -1,8 +1,8 @@
 # Laurel — small decision models as on-chain infrastructure on NEAR
 
-**Compete. Verify. Deploy.** Small models compete on a private test set scored inside a TEE, and the winner becomes a contract method that AI agents and other contracts call and pay for, per prediction, on NEAR.
+**Nobody grades their own test.** Laurel is an open competition on NEAR where small models are scored on a private test set in a TEE, and AI agents pay per prediction for the winner. Every AI model reports its own benchmark, and buyers just believe it; here the test rows are a secret that only the evaluator pinned in the contract can read, and the winning model lives in the contract as data, so inference runs on-chain and each prediction fee goes to the model's owner.
 
-*Trained off-chain, ranked on a private TEE benchmark, served from a NEAR contract to agents and other contracts. The model that earns the laurel serves on-chain.*
+*Compete. Verify. Deploy. Trained off-chain, ranked on a private TEE benchmark, served from a NEAR contract to agents and other contracts. The model that earns the laurel serves on-chain.*
 
 [![Twenty seconds of the live site: landing, exhibit 05 on NEAR mainnet data, a specimen with its trees drawn from the on-chain bytes, the closed credit-risk exhibit, the Method and Connect pages](docs/img/walkthrough.gif)](https://laurel-near.vercel.app)
 
