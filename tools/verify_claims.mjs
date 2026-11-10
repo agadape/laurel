@@ -55,9 +55,9 @@ let rpcCalls = 0;
 const started = Date.now();
 const BUDGET_MS = 1000 * Number(opt("--budget") ?? 240);
 const outOfTime = () => Date.now() - started > BUDGET_MS;
-async function rpc(urls, method, params, { gap = 120 } = {}) {
+async function rpc(urls, method, params, { gap = 120, attempts = 14 } = {}) {
   let lastErr = "no attempt";
-  for (let attempt = 0; attempt < 6; attempt++) {
+  for (let attempt = 0; attempt < attempts; attempt++) {
     if (outOfTime()) throw new Unreachable(`time budget of ${BUDGET_MS / 1000} s spent (last answer: ${lastErr}); run again in a minute, or with --budget 600`);
     const url = urls[attempt % urls.length];
     const wait = (lastHit.get(url) ?? 0) + gap - Date.now();
@@ -77,7 +77,8 @@ async function rpc(urls, method, params, { gap = 120 } = {}) {
     } catch (e) {
       lastErr = `${new URL(url).host}: ${String(e?.message ?? e).slice(0, 80)}`;
     }
-    await sleep(Math.min(6000, 700 * 2 ** Math.floor(attempt / urls.length)));
+    // a rate limit clears after some seconds; wait longer each round, the time budget bounds the total
+    await sleep(Math.min(12000, 800 * 2 ** Math.floor(attempt / urls.length)));
   }
   throw new Unreachable(lastErr);
 }
@@ -96,14 +97,20 @@ async function view(method, args = {}) {
 }
 
 const txCache = new Map();
+let archivalStrikes = 0; // transaction lookups in a row that no archival node answered
 /** A transaction by hash, normalised. Returns null only when an archival node says it does not know the hash. */
 async function tx(hash) {
   if (txCache.has(hash)) { const c = txCache.get(hash); if (c instanceof Unreachable) throw c; return c; }
   progress(`reading transaction ${short(hash)} (${txCache.size + 1})`);
   // The sender only routes the lookup; archival nodes answer for any account. No waiting: these are old transactions.
   let r;
-  try { r = await rpc(ARCHIVAL_RPCS, "EXPERIMENTAL_tx_status", { tx_hash: hash, sender_account_id: CONTRACT, wait_until: "NONE" }, { gap: 450 }); }
-  catch (e) { txCache.set(hash, e); throw e; }
+  try {
+    // Two lookups in a row without an answer: the archival nodes are limiting this address. Stop asking them, so the
+    // checks that only need views still run inside the time budget.
+    if (archivalStrikes >= 2) throw new Unreachable("the public archival nodes are limiting requests from this address; run again in a few minutes");
+    r = await rpc(ARCHIVAL_RPCS, "EXPERIMENTAL_tx_status", { tx_hash: hash, sender_account_id: CONTRACT, wait_until: "NONE" }, { gap: 450, attempts: 8 });
+    archivalStrikes = 0;
+  } catch (e) { archivalStrikes++; txCache.set(hash, e); throw e; }
   if (r.result && r.result.final_execution_status !== "FINAL") { const e = new Unreachable(`${short(hash)} is not final yet`); txCache.set(hash, e); throw e; }
   let out = null;
   if (r.error) {
@@ -191,7 +198,7 @@ const check = (rows, title, fn) => checks.push({ rows, title, fn });
 
 section("Contract and code");
 check("27, 28", "The deployed contract is the wasm committed in this repo", async () => {
-  expect(ACCOUNT, "the contract account could not be read");
+  if (!ACCOUNT) throw new Unreachable("the contract account could not be read");
   const local = base58(sha256(read("wasm/bursa.wasm")));
   expect(ACCOUNT.code_hash === local, `on-chain code hash ${ACCOUNT.code_hash}, sha256(wasm/bursa.wasm) ${local}`);
   expect(claimRow(28).includes(local), "CLAIMS row 28 cites another code hash");
@@ -326,7 +333,7 @@ check("2", "One prediction with the 33 KB, 50-tree champion costs about 4.3 Tgas
   return `function receipts burnt ${tgas(lo)} to ${tgas(hi)} Tgas`;
 });
 check("13", "The agent's key can only call the prediction methods of this contract", async () => {
-  expect(agentKey, "the agent's transactions could not be read");
+  if (!agentKey) throw new Unreachable("needs the agent's transactions from the check above, which were not read");
   const r = await rpc(VIEW_RPCS, "query", { request_type: "view_access_key", block_id: BLOCK.height, account_id: "agent." + TEAM, public_key: agentKey });
   expect(!r.error, `key ${agentKey.slice(0, 16)}… is no longer on the account (${r.cause})`);
   const p = r.result.permission?.FunctionCall;
