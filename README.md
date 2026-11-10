@@ -4,15 +4,16 @@
 
 *Compete. Verify. Deploy. Trained off-chain, ranked on a private TEE benchmark, served from a NEAR contract to agents and other contracts. The model that earns the laurel serves on-chain.*
 
-[![Twenty seconds of the live site: landing, exhibit 05 on NEAR mainnet data, a specimen with its trees drawn from the on-chain bytes, the closed credit-risk exhibit, the Method and Connect pages](docs/img/walkthrough.gif)](https://laurel-near.vercel.app)
-
 | | |
 |---|---|
 | **Live site** | https://laurel-near.vercel.app (public landing page; the explorer opens after connecting a NEAR testnet wallet, which creates no transaction. Without a wallet, the same data is one RPC call away: [Try it, A.4](#a-in-the-browser-2-minutes-a-near-testnet-wallet)) |
-| **Contract** | [`laurel.laurel-team-mw0x0c8g.testnet`](https://testnet.nearblocks.io/address/laurel.laurel-team-mw0x0c8g.testnet) (NEAR testnet, codename `bursa`) |
+| **Contract** | [`laurel.laurel-team-mw0x0c8g.testnet`](https://testnet.nearblocks.io/address/laurel.laurel-team-mw0x0c8g.testnet) (NEAR testnet, codename `bursa`) · code hash `BVNELFchTXxedNghd8vDWFncVWxstXjmjo3R6WeeoB65` (v1.1, 6 Nov 2026) |
+| **Proof: one model, three transactions** | **1. Scored in a TEE.** [`pU1FFm5k…`](https://testnet.nearblocks.io/txns/pU1FFm5kwhPsYg99kThw5oEubKEPmkaoCmoynftjnfD): `request_score` for model #4; OutLayer runs the pinned evaluator on the private rows and the score (71.00 % on the public split) comes back in the same transaction.<br>**2. The sealed split picks the winner.** [`Fx7k6sDC…`](https://testnet.nearblocks.io/txns/Fx7k6sDCUgVoVdVpjWLqGHoxcNE3tppEs2m8YYHD5EbB): `close_task` reveals split B and #4 wins with 66.50 %, ahead of #5, which led the public split.<br>**3. An agent pays for an answer.** [`B9cHP7YV…`](https://testnet.nearblocks.io/txns/B9cHP7YV9qBbBKNjnZSn5ZfB8szyU4rj7TVJdrhSkDN2): `predict_task` signed by a key that can only call the prediction methods; the contract runs the model and credits the 0.001 NEAR fee to the model's owner. |
 | **For AI agents** | remote MCP endpoint `https://laurel-near.vercel.app/api/mcp` (no install, no wallet) · npm package [`laurel-mcp`](https://www.npmjs.com/package/laurel-mcp) |
 | **Evidence** | [CLAIMS.md](CLAIMS.md) maps every statement below to code, tests and transaction hashes |
 | **Hackathon** | NEAR HACKATHON 2026 · tracks `agents`, `privacy`, `open` · sister project by the same team: [Undo](https://github.com/agadape/undo) (rule Q-015) |
+
+[![Twenty seconds of the live site: landing, exhibit 05 on NEAR mainnet data, a specimen with its trees drawn from the on-chain bytes, the closed credit-risk exhibit, the Method and Connect pages](docs/img/walkthrough.gif)](https://laurel-near.vercel.app)
 
 ## In one minute
 
@@ -87,7 +88,7 @@ sequenceDiagram
 | A browser wallet buys prediction credit on the contract | tx [`4YHqm8GP…`](https://testnet.nearblocks.io/txns/4YHqm8GPUpv6kvMSiBzUP3UwTnhLoWp6tK3BoKrj8rfd) (0.05 NEAR via Meteor Wallet, 5 Nov) |
 | Gas and storage costs | [docs/GAS.md](docs/GAS.md); 10 agent calls on the final contract (4 Nov): function receipt **4.340 to 4.341 Tgas**, whole transaction **4.652 to 4.653 Tgas** burnt (`tools/out/agent.json`), i.e. about 0.00047 NEAR of gas plus the 0.001 NEAR fee per prediction at the base gas price |
 
-Unit tests: 50 in `contracts/bursa`, 3 in `contracts/consumer-example`, 4 in `crates/gbdt-core`, 1 in `evaluator` (`bash build.sh test`).
+Unit tests: 52 in `contracts/bursa`, 3 in `contracts/consumer-example`, 4 in `crates/gbdt-core`, 1 in `evaluator` (`bash build.sh test`).
 
 ## Try it
 

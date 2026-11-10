@@ -1,0 +1,77 @@
+# Runs on every push: the same unit tests as `bash build.sh test`, a compile check of both contracts and the
+# evaluator for their wasm targets, a syntax check of every Node script, and the web build.
+# Nothing here talks to NEAR or holds a key; on-chain evidence is in CLAIMS.md.
+name: test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: test-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_VERSION: "1.99.0" # the version the contract and evaluator were built and tested with
+
+jobs:
+  rust:
+    name: Rust unit tests and wasm compile check
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust ${{ env.RUST_VERSION }} with the wasm targets
+        run: |
+          rustup toolchain install "$RUST_VERSION" --profile minimal --target wasm32-unknown-unknown --target wasm32-wasip2
+          rustup default "$RUST_VERSION"
+          rustc --version && cargo --version
+      - uses: Swatinem/rust-cache@v2
+      - name: Unit tests (gbdt-core 4, bursa 52, credit-desk 3)
+        run: cargo test --locked --release -p gbdt-core -p bursa -p credit-desk
+      - name: Unit test (evaluator, without the OutLayer host feature)
+        run: cargo test --locked --release -p evaluator --no-default-features
+      - name: Python == Rust on the three exported German Credit models
+        run: |
+          for v in demo deep shallow; do
+            echo "::group::vectors $v"
+            GBDT_VECTORS="$GITHUB_WORKSPACE/tasks/german-credit/out/$v/vectors.json" \
+              cargo test --locked --release -p gbdt-core matches_python_vectors -- --nocapture 2>&1 | tee out.log
+            if grep -q "skip:" out.log; then echo "vectors file missing for $v"; exit 1; fi
+            echo "::endgroup::"
+          done
+      - name: Contracts compile for wasm32-unknown-unknown
+        run: cargo check --locked --release --target wasm32-unknown-unknown -p bursa -p credit-desk
+      - name: Evaluator compiles for wasm32-wasip2 (OutLayer host feature on)
+        run: cargo check --locked --release --target wasm32-wasip2 -p evaluator
+
+  node:
+    name: Node scripts and web build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Syntax check of every Node script (tools, agents, MCP server, remote MCP endpoint)
+        run: |
+          set -e
+          n=0
+          for f in $(git ls-files 'tools/*.mjs' 'agents/*.mjs' 'mcp/*.mjs' 'mcp/test/*.mjs' 'web/api/*.mjs' 'web/api/_lib/*.mjs'); do
+            node --check "$f"
+            n=$((n + 1))
+          done
+          echo "checked $n files"
+          test "$n" -ge 20
+      - name: Web build
+        working-directory: web
+        run: |
+          npm ci
+          npm run build
