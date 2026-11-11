@@ -65,7 +65,7 @@ sequenceDiagram
     P->>L: request_score
     L->>O: request_execution(pinned evaluator, task secret)
     O->>L: get_model_bytes (view), then on_score: split A + split B
-    Note over L: split A public; split B withheld from the leaderboard until close (readable on-chain in v1)
+    Note over L: split A public, split B withheld from the leaderboard until close (readable on-chain in v1)
     A->>L: close_task, by anyone after the deadline (best split B wins)
     A->>L: predict_task(task_id, features)
     L-->>A: raw score, computed in consensus
