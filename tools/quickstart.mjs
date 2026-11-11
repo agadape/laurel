@@ -26,7 +26,7 @@ const PY = process.env.PYTHON || (process.platform === "win32" ? "python" : "pyt
 const step = (n, s) => console.log(`\n[${n}/8] ${s}`);
 const die = (m) => { console.log(`\n✗ ${m}`); process.exit(1); };
 const py = (argv, label) => {
-  const r = spawnSync(PY, ["-I", ...argv], { cwd: root, encoding: "utf8", env: { ...process.env, PYTHONIOENCODING: "utf-8" } });
+  const r = spawnSync(PY, argv, { cwd: root, encoding: "utf8", env: { ...process.env, PYTHONIOENCODING: "utf-8" } });
   if (r.status !== 0) die(`${label} failed:\n${(r.stderr || r.stdout).slice(-1500)}`);
   return r.stdout;
 };
