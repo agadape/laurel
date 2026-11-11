@@ -80,7 +80,7 @@ bash quickstart.sh
 ```
 
 The script does five things and tells you about each: checks Node and Python; installs the packages; asks for your
-account id and private key **once** and saves them in a file called `.env` that git ignores; runs a **rehearsal** that
+account id and private key **once** (the key stays hidden while you paste it) and saves them in a file called `.env` that git ignores; runs a **rehearsal** that
 trains a model, converts it to the contract's integer format and asks the contract to validate it and quote the cost
 (nothing is sent); then asks you to type **`yes`**. Only then it stores the model on the contract and asks the TEE to
 score it. This is what the real run looks like:

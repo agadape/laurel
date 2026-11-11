@@ -80,7 +80,7 @@ bash quickstart.sh
 ```
 
 Skrip ini melakukan lima hal dan melaporkan tiap langkahnya: memeriksa Node dan Python; memasang paket; menanyakan id akun
-dan private key **sekali** lalu menyimpannya di file `.env` yang diabaikan git; menjalankan **gladi resik** yang melatih
+dan private key **sekali** (kuncinya tetap tersembunyi saat ditempel) lalu menyimpannya di file `.env` yang diabaikan git; menjalankan **gladi resik** yang melatih
 model, mengubahnya ke format integer kontrak, dan meminta kontrak memvalidasi serta mengutip biayanya (belum ada yang
 dikirim); lalu meminta kamu mengetik **`yes`**. Baru setelah itu model disimpan di kontrak dan TEE diminta menilainya.
 Beginilah tampilan run sungguhan:

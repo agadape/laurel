@@ -56,7 +56,10 @@ if ($have) {
   Write-Host ""
   $id = Read-Host "   Account id (something.testnet)"
   if ($id -notmatch "^[a-z0-9._-]+\.testnet$") { Fail "that does not look like a testnet account id (expected something.testnet)" }
-  $key = Read-Host "   Private key (ed25519:...)"
+  Write-Host "   Paste the private key below (Ctrl+V or right-click). It stays hidden, shown as *, so nobody can read it off your screen."
+  $sec = Read-Host "   Private key (ed25519:...)" -AsSecureString
+  $bstr = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($sec)
+  try { $key = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($bstr).Trim() } finally { [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($bstr) }
   if ($key -notmatch "^ed25519:[1-9A-HJ-NP-Za-km-z]{80,100}$") { Fail "that does not look like a NEAR private key (expected ed25519: followed by about 88 characters)" }
   $lines = @()
   if (Test-Path $envPath) { $lines = Get-Content $envPath | Where-Object { $_ -notmatch "^NEAR_(ACCOUNT_ID|PRIVATE_KEY)=" } }
@@ -81,3 +84,4 @@ node tools/quickstart.mjs --task $Task @extra
 if ($LASTEXITCODE -ne 0) { Fail "the entry did not complete (the message above says why)" }
 Write-Host ""
 Write-Host "Done. Open https://laurel-near.vercel.app, connect the same testnet wallet, and find your model on exhibit $Task." -ForegroundColor Green
+Write-Host "To share your result, send only the [8/8] result block above. Never send the whole window or the .env file: they can contain your private key." -ForegroundColor Yellow

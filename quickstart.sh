@@ -52,7 +52,9 @@ else
   echo
   read -r -p "   Account id (something.testnet): " ID
   [[ "$ID" =~ ^[a-z0-9._-]+\.testnet$ ]] || fail "that does not look like a testnet account id (expected something.testnet)"
-  read -r -p "   Private key (ed25519:...): " KEY
+  echo "   Paste the private key below. It stays hidden while you paste, so nobody can read it off your screen."
+  read -r -s -p "   Private key (ed25519:...): " KEY; echo
+  KEY="${KEY//[[:space:]]/}"
   [[ "$KEY" =~ ^ed25519:[1-9A-HJ-NP-Za-km-z]{80,100}$ ]] || fail "that does not look like a NEAR private key (expected ed25519: followed by about 88 characters)"
   if [ -f .env ]; then grep -vE '^NEAR_(ACCOUNT_ID|PRIVATE_KEY)=' .env > .env.tmp || true; mv .env.tmp .env; fi
   printf 'NEAR_ACCOUNT_ID=%s\nNEAR_PRIVATE_KEY=%s\n' "$ID" "$KEY" >> .env
@@ -68,3 +70,4 @@ read -r -p "   Type yes to enter, anything else to stop: " GO || GO=""
 [ "$GO" = "yes" ] || { echo "   stopped; nothing was sent. Run the script again when ready."; exit 0; }
 node tools/quickstart.mjs --task "$TASK" "${EXTRA[@]}" || fail "the entry did not complete (the message above says why)"
 printf '\n\033[32mDone. Open https://laurel-near.vercel.app, connect the same testnet wallet, and find your model on exhibit %s.\033[0m\n' "$TASK"
+printf '\033[33mTo share your result, send only the [8/8] result block above. Never send the whole window or the .env file: they can contain your private key.\033[0m\n'
