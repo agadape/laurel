@@ -219,9 +219,9 @@ check("4, 5", "The evaluator pinned in the contract is the wasm committed in thi
   expect(url.includes(pinned), "the evaluator URL does not carry the pinned hash");
   return `evaluator hash ${pinned.slice(0, 16)}… = sha256(wasm/evaluator.wasm)`;
 });
-check("README", "At least 5 tasks and 13 models are on the contract", async () => {
+check("README", "At least 5 tasks and 15 models are on the contract", async () => {
   const c = await view("get_config");
-  expect(c.task_count >= 5 && c.submission_count >= 13, `${c.task_count} tasks, ${c.submission_count} models`);
+  expect(c.task_count >= 5 && c.submission_count >= 15, `${c.task_count} tasks, ${c.submission_count} models`);
   return `${c.task_count} tasks, ${c.submission_count} models, owner ${c.owner}`;
 });
 
@@ -295,16 +295,16 @@ check("11, 27", "Open tasks do not reveal split B through any view", async () =>
   }
   return open.length ? `tasks ${open.join(", ")} are open: ${n} entries checked in leaderboard, list_submissions and get_submission` : "no task is open right now, nothing to hide";
 });
-check("23, 24, 25, 26", "The entries the README names have the scores, sizes and owners it states", async () => {
-  // submission, task, owner, bytes, split A in bps (CLAIMS rows 24 to 26; split A never changes after scoring)
-  const want = [[7, 5, "p1", 1611, 8350], [8, 5, "p2", 10051, 8200], [9, 5, TEAM, 32087, 8250], [10, 5, "maker", 3059, 8350], [11, 5, "p2", 5041, 8300], [12, 5, "maker", 6307, 8300], [13, 4, "maker", 12539, 7450]];
+check("23, 24, 25, 26, 30", "The entries the README names have the scores, sizes and owners it states", async () => {
+  // submission, task, owner, bytes, split A in bps (CLAIMS rows 24 to 26 and 30; split A never changes after scoring)
+  const want = [[7, 5, "p1", 1611, 8350], [8, 5, "p2", 10051, 8200], [9, 5, TEAM, 32087, 8250], [10, 5, "maker", 3059, 8350], [11, 5, "p2", 5041, 8300], [12, 5, "maker", 6307, 8300], [13, 4, "maker", 12539, 7450], [14, 5, "dexseu0.testnet", 3191, 8350], [15, 5, "stevbeq.testnet", 9511, 8350]];
   for (const [id, task, owner, bytes, a] of want) {
     const s = await view("get_submission", { submission_id: id });
     expect(s.task_id === task && acct(s.owner) === owner && s.bytes === bytes && s.score_a_bps === a, `#${id}: task ${s.task_id}, ${acct(s.owner)}, ${s.bytes} B, ${s.score_a_bps} bps`);
   }
   const t5 = await view("get_task", { task_id: 5 });
   expect(t5.slug === "near-retention" && t5.n_features === 22, `task 5 is ${t5.slug} with ${t5.n_features} features`);
-  return `#7 to #13 match (the agent's entries: #10 ${8350} bps and #12 ${8300} bps on task 5, #13 ${7450} bps on task 4)`;
+  return `#7 to #15 match (the agent's entries: #10 ${8350} bps and #12 ${8300} bps on task 5, #13 ${7450} bps on task 4; quickstart entries #14 and #15 ${8350} bps)`;
 });
 
 section("The model lives in the contract and answers for a fee");
