@@ -277,7 +277,7 @@ async function start() {
   const skipIntro = reduced || (() => { try { return sessionStorage.getItem("laurel-intro") && !location.search.includes("intro"); } catch { return false; } })();
   if (!skipIntro) boot();
   try { sessionStorage.setItem("laurel-intro", "1"); } catch {}
-  const data = await loadData();
+  const data = await loadData(skipIntro ? 3500 : 6000);   // the intro covers the wait; 16+ models take longer than 2.6 s to read
   if (dead) return;
   shared = data;
   world = createWorld(canvas, data);
