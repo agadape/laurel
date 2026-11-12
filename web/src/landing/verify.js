@@ -56,14 +56,21 @@ function checks(ans) {
     [`The transaction is on NEAR ${NET.network} and succeeded`, async () => {
       const r = await rpc("EXPERIMENTAL_tx_status", { tx_hash: ans.tx, sender_account_id: ans.paid_by, wait_until: "NONE" });
       tx = r;
-      const t = r.transaction, a = t.actions?.[0]?.FunctionCall;
+      const t = r.transaction, a = t.actions?.map((x) => x.FunctionCall).find((f) => f?.method_name === "predict_task");
       if (!r.status?.SuccessValue) throw new Error(`status ${JSON.stringify(r.status).slice(0, 80)}`);
       if (t.receiver_id !== C || a?.method_name !== "predict_task") throw new Error(`${t.receiver_id}.${a?.method_name}`);
       const args = JSON.parse(atob(a.args));
       if (JSON.stringify(args.features) !== JSON.stringify(ans.features)) throw new Error("the features in the transaction differ from the case shown");
       return `${esc(t.signer_id)} called <code>${esc(C)}.predict_task</code> with the ${args.features.length} features shown; result <code>${esc(atob(r.status.SuccessValue))}</code>`;
     }],
-    ["The key that signed it can only buy predictions", async () => {
+    ans.own_wallet ? ["You paid from your own account", async () => {
+      const t = tx.transaction;
+      let ev = null;
+      for (const r of tx.receipts_outcome) for (const l of r.outcome.logs || []) { if (l.startsWith("EVENT_JSON:")) { const j = JSON.parse(l.slice(11)); if (j.event === "prediction") ev = j.data[0]; } }
+      if (t.signer_id !== ans.paid_by || ev?.caller !== ans.paid_by) throw new Error(`signed by ${t.signer_id}, prediction paid by ${ev?.caller}`);
+      const dep = t.actions.some((x) => x.FunctionCall?.method_name === "deposit_credit");
+      return `<code>${esc(t.signer_id)}</code> signed it in its own wallet and the contract charged its prepaid credit${dep ? ", topped up by <code>deposit_credit</code> in the same transaction" : ""}; no key of ours was involved`;
+    }] : ["The key that signed it can only buy predictions", async () => {
       const t = tx.transaction;
       const k = await rpc("query", { request_type: "view_access_key", finality: "final", account_id: t.signer_id, public_key: t.public_key });
       const fc = k.permission?.FunctionCall;

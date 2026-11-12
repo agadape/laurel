@@ -325,3 +325,9 @@ a.brow:hover { background: linear-gradient(90deg, rgba(0, 191, 255, .09), transp
 .ask-net button:not(.on):hover { color: var(--paper); }
 .ask-net.busy button { pointer-events: none; opacity: .6; }
 .ask #ask-intro code { font-family: var(--f-mono); font-size: .86em; overflow-wrap: anywhere; }
+
+/* Pay with your own mainnet wallet */
+.ask-own { margin-top: 18px; display: grid; gap: 10px; justify-items: start; }
+.ask-own[hidden] { display: none; }
+.ask-own p { color: var(--mut); font-size: 15px; max-width: 34em; }
+.ask-own code { font-family: var(--f-mono); font-size: .9em; }

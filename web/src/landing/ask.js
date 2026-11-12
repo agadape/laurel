@@ -5,6 +5,7 @@ import { LEAF, decodeModel, b64ToBytes } from "../model.js";
 import { EXPLORER_TX, EXPLORER_ACCOUNT, contractId } from "../rpc.js";
 import { yoctoToNear, pad2 } from "./data.js";
 import { verifyPanel } from "./verify.js";
+import { payOwnWallet, signInMainnet, onMainnetWallet, restoreMainnet, mainnetAccount, TOP_UP } from "./mainnet-wallet.js";
 
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 const n = (x) => Number(x).toLocaleString("en-US");
@@ -108,6 +109,10 @@ export function askSection(champ, winRow, earned) {
         <button class="btn solid" id="ask-btn" type="button" disabled><span>Ask the champion</span><i aria-hidden="true">↗</i></button>
         <button class="ask-next" id="ask-next" type="button" disabled>Another one</button>
       </div>
+      <div class="ask-own rise" id="ask-own" hidden>
+        <button class="btn" id="ask-own-btn" type="button"><span>Pay with my own NEAR wallet</span><i aria-hidden="true">↗</i></button>
+        <p id="ask-own-note"></p>
+      </div>
     </div>
     <div class="ask-right rise" style="--d:160ms">
       <div class="ask-out" id="ask-out" aria-live="polite"></div>
@@ -160,6 +165,7 @@ export async function wireAsk(root, champ, champModel) {
     tabs.querySelectorAll("button").forEach((b) => { const on = b.dataset.net === n; b.classList.toggle("on", on); b.setAttribute("aria-selected", on); });
     $("#ask-intro").innerHTML = `One press sends a real transaction on <b>${NETS[n].what}</b>. Model #${c.champ.winner} answers inside the contract <code>${esc(n === "mainnet" ? NETS.mainnet.contract : contractId())}</code> and its owner is paid ${yoctoToNear(c.champ.fee_per_call, 3)} NEAR. Our guest account pays, so you need no wallet. ${speak().intro(pad2(c.champ.task_id))}`;
     next.textContent = speak().next;
+    $("#ask-own").hidden = n !== "mainnet";
     setLedger();
     show();
   };
@@ -171,6 +177,45 @@ export async function wireAsk(root, champ, champModel) {
       <dl class="ask-bill">${how}<div><dt>Raw score</dt><dd>${n(raw)}, ${y ? "above" : "not above"} zero</dd></div></dl>`;
     dispatchEvent(new Event("resize"));
   };
+
+  const paid = (j, here, features) => {
+    const N = NETS[here];
+    answer(Number(j.raw_score), `
+      <div><dt>Network</dt><dd>${here === "mainnet" ? "NEAR mainnet, real NEAR" : "NEAR testnet"}</dd></div>
+      <div><dt>Transaction</dt><dd><a href="${N.tx(esc(j.tx))}" target="_blank" rel="noreferrer">${esc(j.tx.slice(0, 8))}…${esc(j.tx.slice(-6))} ↗</a></dd></div>
+      <div><dt>Computed</dt><dd>inside the contract, ${esc(j.gas_tgas)} Tgas</dd></div>
+      <div><dt>Paid</dt><dd>${yoctoToNear(j.fee_yocto, 3)} NEAR ${j.own_wallet ? `by you (<a href="${N.account(esc(j.paid_by))}" target="_blank" rel="noreferrer">${esc(shortId(j.paid_by))}</a>) ` : ""}to ${j.owner ? `<a href="${N.account(esc(j.owner))}" target="_blank" rel="noreferrer">${esc(shortId(j.owner))}</a>` : "the model's owner"}</dd></div>`);
+    verifyPanel(out, { ...j, features }, here === "mainnet" ? { contract: N.contract, rpcs: N.rpcs, attest: N.attest, register: N.register, network: "mainnet" } : { attest: N.attest, register: N.register, network: "testnet" });
+  };
+
+  // Pay with the visitor's own mainnet wallet: one approval, the fee comes from their account.
+  const own = $("#ask-own-btn"), ownLabel = own.querySelector("span"), ownNote = $("#ask-own-note");
+  onMainnetWallet((acc) => {
+    ownLabel.textContent = acc ? `Pay 0.001 NEAR from ${shortId(acc)}` : "Pay with my own NEAR wallet";
+    ownNote.innerHTML = acc
+      ? `Your wallet asks you to approve one transaction on mainnet. The first one also puts ${TOP_UP} NEAR of prediction credit on the contract, enough for about nine more; you can take what is left back with <code>withdraw_credit</code>.`
+      : `HOT, Meteor, Intear, NEAR Mobile or Nightly, on mainnet. You pay the fee yourself, so the champion's owner earns from your account, not ours.`;
+  });
+  own.addEventListener("click", async () => {
+    if (busy || net !== "mainnet") return;
+    if (!mainnetAccount()) { try { await signInMainnet(); } catch (e) { ownNote.textContent = `The wallet could not open: ${String(e.message || e).slice(0, 120)}`; } return; }
+    busy = true; btn.disabled = true; next.disabled = true; own.disabled = true; tabs.classList.add("busy");
+    const c = cur(), features = row().slice(0, ds().feature_names.length);
+    ownLabel.textContent = "Approve it in your wallet…";
+    out.innerHTML = `<p class="ask-wait">Waiting for your wallet, then for NEAR mainnet to run the model…</p>`;
+    try {
+      const j = await payOwnWallet(c.champ, features);
+      if (j.calls != null) c.calls = j.calls;
+      c.earned = j.earned_yocto;
+      setLedger();
+      paid(j, "mainnet", features);
+      ownLabel.textContent = `Paid from ${shortId(j.paid_by)}`;
+    } catch (e) {
+      out.innerHTML = `<p class="ask-wait">No payment was made: ${esc(String(e.message || e).slice(0, 160))}</p>`;
+      ownLabel.textContent = mainnetAccount() ? `Pay 0.001 NEAR from ${shortId(mainnetAccount())}` : "Pay with my own NEAR wallet";
+    }
+    busy = false; btn.disabled = false; next.disabled = false; own.disabled = false; tabs.classList.remove("busy");
+  });
 
   async function ask() {
     if (busy) return;
@@ -189,12 +234,7 @@ export async function wireAsk(root, champ, champModel) {
           if (j.earned_yocto) c.earned = j.earned_yocto;
           setLedger();
           if (here === "testnet") document.querySelectorAll('[data-live="calls"]').forEach((el) => { el.textContent = c.calls; }), j.earned_yocto && document.querySelectorAll('[data-live="earned"]').forEach((el) => { el.textContent = yoctoToNear(j.earned_yocto, 3); });
-          answer(Number(j.raw_score), `
-            <div><dt>Network</dt><dd>${here === "mainnet" ? "NEAR mainnet, real NEAR" : "NEAR testnet"}</dd></div>
-            <div><dt>Transaction</dt><dd><a href="${N.tx(esc(j.tx))}" target="_blank" rel="noreferrer">${esc(j.tx.slice(0, 8))}…${esc(j.tx.slice(-6))} ↗</a></dd></div>
-            <div><dt>Computed</dt><dd>inside the contract, ${esc(j.gas_tgas)} Tgas</dd></div>
-            <div><dt>Paid</dt><dd>${yoctoToNear(j.fee_yocto, 3)} NEAR to ${j.owner ? `<a href="${N.account(esc(j.owner))}" target="_blank" rel="noreferrer">${esc(shortId(j.owner))}</a>` : "the model's owner"}</dd></div>`);
-          verifyPanel(out, { ...j, features }, here === "mainnet" ? { contract: N.contract, rpcs: N.rpcs, attest: N.attest, register: N.register, network: "mainnet" } : { attest: N.attest, register: N.register, network: "testnet" });
+          paid(j, here, features);
           label.textContent = "Answered on-chain"; next.disabled = false; busy = false; tabs.classList.remove("busy");
           return;
         }
@@ -223,6 +263,7 @@ export async function wireAsk(root, champ, champModel) {
       tabs.innerHTML = ["mainnet", "testnet"].map((k) => `<button type="button" role="tab" data-net="${k}">${NETS[k].label}</button>`).join("");
       tabs.hidden = false;
       await status("mainnet");
+      restoreMainnet();
       if (!busy && at === 0) select("mainnet"); else select(net);
     }
   } catch {}
