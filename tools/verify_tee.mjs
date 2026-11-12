@@ -135,7 +135,7 @@ for (const { hash, signer } of txs) {
     check("2 the TDX quote verifies to Intel's root, TCB UpToDate", v.status === "UpToDate", `status ${v.status}, quote ${quote.length} bytes`);
 
     const m = { mrtd: hex(td.mrTd), rtmr0: hex(td.rtMr0), rtmr1: hex(td.rtMr1), rtmr2: hex(td.rtMr2), rtmr3: hex(td.rtMr3) };
-    check("3 its five measurements are approved on worker.outlayer.testnet", isApproved(m), `MRTD ${m.mrtd.slice(0, 12)}…, RTMR3 ${m.rtmr3.slice(0, 12)}…`);
+    check(`3 its five measurements are approved on ${REGISTER}`, isApproved(m), `MRTD ${m.mrtd.slice(0, 12)}…, RTMR3 ${m.rtmr3.slice(0, 12)}…`);
 
     const th = taskHash(att);
     check("4 report_data = sha256 of this run's record", hex(td.reportData).slice(0, 64) === hex(th), hex(th).slice(0, 16) + "…");
