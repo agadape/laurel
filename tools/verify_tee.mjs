@@ -150,9 +150,10 @@ for (const { hash, signer } of txs) {
 
     check("6 input and output hashes match the chain", att.input_hash === hex(sha256(reqData.input_data ?? "")) && att.output_hash === hex(sha256(output)), `${output.length}-byte output`);
 
-    let a = null;
-    try { let o = JSON.parse(output.toString()); if (typeof o === "string") o = JSON.parse(o); a = o.a; } catch {}
+    let a = null, b = null;
+    try { let o = JSON.parse(output.toString()); if (typeof o === "string") o = JSON.parse(o); a = o.a; b = o.b; } catch {}
     check("7 the recorded split-A score is the one in the attested output", a && a.bal_acc_bps === scored.score_a_bps, `#${scored.submission_id} task ${scored.task_id}: ${scored.score_a_bps} bps`);
+    check("8 the attested output also holds a split-B reading (the sealed split was scored)", !!b && Number.isInteger(b.bal_acc_bps) && b.n > 0, b ? `split B on ${b.n} rows` : "no split B in the output");
   } catch (e) {
     if (!lines.some((l) => l.includes("FAIL"))) lines.push(`  FAIL  ${String(e.message || e).slice(0, 200)}`);
   }

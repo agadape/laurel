@@ -269,6 +269,23 @@ check("11", "Each closed task's champion is the best sealed (split B) score, tie
   expect(lines.length > 0, "no closed task");
   return lines.join(", ");
 });
+check("38", "No champion was picked by the split-A fallback: every entry of every closed task was scored and has a split-B score", async () => {
+  // contracts/bursa final_score() falls back to split A when an entry has no split-B score, and close_task skips
+  // entries that are not Scored (CLAIMS row 38). This checks that neither case ever applied on this contract.
+  const c = await view("get_config");
+  const lines = [];
+  for (let id = 1; id <= c.task_count; id++) {
+    const task = await view("get_task", { task_id: id });
+    if (!task.closed) continue;
+    const subs = await view("list_submissions", { task_id: id });
+    const unscored = subs.filter((s) => s.status !== "Scored").map((s) => `#${s.submission_id} ${typeof s.status === "string" ? s.status : Object.keys(s.status)[0]}`);
+    const noB = subs.filter((s) => s.status === "Scored" && s.score_b_bps == null).map((s) => `#${s.submission_id}`);
+    expect(!unscored.length && !noB.length, `task ${id}: not scored ${unscored.join(", ") || "none"}; scored without split B ${noB.join(", ") || "none"}`);
+    lines.push(`task ${id}: ${subs.length} of ${subs.length} scored with split B`);
+  }
+  expect(lines.length > 0, "no closed task");
+  return lines.join("; ");
+});
 check("11, 28", "Task 3: the public leader lost, the sealed split picked the champion", async () => {
   const closeTx = (await Promise.all(rowTx(28).map(mustTx))).find((t) => t.method === "close_task");
   expect(closeTx?.ok, "no successful close_task transaction in CLAIMS row 28");
@@ -414,13 +431,15 @@ check("mainnet", "Every mainnet score came from the pinned evaluator, and each c
     const subs = await mview("list_submissions", { task_id: t.task_id });
     for (const s of subs.filter((s) => s.status === "Scored")) { expect(s.scored_by === pinned, `#${s.submission_id} scored by ${s.scored_by}`); scored++; }
     if (t.closed) {
+      const gap = subs.filter((s) => s.status !== "Scored" || s.score_b_bps == null).map((s) => `#${s.submission_id}`);
+      expect(!gap.length, `mainnet task ${t.task_id}: entries not scored on split B: ${gap.join(", ")} (the split-A fallback would apply)`);
       const board = (await mview("leaderboard", { task_id: t.task_id })).filter((r) => r.score_b_bps != null);
       const best = board.sort((a, b) => b.score_b_bps - a.score_b_bps || a.submission_id - b.submission_id)[0];
       expect(!best || best.submission_id === t.winner, `task ${t.task_id}: champion #${t.winner}, best sealed #${best?.submission_id}`);
       closed++;
     }
   }
-  return `${scored} scored model(s) on mainnet, all by ${pinned.slice(0, 12)}…; ${closed} closed task(s), champion = best split B`;
+  return `${scored} scored model(s) on mainnet, all by ${pinned.slice(0, 12)}…; ${closed} closed task(s), every entry scored on split B, champion = best split B`;
 });
 check("33-37", "Every mainnet transaction cited in CLAIMS.md exists on mainnet and succeeded", async () => {
   const hashes = [...mainnetTx(claims)];
