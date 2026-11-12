@@ -2,7 +2,7 @@
 
 # IDEAS — Project 2, NEAR HACKATHON (Fase 2: audit lintas-model + konsep baru), 2 Nov 2026
 
-Masukan: riset kita ([docs/research/](docs/research/), [SPIKE_LOG.md](SPIKE_LOG.md)) dan dokumen Grok (22 konsep, `GROK_RESEARCH.md`). Aturan skor sama dengan [docs/research/10_ideas_v1_project1.md](docs/research/10_ideas_v1_project1.md): Feasibility maks 5 kalau dependensi inti belum di-spike; Judge Fit maks 5 tanpa juri bernama + bukti; Business maks 4 tanpa model bisnis satu kalimat.
+Masukan: riset kita ([docs/research/](../research), [SPIKE_LOG.md](../../SPIKE_LOG.md)) dan dokumen Grok (22 konsep, `GROK_RESEARCH.md`). Aturan skor sama dengan [docs/research/10_ideas_v1_project1.md](../research/10_ideas_v1_project1.md): Feasibility maks 5 kalau dependensi inti belum di-spike; Judge Fit maks 5 tanpa juri bernama + bukti; Business maks 4 tanpa model bisnis satu kalimat.
 
 Batasan khusus project 2: tidak boleh tumpang tindih dengan Undo (pembayaran reversibel + sidang AI di TEE), dan harus bisa dibangun tim pemula dalam 12 hari (3–14 Nov) di testnet.
 
@@ -16,20 +16,20 @@ Batasan khusus project 2: tidak boleh tumpang tindih dengan Undo (pembayaran rev
 
 | Klaim Grok | Status | Catatan |
 |---|---|---|
-| Post @NEARProtocol `2107187818573222154` berisi ide Illia | ✅ ada (5 Okt 2026) | Post itu mengutip daftar ide Illia 3 Okt. Daftar aslinya sudah kami petakan di [docs/research/04_illia_ideas.md](docs/research/04_illia_ideas.md); publik sejak 4 minggu lalu → semua peserta sudah membacanya. |
-| "Leash" sudah muncul di hackathon | ✅ | Bukan satu, tapi **~45 klon** ([docs/research/06](docs/research/06_competition_live.md)). Grok tidak menangkap tingkat kejenuhannya. |
+| Post @NEARProtocol `2107187818573222154` berisi ide Illia | ✅ ada (5 Okt 2026) | Post itu mengutip daftar ide Illia 3 Okt. Daftar aslinya sudah kami petakan di [docs/research/04_illia_ideas.md](../research/04_illia_ideas.md); publik sejak 4 minggu lalu → semua peserta sudah membacanya. |
+| "Leash" sudah muncul di hackathon | ✅ | Bukan satu, tapi **~45 klon** ([docs/research/06](../research/06_competition_live.md)). Grok tidak menangkap tingkat kejenuhannya. |
 | "PrivatePay-style restricted agent payments" | ❌ tidak ditemukan | Pencarian web tidak menemukan project bernama itu di NEAR. Yang mirip: CyberNanoPay (TON), UnWallet. Perlakukan sebagai spekulasi. |
 | Artikel altcoindesk "wildest pilots" | ✅ ada (29 Agt 2025) | Isinya sapi RFID, pisang, pernikahan on-chain; "fart-to-earn" disebut **satire** oleh artikel itu sendiri. Nilai riset rendah. |
 | Keluhan berulang (counterparty privat, agent tanpa kunci, sybil, prompt injection) | ✅ sejalan dengan recon kita | Tapi Grok tidak memberi sumber per keluhan. |
 
-Yang **tidak** dilakukan Grok: tidak ada pencarian prior art per mekanisme, tidak ada pemetaan juri, tidak ada model bisnis, tidak ada bukti teknis, dan tidak menyentuh primitive NEAR yang baru (CKD, `verify_foreign_transaction`, akun deterministik, NEP-641, yield-with-id; lihat [docs/research/07](docs/research/07_new_primitives.md)). Hampir semua konsepnya memakai "TEE inference" sebagai sihir serbaguna.
+Yang **tidak** dilakukan Grok: tidak ada pencarian prior art per mekanisme, tidak ada pemetaan juri, tidak ada model bisnis, tidak ada bukti teknis, dan tidak menyentuh primitive NEAR yang baru (CKD, `verify_foreign_transaction`, akun deterministik, NEP-641, yield-with-id; lihat [docs/research/07](../research/07_new_primitives.md)). Hampir semua konsepnya memakai "TEE inference" sebagai sihir serbaguna.
 
 ### 1.2 Pemenang Grok: Artificial Life Colony — ditolak
 
 1. **Prior art langsung yang terlewat: Spore.fun** (Phala, 2024–25): agent AI di TEE yang harus menghasilkan uang untuk membayar servernya, bereproduksi di atas ambang valuasi, dan "mati" di bawahnya; sifat diwariskan ke anak. Ini persis "metabolisme, kematian, reproduksi" yang Grok sebut belum ada. Studi kasus arXiv menyimpulkan evolusinya pendek (5 generasi) dan tidak open-ended. Sumber: [cloud.phala.network/cases/spore-fun](https://cloud.phala.network/cases/spore-fun), [arXiv 2506.04236](https://arxiv.org/html/2506.04236v2). Di hackathon ini sendiri **Kibble** sudah di mainnet (AI pet yang membayar inferensinya sendiri).
 2. **Mekanismenya tidak jalan seperti ditulis.** "Anak bersaing memperebutkan bounty" dan "fork kode dengan mutasi" berarti tiap organisme = kontrak baru. Dari S13: tiap kontrak mengunci ~1,6–2,3 NEAR storage; akun baru ~0,007 NEAR. Tidak ada tekanan seleksi nyata karena tidak ada pekerjaan nyata, jadi "evolusi" cuma counter yang berubah.
 3. **Demo = menonton angka berubah.** Tidak ada hal yang bisa dilakukan juri.
-4. **Juri:** Haseeb ("agents don't need crypto, humans do"), Kain ("too early for trading agents"), Mert ("99.99% it's AI") skeptis pada agent-untuk-agent tanpa pengguna nyata ([docs/research/05](docs/research/05_judges_x.md), tema 3).
+4. **Juri:** Haseeb ("agents don't need crypto, humans do"), Kain ("too early for trading agents"), Mert ("99.99% it's AI") skeptis pada agent-untuk-agent tanpa pengguna nyata ([docs/research/05](../research/05_judges_x.md), tema 3).
 5. Tidak ada model bisnis.
 
 ### 1.3 Ke-22 konsep, satu baris masing-masing
@@ -65,7 +65,7 @@ Hasil cross-pollination yang berguna dari Grok: hanya **mekanik tersembunyi** di
 
 ## 2. Konsep baru (12), bukan varian dari 22 Grok maupun daftar v1/v2 kita
 
-Semua konsep hanya memakai kemampuan ✅ di [SPIKE_LOG.md](SPIKE_LOG.md) atau primitive yang ditandai perlu spike baru (S30+).
+Semua konsep hanya memakai kemampuan ✅ di [SPIKE_LOG.md](../../SPIKE_LOG.md) atau primitive yang ditandai perlu spike baru (S30+).
 
 | # | Konsep | Mekanik yang tidak biasa | NEAR load-bearing? | Spike | Nasib |
 |---|---|---|---|---|---|
@@ -116,7 +116,7 @@ Ditambah satu cadangan dari daftar lama: **Anti Jam Karet** (event escrow, 0 pes
 ### 3.3 Capit Chain — mesin capit yang digerakkan kontrak
 
 - **Konsep:** mesin capit mini sungguhan, kamera livestream, pembayaran dari HP (gasless, S10) atau dari chain lain (S4/S6a). ESP32 memegang FC key yang hanya bisa `start_play` dan `report_result` (S7). Agent AI juga boleh menyewa giliran.
-- **Pembeda:** satu-satunya kandidat dengan momen fisik, pola juara umum (Unruggable, CrowdBrain, LensMint; [docs/research/08](docs/research/08_winner_patterns.md)).
+- **Pembeda:** satu-satunya kandidat dengan momen fisik, pola juara umum (Unruggable, CrowdBrain, LensMint; [docs/research/08](../research/08_winner_patterns.md)).
 - **Prior art:** Clawee/Toreba (fiat, jutaan unduhan) [K]; mesin capit kripto di konferensi [K]; NEAR Tap dan Tapproved (ESP32 di hackathon ini). Mekanismenya tidak baru; yang baru adalah kunci berbatas di perangkat + bayar dari chain mana pun.
 - **Track:** `games`, `realworld`, `open`.
 - **Risiko:** pengadaan dan modifikasi hardware dalam 12 hari, keandalan saat penjurian (video boleh, Q-012). Tim pemula + hardware = risiko tertinggi di daftar ini.
@@ -133,7 +133,7 @@ Ditambah satu cadangan dari daftar lama: **Anti Jam Karet** (event escrow, 0 pes
 
 ### 3.5 Anti Jam Karet — event escrow (cadangan paling aman)
 
-- Dari [docs/research/11](docs/research/11_ideas_v2_project1.md): 0 pesaing, semua komponen ✅, bisa diuji di acara kampus nyata. Kelemahan: ada di daftar publik Illia, konsep Kickback sudah dikenal (ditutup 2023), peluang grand prize kecil, peluang track `social` (hijau) besar.
+- Dari [docs/research/11](../research/11_ideas_v2_project1.md): 0 pesaing, semua komponen ✅, bisa diuji di acara kampus nyata. Kelemahan: ada di daftar publik Illia, konsep Kickback sudah dikenal (ditutup 2023), peluang grand prize kecil, peluang track `social` (hijau) besar.
 
 ### Perbandingan
 

@@ -1,6 +1,6 @@
 # Recon Synthesis — NEAR HACKATHON (2026-10-26)
 
-Detail: [01_hackathon_intel.md](01_hackathon_intel.md) · [02_partner_tech.md](02_partner_tech.md) · [03_narrative_and_gaps.md](03_narrative_and_gaps.md) · bukti spike: [../SPIKE_LOG.md](../SPIKE_LOG.md)
+Detail: [01_hackathon_intel.md](01_hackathon_intel.md) · [02_partner_tech.md](02_partner_tech.md) · [03_narrative_and_gaps.md](03_narrative_and_gaps.md) · bukti spike: [../SPIKE_LOG.md](../../SPIKE_LOG.md)
 
 Tim: 4+ orang · stack campuran · baru pertama di NEAR · terbuka ke semua track.
 Waktu: 6 hari sebelum kickoff (1 Nov) + 14 hari build (sampai 14 Nov 23:59 UTC).

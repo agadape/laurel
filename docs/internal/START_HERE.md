@@ -1,12 +1,12 @@
 # START HERE — NEAR HACKATHON, project ke-2: **Laurel**
 
-> **Status 3 Nov 2026:** ide dipilih (**Laurel**, nama kerja Bursa Model; `docs/NAMING.md`), kontrak + evaluator + tools + web sudah jadi dan terbukti end-to-end di testnet (`docs/E2E.md`). Baca [README.md](README.md) (produk, cara coba), [PLAN.md](PLAN.md) (status per milestone), [CLAUDE.md](CLAUDE.md) (aturan kerja). Yang tersisa: akun tim + faucet → `node tools/deploy_final.mjs`, video (`DEMO.md`), repo publik, submit (`docs/SUBMISSION.md`). Dokumen di bawah ini adalah konteks awal (riset + spike) dan tetap berlaku.
+> **Status 3 Nov 2026:** ide dipilih (**Laurel**, nama kerja Bursa Model; `docs/NAMING.md`), kontrak + evaluator + tools + web sudah jadi dan terbukti end-to-end di testnet (`docs/E2E.md`). Baca [README.md](../../README.md) (produk, cara coba), [PLAN.md](PLAN.md) (status per milestone), [CLAUDE.md](CLAUDE_TEAM_NOTES.md) (aturan kerja). Yang tersisa: akun tim + faucet → `node tools/deploy_final.mjs`, video (`DEMO.md`), repo publik, submit (`docs/SUBMISSION.md`). Dokumen di bawah ini adalah konteks awal (riset + spike) dan tetap berlaku.
 
 Folder ini adalah titik mulai **project kedua** tim untuk NEAR HACKATHON. Isinya hasil spike dan riset dari project pertama, tanpa rencana produk project pertama.
 
 - **Project 1 (Undo, "Ctrl+Z untuk uang kripto")** ada di `C:\Project_Dave\NEAR_Hackathon` — track `privacy` + `realworld`. Jangan diubah dari sini.
 - **Deadline:** Sabtu 14 Nov 2026 23:59 UTC (= Minggu 15 Nov 06:59 WIB). Repo harus publik sebelum itu. Penjurian mulai 16 Nov.
-- **Aturan lengkap:** [HACKATHON.md](HACKATHON.md) (salinan 26 Okt; versi live di https://nearhackathon.com/HACKATHON.md — baca ulang sebelum submit).
+- **Aturan lengkap:** [HACKATHON.md](../../HACKATHON.md) (salinan 26 Okt; versi live di https://nearhackathon.com/HACKATHON.md — baca ulang sebelum submit).
 
 ## ⚠️ Aturan dua project (dikoreksi 2 Nov)
 
@@ -16,20 +16,20 @@ HACKATHON.md versi 2 Nov: *"One submission per project"*. Satu email boleh **2 s
 
 | Path | Isi |
 |---|---|
-| [SPIKE_LOG.md](SPIKE_LOG.md) | Log 20+ spike (S0–S22): apa yang dicoba, hasil, tx hash, gotcha. **Sumber utama "apa yang sudah terbukti jalan".** |
-| [spikes/](spikes/) | Skrip spike Node (`near-api-js` 7.4) + `lib.mjs` (helper akun/RPC). Dependency sudah terpasang (`npm ci`). |
-| [spikes/out/](spikes/out/) | Output mentah tiap spike (bukti). |
-| [spikes/contracts/](spikes/contracts/) | Workspace Rust: FT (NEP-141), NFT (NEP-171/177/178/181), MT (NEP-245) + wasm siap deploy. |
-| [spikes/contracts-undo/](spikes/contracts-undo/) | Workspace Rust dari project 1: `undo-token` (S20, versi spike) dan `s22-verifier` (verifikasi tanda tangan NEAR AI TEE + dekripsi putusan on-chain, S21/S22) + wasm. |
-| [docs/research/](docs/research/) | Riset: intel hackathon, tech partner, narasi, ide Illia, juri di X, pesaing live (213 repo), primitive baru NEAR, pola pemenang. |
-| [docs/research/10_ideas_v1_project1.md](docs/research/10_ideas_v1_project1.md), [docs/research/11_ideas_v2_project1.md](docs/research/11_ideas_v2_project1.md) | Skor ide dari project 1 (dulunya `IDEAS.md` / `IDEAS_V2.md`). Berguna untuk memilih ide project ini. |
-| `.env` | Kunci testnet + `NEAR_AI_API_KEY` (disalin dari project 1, gitignored). Daftar key ada di [.env.example](.env.example). |
+| [SPIKE_LOG.md](../../SPIKE_LOG.md) | Log 20+ spike (S0–S22): apa yang dicoba, hasil, tx hash, gotcha. **Sumber utama "apa yang sudah terbukti jalan".** |
+| [spikes/](../../spikes) | Skrip spike Node (`near-api-js` 7.4) + `lib.mjs` (helper akun/RPC). Dependency sudah terpasang (`npm ci`). |
+| [spikes/out/](../../spikes/out) | Output mentah tiap spike (bukti). |
+| [spikes/contracts/](../../spikes/contracts) | Workspace Rust: FT (NEP-141), NFT (NEP-171/177/178/181), MT (NEP-245) + wasm siap deploy. |
+| [spikes/contracts-undo/](../../spikes/contracts-undo) | Workspace Rust dari project 1: `undo-token` (S20, versi spike) dan `s22-verifier` (verifikasi tanda tangan NEAR AI TEE + dekripsi putusan on-chain, S21/S22) + wasm. |
+| [docs/research/](../research) | Riset: intel hackathon, tech partner, narasi, ide Illia, juri di X, pesaing live (213 repo), primitive baru NEAR, pola pemenang. |
+| [docs/research/10_ideas_v1_project1.md](../research/10_ideas_v1_project1.md), [docs/research/11_ideas_v2_project1.md](../research/11_ideas_v2_project1.md) | Skor ide dari project 1 (dulunya `IDEAS.md` / `IDEAS_V2.md`). Berguna untuk memilih ide project ini. |
+| `.env` | Kunci testnet + `NEAR_AI_API_KEY` (disalin dari project 1, gitignored). Daftar key ada di [.env.example](../../.env.example). |
 
 Tidak disalin: `PLAN_UNDO.md` dan `PLAN_VAULT_CARD.md` (rencana khusus project 1, ada di folder project 1 kalau perlu referensi).
 
 ## Yang sudah terbukti di testnet (ringkas)
 
-Detail, tx hash, dan biaya ada di [SPIKE_LOG.md](SPIKE_LOG.md).
+Detail, tx hash, dan biaya ada di [SPIKE_LOG.md](../../SPIKE_LOG.md).
 
 - **Akun:** akun testnet gratis 10 NEAR tanpa CAPTCHA (S3a); transfer + function call ~2,5 dtk (S3b).
 - **Kunci agent:** sub-account, function-call key dengan whitelist method, revoke instan, **gas key** dengan saldo sendiri (S7).
@@ -73,7 +73,7 @@ MSYS_NO_PATHCONV=1 wsl.exe --exec bash spikes/contracts/build.sh
 
 ## Gotcha terpenting
 
-Daftar lengkap ada di kolom "Gotcha" [SPIKE_LOG.md](SPIKE_LOG.md). Yang paling sering menjebak:
+Daftar lengkap ada di kolom "Gotcha" [SPIKE_LOG.md](../../SPIKE_LOG.md). Yang paling sering menjebak:
 
 1. Pakai RPC fastnear (~0,3 dtk), bukan `rpc.*.near.org` (~3 dtk).
 2. `account.callFunction` mengembalikan nilai, bukan tx; pakai `signAndSendTransaction` kalau butuh hash.
@@ -86,7 +86,7 @@ Daftar lengkap ada di kolom "Gotcha" [SPIKE_LOG.md](SPIKE_LOG.md). Yang paling s
 
 ## Kandidat ide dari riset (selain Undo)
 
-Dari [docs/research/11_ideas_v2_project1.md](docs/research/11_ideas_v2_project1.md) — skor dari 60:
+Dari [docs/research/11_ideas_v2_project1.md](../research/11_ideas_v2_project1.md) — skor dari 60:
 
 | Ide | Track | Skor | Catatan |
 |---|---|---|---|
@@ -103,4 +103,4 @@ Lane yang masih kosong (2 Nov): event escrow, social di atas Sputnik/Trezu, NFT 
 
 1. Tentukan tim dan orang untuk project ini (lihat aturan satu submission per tim).
 2. Pilih ide → tulis `IDEAS.md` dan `PLAN.md` di root folder ini.
-3. Kalau butuh spike baru, beri nomor mulai **S30** supaya tidak bentrok dengan S0–S22, dan catat di [SPIKE_LOG.md](SPIKE_LOG.md) dengan format yang sama.
+3. Kalau butuh spike baru, beri nomor mulai **S30** supaya tidak bentrok dengan S0–S22, dan catat di [SPIKE_LOG.md](../../SPIKE_LOG.md) dengan format yang sama.

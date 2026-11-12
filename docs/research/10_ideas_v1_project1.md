@@ -1,6 +1,6 @@
 # IDEAS — NEAR HACKATHON (Phase 3, 2026-10-28)
 
-Semua ide di bawah dibangun **hanya** di atas kemampuan yang sudah terbukti di [SPIKE_LOG.md](../SPIKE_LOG.md). Referensi `S#` = baris spike. Konteks: [recon/00_SYNTHESIS.md](00_SYNTHESIS.md).
+Semua ide di bawah dibangun **hanya** di atas kemampuan yang sudah terbukti di [SPIKE_LOG.md](../../SPIKE_LOG.md). Referensi `S#` = baris spike. Konteks: [recon/00_SYNTHESIS.md](00_SYNTHESIS.md).
 
 Aturan skor (playbook): Feasibility dibatasi maks **5** kalau ada dependensi inti yang belum di-spike; Judge Fit maks **5** tanpa juri bernama + bukti; Business maks **4** tanpa model bisnis satu kalimat.
 

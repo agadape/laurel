@@ -4,7 +4,7 @@
 
 Tujuan: menjawab empat pertanyaan arsitektur dengan memisahkan **fakta terdokumentasi**, **sudah dibuktikan spike kita**, dan **asumsi**. Lalu merampingkan MVP dan memberi go/no-go. Tidak ada kode yang ditulis.
 
-Legenda: **[DOC]** dokumentasi resmi (dibaca 2 Nov) · **[SPIKE]** dibuktikan di [SPIKE_LOG.md](SPIKE_LOG.md) · **[ASUMSI]** belum dibuktikan · **[PARAM]** parameter protokol NEAR (`nearcore/core/parameters/res/runtime_configs/parameters.yaml`).
+Legenda: **[DOC]** dokumentasi resmi (dibaca 2 Nov) · **[SPIKE]** dibuktikan di [SPIKE_LOG.md](../../SPIKE_LOG.md) · **[ASUMSI]** belum dibuktikan · **[PARAM]** parameter protokol NEAR (`nearcore/core/parameters/res/runtime_configs/parameters.yaml`).
 
 Angka protokol yang dipakai di bawah [PARAM]: `max_transaction_size` 1.572.864 B · `max_arguments_length` 4 MiB · `max_contract_size` 4 MiB · storage 10¹⁹ yN/byte (= **1 NEAR per 100 KB**) · `storage_write_value_byte` 31 Mgas/B · `storage_read_value_byte` 5,6 Mgas/B · `max_gas_burnt` 1.000 Tgas · `max_total_log_length` 16 KB (dari pengetahuan nearcore, belum dikutip ulang hari ini).
 
@@ -48,7 +48,7 @@ Angka protokol yang dipakai di bawah [PARAM]: `max_transaction_size` 1.572.864 B
 **Jawaban singkat: secara teknis ya, tapi JANGAN deploy wasm kiriman pengguna.** Deploy template kita + data model.
 
 ### Yang terdokumentasi
-`near_sdk::Promise` 5.30 **[DOC]** (docs.rs): `create_account()`, `transfer(NearToken)`, `deploy_contract(code)`, `function_call(name, args, deposit, gas)`, `add_full_access_key`, `delete_account`, dan **`deploy_global_contract(code)` / `use_global_contract(code_hash)` / `use_global_contract_by_account_id(account)`**. Global contracts (NEP-591) live di testnet dan mainnet ([docs/research/07](docs/research/07_new_primitives.md) #6).
+`near_sdk::Promise` 5.30 **[DOC]** (docs.rs): `create_account()`, `transfer(NearToken)`, `deploy_contract(code)`, `function_call(name, args, deposit, gas)`, `add_full_access_key`, `delete_account`, dan **`deploy_global_contract(code)` / `use_global_contract(code_hash)` / `use_global_contract_by_account_id(account)`**. Global contracts (NEP-591) live di testnet dan mainnet ([docs/research/07](../research/07_new_primitives.md) #6).
 
 Alur yang terbukti sebagian: S13 men-deploy kontrak dari **skrip** ke akun faucet (deploy + `new` dalam satu tx). Dari **dalam kontrak** lewat Promise batch belum pernah kami lakukan → **[ASUMSI]** sampai S33.
 

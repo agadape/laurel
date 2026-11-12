@@ -1,6 +1,6 @@
 # IDEAS V2 — ide baru setelah riset 2 Nov 2026
 
-Dasar: [recon/05_judges_x.md](05_judges_x.md) (juri), [recon/06_competition_live.md](06_competition_live.md) (pesaing, 213 repo), [recon/07_new_primitives.md](07_new_primitives.md) (fitur baru NEAR), [recon/08_winner_patterns.md](08_winner_patterns.md) (pola pemenang). Bukti teknis: [SPIKE_LOG.md](../SPIKE_LOG.md). Aturan skor sama dengan [IDEAS.md](10_ideas_v1_project1.md).
+Dasar: [recon/05_judges_x.md](05_judges_x.md) (juri), [recon/06_competition_live.md](06_competition_live.md) (pesaing, 213 repo), [recon/07_new_primitives.md](07_new_primitives.md) (fitur baru NEAR), [recon/08_winner_patterns.md](08_winner_patterns.md) (pola pemenang). Bukti teknis: [SPIKE_LOG.md](../../SPIKE_LOG.md). Aturan skor sama dengan [IDEAS.md](10_ideas_v1_project1.md).
 
 ## Temuan riset yang mengubah keputusan
 

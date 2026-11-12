@@ -293,7 +293,7 @@ What is **not** guaranteed, stated plainly: the contract trusts what `outlayer.t
 | `docs/` | ABI, GAS, AGENT, CONSUMER, E2E, EVALUATOR, MCP, NEGATIVE_TESTS, TESTNET, UI_DIRECTION, audit, research |
 | `spikes/` | The original testnet spikes S0–S31 this design rests on, with [SPIKE_LOG.md](SPIKE_LOG.md) |
 
-Planning history, in Indonesian: [PLAN.md](PLAN.md), [IDEAS.md](IDEAS.md), [ARCH_STRESS_TEST.md](ARCH_STRESS_TEST.md) (how the idea was chosen and stress-tested).
+Planning history, in Indonesian: [PLAN.md](docs/internal/PLAN.md), [IDEAS.md](docs/internal/IDEAS.md), [ARCH_STRESS_TEST.md](docs/internal/ARCH_STRESS_TEST.md) (how the idea was chosen and stress-tested).
 
 ## Limits (please read before judging the numbers)
 
