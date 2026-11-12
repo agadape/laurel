@@ -1,11 +1,13 @@
 // Remote MCP endpoint for Laurel (Streamable HTTP, stateless): https://laurel-near.vercel.app/api/mcp
-// Read-only tools over the contract's view calls, so any MCP client can browse exhibits, read leaderboards, fetch a
-// model's bytes and run it locally without installing anything. On-chain predict_task needs a key and stays in the
-// npm package `laurel-mcp` (mcp/ in the repo).
+// Tools over the contract's view calls, so any MCP client can browse exhibits, read leaderboards, fetch a model's bytes
+// and run it locally without installing anything, plus laurel_ask_champion: one real paid predict_task on testnet,
+// paid by the site's guest account (a function-call key limited to the prediction methods, see _lib/guest.mjs).
+// predict_task from the agent's own account stays in the npm package `laurel-mcp` (mcp/ in the repo).
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { z } from "zod";
 import { decodeModel, rawScore, stats, sha256, b64ToBytes } from "./_lib/gbdt.mjs";
+import { askChampion } from "./_lib/guest.mjs";
 
 const CONTRACT = process.env.LAUREL_CONTRACT || "laurel.laurel-team-mw0x0c8g.testnet";
 const RPCS = ["https://rpc.testnet.fastnear.com", "https://archival-rpc.testnet.fastnear.com", "https://near-testnet.drpc.org"];
@@ -40,9 +42,9 @@ async function specimen(submission_id) {
   return { ...sub, task_closed: !!task?.closed, champion: !!task?.closed && task.winner === submission_id };
 }
 
-function buildServer() {
+function buildServer(ip = "?") {
   const server = new McpServer({ name: "laurel", version: "0.1.0" }, {
-    instructions: `Laurel is a registry contract on NEAR testnet (${CONTRACT}) where small gradient-boosted-tree models are submitted as data, scored inside a TEE on a sealed private test set (split A public while a task is open; split B's rows never leave the enclave and its score is withheld from the leaderboard until close), and the champion is served on-chain through predict_task. This remote endpoint is read-only: list exhibits, read a leaderboard or a specimen, fetch a model's bytes, and run a model with the contract's integer arithmetic. To call the champion on-chain (predict_task) install the npm package laurel-mcp with a NEAR key. Features are integers in the task's feature order; a raw score > 0 means the positive class (credit-risk demo: 1 = bad credit).`,
+    instructions: `Laurel is a registry contract on NEAR testnet (${CONTRACT}) where small gradient-boosted-tree models are submitted as data, scored inside a TEE on a sealed private test set (split A public while a task is open; split B's rows never leave the enclave and its score is withheld from the leaderboard until close), and the champion is served on-chain through predict_task. This remote endpoint can list exhibits, read a leaderboard or a specimen, fetch a model's bytes, run a model with the contract's integer arithmetic, and buy one real on-chain prediction from a closed task's champion with laurel_ask_champion (paid from the site's guest account, so the agent needs no wallet; it returns the testnet transaction). To pay from your own account install the npm package laurel-mcp with a NEAR key. Features are integers in the task's feature order; a raw score > 0 means the positive class (credit-risk demo: 1 = bad credit).`,
   });
   server.tool("laurel_list_exhibits", "List the tasks (exhibits) on the Laurel contract with their state, deadline and entrant count.", {}, async () => {
     const tasks = await view("list_tasks", { from: 0, limit: 50 });
@@ -70,6 +72,10 @@ function buildServer() {
       return text({ submission_id, raw_score: raw.toString(), label: raw > 0n ? 1 : 0, note: "label 1 = the task's positive class (see the exhibit's description_url); identical to the on-chain result for the same bytes" });
     } catch (e) { return fail(String(e.message || e)); }
   });
+  server.tool("laurel_ask_champion", "Buy ONE real prediction ON-CHAIN from the champion of a closed task (predict_task on NEAR testnet). The site's guest account pays the task's fee (0.001 NEAR) from its prepaid credit with a function-call key limited to the prediction methods, so you need no wallet; the fee goes to the model's owner. Returns the raw score, the label, the transaction hash and explorer link, gas and the owner's new earnings. Rate-limited; use laurel_predict_local for many rows.", { task_id: z.number().int().positive().describe("a CLOSED task (laurel_list_exhibits shows closed and champion)"), features: z.array(z.number().int()).describe("integers in the task's feature order (laurel_exhibit lists feature_names)") }, async ({ task_id, features }) => {
+    const { code, body } = await askChampion(task_id, features, `mcp:${ip}`);
+    return code === 200 ? text({ ...body, note: "computed inside the contract in this transaction; label 1 = the task's positive class" }) : fail(`${body.error}${body.tx ? ` (tx ${body.tx})` : ""}${body.fallback === "local" ? " — laurel_predict_local runs the same bytes with no transaction" : ""}`);
+  });
   return server;
 }
 
@@ -83,7 +89,7 @@ export default async function handler(req, res) {
     res.statusCode = 405; res.setHeader("content-type", "application/json");
     return res.end(JSON.stringify({ jsonrpc: "2.0", error: { code: -32000, message: "Laurel MCP: stateless Streamable HTTP, POST only. Add https://laurel-near.vercel.app/api/mcp as a remote MCP server." }, id: null }));
   }
-  const server = buildServer();
+  const server = buildServer(String(req.headers["x-forwarded-for"] || req.socket?.remoteAddress || "?").split(",")[0].trim());
   const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
   res.on("close", () => { transport.close(); server.close(); });
   await server.connect(transport);

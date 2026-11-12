@@ -169,7 +169,7 @@ node tools/consumer.mjs <task_id> --funder TEAM                      # deploys c
 
 ### F. Give the model to an AI agent as an MCP server (`mcp/`, `web/api/mcp.mjs`)
 Two ways, for every OS and client; the picker with ready-to-paste snippets is at https://laurel-near.vercel.app/#/connect.
-- **Remote, nothing to install, no wallet** (Claude.ai / Claude Desktop connectors, Claude Code `--transport http`, Cursor, VS Code): `https://laurel-near.vercel.app/api/mcp` — read-only (exhibits, leaderboards, specimens, model bytes, local prediction), served by a stateless Streamable-HTTP function on Vercel.
+- **Remote, nothing to install, no wallet** (Claude.ai / Claude Desktop connectors, Claude Code `--transport http`, Cursor, VS Code): `https://laurel-near.vercel.app/api/mcp` — exhibits, leaderboards, specimens, model bytes, local prediction, and since 12 Nov **`laurel_ask_champion`: one real paid `predict_task` on testnet with no wallet**, paid from the site's guest account (the same function-call key as the landing page's Ask button, limited to the prediction methods, rate-limited) and returning the transaction hash. Served by a stateless Streamable-HTTP function on Vercel. Try it: add the URL as a connector, then ask *"Ask Laurel's champion of exhibit 3 about holdout row 0"* → see raw score 811014 and a testnet tx.
 - **Local, with on-chain calls** (Node 18+, macOS/Windows/Linux):
 ```json
 { "mcpServers": { "laurel": { "command": "npx", "args": ["-y", "laurel-mcp"] } } }

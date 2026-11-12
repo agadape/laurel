@@ -31,7 +31,7 @@ const CLIENTS = [
     <>
       <p className="ink2">Settings → Connectors → <b>Add custom connector</b> → paste the URL. Nothing to install; the server runs on Vercel and only reads the contract.</p>
       <Cmd>{REMOTE}</Cmd>
-      <p className="mist">Read-only tools: exhibits, leaderboards, specimens, model bytes, local prediction. For paid on-chain <span className="mono">predict_task</span> use the local package with your key (step 2).</p>
+      <p className="mist">Exhibits, leaderboards, specimens, model bytes, local prediction, and <span className="mono">laurel_ask_champion</span>: one real paid <span className="mono">predict_task</span> on testnet, paid by the site's guest account, so your agent needs no wallet. To pay from your own account use the local package with your key (step 2).</p>
     </>
   ) },
   { id: "claude-desktop", name: "Claude Desktop (local, npx)", body: (o) => (
