@@ -3,6 +3,7 @@
 //   cd tools && npm ci && node verify_tee.mjs              # every successful request_score on the contract
 //   node verify_tee.mjs <tx_hash> [<tx_hash> ...]          # only these scoring transactions
 //   [--json out.json]                                      # also write the per-run results
+//   [--network mainnet --contract <account>]               # the same checks on NEAR mainnet
 //
 // For each scoring transaction it checks, and prints one line per check:
 //   1. OutLayer's per-run attestation exists for this transaction (testnet-api.outlayer.ai/attestations/by-tx/<hash>).
@@ -21,16 +22,19 @@ import crypto from "node:crypto";
 import fs from "node:fs";
 import { getCollateralAndVerify } from "@phala/dcap-qvl";
 
-const CONTRACT = process.env.BURSA_CONTRACT_ID || "laurel.laurel-team-mw0x0c8g.testnet";
-const REGISTER = "worker.outlayer.testnet";
-const ATTEST = "https://testnet-api.outlayer.ai/attestations/by-tx/";
-const INTEL_PCS = "https://api.trustedservices.intel.com/";
-const RPCS = ["https://archival-rpc.testnet.fastnear.com", "https://rpc.testnet.fastnear.com"];
-const TXAPI = "https://tx.test.fastnear.com/v0";
-
 const args = process.argv.slice(2);
-const jsonOut = args.includes("--json") ? args[args.indexOf("--json") + 1] : null;
-const given = args.filter((a, i) => !a.startsWith("--") && args[i - 1] !== "--json");
+const flag = (k) => (args.includes(`--${k}`) ? args[args.indexOf(`--${k}`) + 1] : null);
+const MAINNET = flag("network") === "mainnet";
+const CONTRACT = flag("contract") || (MAINNET ? process.env.MAINNET_CONTRACT_ID : process.env.BURSA_CONTRACT_ID) || (MAINNET ? null : "laurel.laurel-team-mw0x0c8g.testnet");
+if (!CONTRACT) { console.log("--network mainnet needs --contract <account> (or MAINNET_CONTRACT_ID)"); process.exit(2); }
+const REGISTER = MAINNET ? "worker.outlayer.near" : "worker.outlayer.testnet";
+const ATTEST = MAINNET ? "https://api.outlayer.ai/attestations/by-tx/" : "https://testnet-api.outlayer.ai/attestations/by-tx/";
+const INTEL_PCS = "https://api.trustedservices.intel.com/";
+const RPCS = MAINNET ? ["https://archival-rpc.mainnet.fastnear.com", "https://rpc.mainnet.fastnear.com"] : ["https://archival-rpc.testnet.fastnear.com", "https://rpc.testnet.fastnear.com"];
+const TXAPI = MAINNET ? "https://tx.main.fastnear.com/v0" : "https://tx.test.fastnear.com/v0";
+
+const jsonOut = flag("json");
+const given = args.filter((a, i) => !a.startsWith("--") && !["--json", "--network", "--contract"].includes(args[i - 1]));
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const sha256 = (b) => crypto.createHash("sha256").update(b).digest();
 const hex = (b) => Buffer.from(b).toString("hex");
@@ -95,7 +99,7 @@ const approved = await view(REGISTER, "get_approved_measurements");
 const isApproved = (m) => approved.some((x) => ["mrtd", "rtmr0", "rtmr1", "rtmr2", "rtmr3"].every((k) => x[k] === m[k]));
 const tasks = Object.fromEntries((await view(CONTRACT, "list_tasks", { from: 0, limit: 50 })).map((t) => [t.task_id, t]));
 const txs = await scoringTxs();
-console.log(`Laurel contract ${CONTRACT}; pinned evaluator ${pinned}`);
+console.log(`NEAR ${MAINNET ? "mainnet" : "testnet"} · Laurel contract ${CONTRACT}; pinned evaluator ${pinned}`);
 console.log(`OutLayer register ${REGISTER}: ${approved.length} approved measurement sets`);
 console.log(`${txs.length} scoring transaction(s) to check\n`);
 
