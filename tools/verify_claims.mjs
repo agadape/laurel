@@ -151,7 +151,9 @@ const HASH = "[1-9A-HJ-NP-Za-km-z]{43,44}";
 // CLAIMS.md also prints the contract's code hash in the same alphabet; it is not a transaction. The hash read from the
 // chain is added before the checks run, so a wasm that differs from the deployed one fails one check, not five.
 const NOT_TX = new Set([base58(sha256(read("wasm/bursa.wasm")))]);
-const hashesIn = (text) => [...new Set([...text.matchAll(new RegExp("(?:txns/|`)(" + HASH + ")(?![1-9A-HJ-NP-Za-km-z])", "g"))].map((m) => m[1]))].filter((h) => !NOT_TX.has(h));
+// Mainnet transactions (linked to nearblocks.io, not testnet.nearblocks.io) are checked by the mainnet section, not here.
+const mainnetTx = (text) => new Set([...text.matchAll(new RegExp("//nearblocks\\.io/txns/(" + HASH + ")", "g"))].map((m) => m[1]));
+const hashesIn = (text) => { const main = mainnetTx(text); return [...new Set([...text.matchAll(new RegExp("(?:txns/|`)(" + HASH + ")(?![1-9A-HJ-NP-Za-km-z])", "g"))].map((m) => m[1]))].filter((h) => !NOT_TX.has(h) && !main.has(h)); };
 const claimRow = (n) => claims.split(/\r?\n/).find((l) => l.startsWith(`| ${n} |`)) ?? "";
 const rowTx = (n) => hashesIn(claimRow(n));
 const agentTable = hashesIn(read("docs/AGENT.md").toString());
@@ -419,6 +421,17 @@ check("mainnet", "Every mainnet score came from the pinned evaluator, and each c
     }
   }
   return `${scored} scored model(s) on mainnet, all by ${pinned.slice(0, 12)}…; ${closed} closed task(s), champion = best split B`;
+});
+check("33-36", "Every mainnet transaction cited in CLAIMS.md exists on mainnet and succeeded", async () => {
+  const hashes = [...mainnetTx(claims)];
+  const bad = [];
+  for (const h of hashes) {
+    const r = await rpc(["https://archival-rpc.mainnet.fastnear.com", "https://rpc.mainnet.fastnear.com"], "EXPERIMENTAL_tx_status", { tx_hash: h, sender_account_id: MAINNET_CONTRACT, wait_until: "NONE" }, { gap: 300, attempts: 8 });
+    const st = r.result?.status;
+    if (r.error || !st || st.Failure) bad.push(`${short(h)} ${r.cause ?? JSON.stringify(st?.Failure ?? "").slice(0, 60)}`);
+  }
+  expect(hashes.length > 0 && !bad.length, bad.length ? `not found or failed: ${bad.join(", ")}` : "no mainnet transactions cited");
+  return `${hashes.length} mainnet transactions found, all succeeded`;
 });
 
 section("Live endpoints (not on-chain)");
