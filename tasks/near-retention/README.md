@@ -29,7 +29,7 @@ used; see the README's Security model.
 | #9 (team) | 50 trees × depth 4 (`train.py`) | 32,087 | 8638 bps | 8250 bps | sealed | A 8250 · B 8050 |
 | #8 (`p2`) | 30 trees × depth 3 | 10,051 | 8388 bps | 8200 bps | sealed | A 8200 · B 8250 |
 
-Balanced accuracy in basis points, rounded to 50. The TEE's split-A readings equal the local evaluator's to the point,
+Balanced accuracy in basis points, rounded to 50 (the evaluator's output also carries the exact confusion counts per split, so the exact value can be recomputed; the rounding is cosmetic). The TEE's split-A readings equal the local evaluator's to the point,
 and the integer model agrees with sklearn on every holdout row (`report.json`, `label agreement … 1.0000`). Note the
 order: the biggest model wins the public holdout, the smallest wins split A. What split B says is in the contract on
 12 Nov; the local numbers are in this table only so that the claim "TEE = local" can be checked after the reveal.
