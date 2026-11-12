@@ -8,7 +8,7 @@ if (!taskId) { console.log("usage: node tools/close_task.mjs <task_id> [--wait] 
 const i = args.indexOf("--as"); const who = i >= 0 ? args[i + 1] : "MAIN";
 const signers = { TEAM: ["TEAM_ACCOUNT_ID", "TEAM_PRIVATE_KEY"], FT: ["NEAR_FT_CONTRACT_ID", "NEAR_FT_CONTRACT_PRIVATE_KEY"], MAIN: ["NEAR_ACCOUNT_ID", "NEAR_PRIVATE_KEY"] };
 const signer = accountFromEnv(...signers[who]);
-const C = process.env.BURSA_CONTRACT_ID || process.env.BURSA_DEV_ID;
+const C = process.env.BURSA_CONTRACT_ID || "laurel.laurel-team-mw0x0c8g.testnet";   // the final contract unless .env names another
 
 try {
   const task = await view(C, "get_task", { task_id: taskId });

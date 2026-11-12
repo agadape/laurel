@@ -2,7 +2,7 @@
 //   node tools/create_task.mjs <slug> [--minutes 1440] [--fee 0.001] [--submission-fee 0.1] [--max 3]
 //        [--secrets-account <acct>] [--profile <slug>] [--as TEAM|FT|MAIN]
 // Signer (--as): TEAM = TEAM_ACCOUNT_ID/TEAM_PRIVATE_KEY, FT = NEAR_FT_CONTRACT_*, MAIN = NEAR_ACCOUNT_ID/NEAR_PRIVATE_KEY.
-// Contract: BURSA_CONTRACT_ID in .env (falls back to BURSA_DEV_ID).
+// Contract: BURSA_CONTRACT_ID in .env (default: the final contract laurel.laurel-team-mw0x0c8g.testnet).
 import fs from "node:fs";
 import path from "node:path";
 import { accountFromEnv, call, view, summary, root, nearToYocto, errMsg } from "./lib.mjs";
@@ -14,8 +14,8 @@ const opt = (k, d) => { const i = args.indexOf(`--${k}`); return i >= 0 ? args[i
 const signers = { TEAM: ["TEAM_ACCOUNT_ID", "TEAM_PRIVATE_KEY"], FT: ["NEAR_FT_CONTRACT_ID", "NEAR_FT_CONTRACT_PRIVATE_KEY"], MAIN: ["NEAR_ACCOUNT_ID", "NEAR_PRIVATE_KEY"] };
 const who = opt("as", process.env.TEAM_ACCOUNT_ID ? "TEAM" : "FT");
 const signer = accountFromEnv(...signers[who]);
-const C = process.env.BURSA_CONTRACT_ID || process.env.BURSA_DEV_ID;
-if (!C) throw new Error("BURSA_CONTRACT_ID (or BURSA_DEV_ID) missing in .env");
+const C = process.env.BURSA_CONTRACT_ID || "laurel.laurel-team-mw0x0c8g.testnet";   // the final contract unless .env names another
+
 
 const spec = JSON.parse(fs.readFileSync(path.join(root, "tasks", slug, "features.json"), "utf8"));
 const minutes = Number(opt("minutes", "1440"));

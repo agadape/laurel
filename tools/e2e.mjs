@@ -3,7 +3,7 @@
 //
 //   node tools/e2e.mjs [--funder NFT|FT|TEAM] [--minutes 3] [--cleanup] [--no-score]
 //
-// Needs in .env: the funder key (≥ 6 NEAR free), NEAR_ACCOUNT_ID (owner of the OutLayer secret profile
+// Needs in .env: the funder key (≥ 6 NEAR free), NEAR_ACCOUNT_ID (the account that owns the OutLayer secret profile
 // `german-credit`, see docs/EVALUATOR.md), and the model files from tools/export.py in tasks/german-credit/out/.
 // --cleanup deletes the four fresh accounts at the end and returns the NEAR to the funder.
 import fs from "node:fs";

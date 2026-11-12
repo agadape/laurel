@@ -1,0 +1,38 @@
+{
+  "dataset": "https://archive.ics.uci.edu/dataset/144/statlog+german+credit+data",
+  "random_state": 144,
+  "sizes": {
+    "public_train": 600,
+    "public_holdout": 100,
+    "private_a": 150,
+    "private_b": 150
+  },
+  "class_counts": {
+    "public_train": {
+      "good": 420,
+      "bad": 180
+    },
+    "public_holdout": {
+      "good": 70,
+      "bad": 30
+    },
+    "private_a": {
+      "good": 105,
+      "bad": 45
+    },
+    "private_b": {
+      "good": 105,
+      "bad": 45
+    }
+  },
+  "private_sha256": {
+    "private_a.json": "8a30149abb8233eb3df6047c4b4157b99366c5545264cbb6a061523d6f53bae2",
+    "private_b.json": "c99f608a5a3caf451680891f3289d14a98c1af16b99e2ccc0babb1fd7aa5dc35"
+  },
+  "private_bytes": {
+    "private_a.json": 7617,
+    "private_b.json": 7617
+  },
+  "identical_rows_between_private_and_public": 0,
+  "note": "duplicates (if any) are identical feature+label rows that exist twice in UCI data, not index leaks"
+}

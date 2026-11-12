@@ -20,7 +20,7 @@ if (!taskId) { console.log("usage: node tools/agent.mjs <task_id> [--rows 10] [-
 const opt = (k, d) => { const i = args.indexOf(`--${k}`); return i >= 0 ? args[i + 1] : d; };
 const funders = { TEAM: ["TEAM_ACCOUNT_ID", "TEAM_PRIVATE_KEY"], FT: ["NEAR_FT_CONTRACT_ID", "NEAR_FT_CONTRACT_PRIVATE_KEY"], MAIN: ["NEAR_ACCOUNT_ID", "NEAR_PRIVATE_KEY"] };
 const funder = accountFromEnv(...funders[opt("funder", process.env.TEAM_ACCOUNT_ID ? "TEAM" : "FT")]);
-const C = process.env.BURSA_CONTRACT_ID || process.env.BURSA_DEV_ID;
+const C = process.env.BURSA_CONTRACT_ID || "laurel.laurel-team-mw0x0c8g.testnet";   // the final contract unless .env names another
 const ROWS = Number(opt("rows", "10"));
 const correctOf = () => out.summary?.correct ?? 0;
 const out = { when: new Date().toISOString(), contract: C, task_id: taskId, calls: [], negatives: [] };

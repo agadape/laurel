@@ -13,7 +13,7 @@ const signers = {
   P1: ["P1_ACCOUNT_ID", "P1_PRIVATE_KEY"], P2: ["P2_ACCOUNT_ID", "P2_PRIVATE_KEY"],
 };
 const signer = accountFromEnv(...signers[opt("as", process.env.P1_ACCOUNT_ID ? "P1" : "FT")]);
-const C = process.env.BURSA_CONTRACT_ID || process.env.BURSA_DEV_ID;
+const C = process.env.BURSA_CONTRACT_ID || "laurel.laurel-team-mw0x0c8g.testnet";   // the final contract unless .env names another
 const taskId = Number(taskIdArg);
 const bytes = fs.readFileSync(modelPath);
 

@@ -8,8 +8,8 @@ import { accountFromEnv, saveEnv, provider, summary, errMsg, sleep, view, call, 
 
 const args = process.argv.slice(2);
 const opt = (k, d) => { const i = args.indexOf(`--${k}`); return i >= 0 ? args[i + 1] : d; };
-const C = process.env.BURSA_CONTRACT_ID;
-if (!C) { console.log("BURSA_CONTRACT_ID missing in .env"); process.exit(2); }
+const C = process.env.BURSA_CONTRACT_ID || "laurel.laurel-team-mw0x0c8g.testnet";
+
 
 try {
   let guest;

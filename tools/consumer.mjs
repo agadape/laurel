@@ -12,7 +12,7 @@ if (!taskId) { console.log("usage: node tools/consumer.mjs <task_id> [--funder N
 const opt = (k, d) => { const i = args.indexOf(`--${k}`); return i >= 0 ? args[i + 1] : d; };
 const funders = { TEAM: ["TEAM_ACCOUNT_ID", "TEAM_PRIVATE_KEY"], FT: ["NEAR_FT_CONTRACT_ID", "NEAR_FT_CONTRACT_PRIVATE_KEY"], NFT: ["NEAR_NFT_CONTRACT_ID", "NEAR_NFT_CONTRACT_PRIVATE_KEY"] };
 const funder = accountFromEnv(...funders[opt("funder", process.env.TEAM_ACCOUNT_ID ? "TEAM" : "NFT")]);
-const C = process.env.BURSA_CONTRACT_ID || process.env.BURSA_DEV_ID;
+const C = process.env.BURSA_CONTRACT_ID || "laurel.laurel-team-mw0x0c8g.testnet";   // the final contract unless .env names another
 const WASM = path.join(root, "wasm", "credit_desk.wasm");
 const rows = opt("rows", "0,1,3").split(",").map(Number);
 const out = { when: new Date().toISOString(), bursa: C, task_id: taskId, screens: [] };

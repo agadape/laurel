@@ -1,0 +1,5 @@
+[toolchain]
+# The version the contract and the evaluator were built and tested with (also pinned in .github/workflows/test.yml).
+channel = "1.99.0"
+targets = ["wasm32-unknown-unknown", "wasm32-wasip2"]
+profile = "minimal"
