@@ -115,6 +115,8 @@ export async function askChampion(task_id, features, ip) {
     const credit = BigInt(await view("get_credit", { account_id: s.id }));
     if (credit < BigInt(task.fee_per_call)) return { code: 402, body: { error: "the guest account's prepaid credit is used up", fallback: "local", paid_by: s.id } };
 
+    // earnings are read BEFORE the call: a view right after send can still lag one block behind
+    const earnedBefore = await view("get_earnings", { submission_id: task.winner }).catch(() => null);
     const run = queue.then(() => predictOnChain(s, task_id, features));
     queue = run.catch(() => {});
     const { res: out, hash } = await run;
@@ -129,7 +131,7 @@ export async function askChampion(task_id, features, ip) {
       try { const j = JSON.parse(l.slice(11)); if (j.event === "prediction") ev = j.data?.[0] ?? j.data; } catch {}
     }
     const submission_id = ev?.submission_id ?? task.winner;
-    const earned = await view("get_earnings", { submission_id }).catch(() => null);
+    const earned = earnedBefore != null && submission_id === task.winner ? BigInt(earnedBefore) + BigInt(task.fee_per_call) : await view("get_earnings", { submission_id }).catch(() => null);
     return { code: 200, body: {
       task_id, submission_id, raw_score: raw, label: BigInt(raw) > 0n ? 1 : 0,
       tx: hash, explorer: EXPLORER + hash, gas_tgas: Number(gas.toFixed(2)),
