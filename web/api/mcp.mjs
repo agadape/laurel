@@ -10,6 +10,7 @@ import { decodeModel, rawScore, stats, sha256, b64ToBytes } from "./_lib/gbdt.mj
 import { askChampion } from "./_lib/guest.mjs";
 
 const CONTRACT = process.env.LAUREL_CONTRACT || "laurel.laurel-team-mw0x0c8g.testnet";
+const HOLDOUT = "https://laurel-near.vercel.app/aset/holdout.json";   // every public holdout row, as the landing page uses them
 const RPCS = ["https://rpc.testnet.fastnear.com", "https://archival-rpc.testnet.fastnear.com", "https://near-testnet.drpc.org"];
 
 async function view(method, args = {}) {
@@ -71,6 +72,17 @@ function buildServer(ip = "?") {
       const raw = rawScore(model, features);
       return text({ submission_id, raw_score: raw.toString(), label: raw > 0n ? 1 : 0, note: "label 1 = the task's positive class (see the exhibit's description_url); identical to the on-chain result for the same bytes" });
     } catch (e) { return fail(String(e.message || e)); }
+  });
+  server.tool("laurel_sample_case", "One row of a task's PUBLIC holdout set, ready to pass to laurel_ask_champion or laurel_predict_local: the integer features in the task's order, their names, and the row's true label (for NEAR account retention also the mainnet account it describes). Omit row for a random one.", { task_id: z.number().int().positive(), row: z.number().int().min(0).optional().describe("row index; omit for a random row") }, async ({ task_id, row }) => {
+    const task = await view("get_task", { task_id });
+    if (!task) return fail(`no task ${task_id} on ${CONTRACT}`);
+    const all = await (await fetch(HOLDOUT)).json();
+    const ds = all.datasets.find((d) => JSON.stringify(d.feature_names) === JSON.stringify(task.feature_names));
+    if (!ds) return fail(`no public holdout rows on file for task ${task_id}`);
+    const i = row ?? Math.floor(Math.random() * ds.rows.length);
+    if (i >= ds.rows.length) return fail(`row must be below ${ds.rows.length}`);
+    const r = ds.rows[i], n = ds.feature_names.length;
+    return text({ task_id, task_closed: task.closed, dataset: ds.key, row: i, of_rows: ds.rows.length, features: r.slice(0, n), feature_names: ds.feature_names, true_label: r[n], ...(ds.accounts ? { account: { id: ds.accounts[i][0], created_at_utc: ds.accounts[i][1], created_by: ds.accounts[i][2] } } : {}), next: task.closed ? `laurel_ask_champion {"task_id":${task_id},"features":[...]} buys the champion's on-chain answer; laurel_predict_local runs it for free` : "the task is still open, so it has no champion yet: use laurel_predict_local on an entry" });
   });
   server.tool("laurel_ask_champion", "Buy ONE real prediction ON-CHAIN from the champion of a closed task (predict_task on NEAR testnet). The site's guest account pays the task's fee (0.001 NEAR) from its prepaid credit with a function-call key limited to the prediction methods, so you need no wallet; the fee goes to the model's owner. Returns the raw score, the label, the transaction hash and explorer link, gas and the owner's new earnings. Rate-limited; use laurel_predict_local for many rows.", { task_id: z.number().int().positive().describe("a CLOSED task (laurel_list_exhibits shows closed and champion)"), features: z.array(z.number().int()).describe("integers in the task's feature order (laurel_exhibit lists feature_names)") }, async ({ task_id, features }) => {
     const { code, body } = await askChampion(task_id, features, `mcp:${ip}`);
