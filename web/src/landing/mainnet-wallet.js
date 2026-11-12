@@ -36,7 +36,10 @@ async function load() {
       storage,
       modules: [setupHotWallet(), setupMeteorWallet(), setupIntearWallet(), setupNearMobileWallet(), setupNightly()],
     });
-    modal = setupModal(selector, { contractId: "" });
+    // Sign-in names the Laurel contract: NEAR Mobile sends every later transaction to the contract recorded at sign-in
+    // (it ignores the receiver of the transaction itself), and refuses an empty one ("Receiver account not specified").
+    // The wallet may add a key limited to predict_task on this contract; payments with a deposit are still approved in full.
+    modal = setupModal(selector, { contractId: CONTRACT, methodNames: ["predict_task"] });
     const sync = () => { const s = selector.store.getState(); const a = s.accounts.find((x) => x.active) || s.accounts[0]; accountId = a?.accountId ?? null; emit(); };
     selector.store.observable.subscribe(sync); sync();
     return selector;
@@ -48,7 +51,13 @@ async function load() {
 export async function restoreMainnet() {
   try { if (Object.keys(localStorage).some((k) => k.startsWith(PREFIX))) await load(); } catch {}
 }
-export async function signInMainnet() { await load(); modal.show(); }
+export async function signInMainnet() {
+  const s = await load();
+  // a session made before the sign-in named the contract (or for another contract) is renewed first
+  const c = s.store.getState().contract;
+  if (s.store.getState().accounts.length && c?.contractId !== CONTRACT) { try { await (await s.wallet()).signOut(); } catch {} accountId = null; emit(); }
+  modal.show();
+}
 export async function signOutMainnet() { const s = await load(); await (await s.wallet()).signOut(); accountId = null; emit(); }
 
 async function view(method, args = {}) {
@@ -82,6 +91,7 @@ export const TOP_UP = 0.01;   // NEAR the first payment attaches as credit: abou
 /** One paid prediction from the visitor's own mainnet account. Returns the same shape /api/ask returns. */
 export async function payOwnWallet(task, features) {
   const s = await load();
+  if (s.store.getState().contract?.contractId !== CONTRACT) { try { await (await s.wallet()).signOut(); } catch {} accountId = null; emit(); throw new Error("please connect your wallet again (the connection has to name the Laurel contract)"); }
   const w = await s.wallet();
   const me = accountId;
   if (!me) throw new Error("not signed in");
