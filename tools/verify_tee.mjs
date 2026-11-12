@@ -59,6 +59,10 @@ const view = async (account_id, method_name, a = {}) => {
   const r = await rpc("query", { request_type: "call_function", finality: "final", account_id, method_name, args_base64: Buffer.from(JSON.stringify(a)).toString("base64") });
   return JSON.parse(Buffer.from(r.result).toString());
 };
+/** Network hiccups (a dropped connection to Intel's PCS or OutLayer's API) are retried, not reported as a failed check. */
+async function retry(fn, tries = 4) {
+  for (let i = 1; ; i++) { try { return await fn(); } catch (e) { if (i >= tries) throw new Error(`network: ${e.message || e} (after ${tries} tries)`); await sleep(1500 * i); } }
+}
 const post = async (url, body) => (await fetch(url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) })).json();
 
 /** Scoring transactions: the ones given, or every successful request_score sent to the contract. */
@@ -125,12 +129,12 @@ for (const { hash, signer } of txs) {
     res.submission_id = scored?.submission_id; res.task_id = scored?.task_id;
     if (!scored?.ok || !reqData || !output) { lines.push("  SKIP  this request_score did not end in a recorded score (failed or retried run)"); results.push({ ...res, skipped: true }); console.log(`${hash} (#${scored?.submission_id ?? "?"})\n${lines.join("\n")}\n`); continue; }
 
-    const r = await fetch(ATTEST + hash);
+    const r = await retry(() => fetch(ATTEST + hash));
     const att = r.ok ? await r.json() : null;
     if (!check("1 OutLayer published a TDX attestation for this run", !!att?.tdx_quote, att ? `request_id ${att.request_id}` : `HTTP ${r.status}`)) throw new Error("no attestation");
 
     const quote = Buffer.from(att.tdx_quote, "base64");
-    const v = await getCollateralAndVerify(quote, INTEL_PCS);
+    const v = await retry(() => getCollateralAndVerify(quote, INTEL_PCS));
     const td = v.report?.data || {};
     check("2 the TDX quote verifies to Intel's root, TCB UpToDate", v.status === "UpToDate", `status ${v.status}, quote ${quote.length} bytes`);
 
