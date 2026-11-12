@@ -422,7 +422,7 @@ check("mainnet", "Every mainnet score came from the pinned evaluator, and each c
   }
   return `${scored} scored model(s) on mainnet, all by ${pinned.slice(0, 12)}…; ${closed} closed task(s), champion = best split B`;
 });
-check("33-36", "Every mainnet transaction cited in CLAIMS.md exists on mainnet and succeeded", async () => {
+check("33-37", "Every mainnet transaction cited in CLAIMS.md exists on mainnet and succeeded", async () => {
   const hashes = [...mainnetTx(claims)];
   const bad = [];
   for (const h of hashes) {

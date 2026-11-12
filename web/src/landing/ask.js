@@ -71,7 +71,7 @@ function scoreLocal(model, x) {
 // The two places the button can pay. Testnet is the main exhibition; mainnet is the same contract code with a small
 // prepaid credit of real NEAR (a demo), shown first when its champion exists.
 const NETS = {
-  mainnet: { label: "Mainnet · real NEAR", contract: "laurel.ikantongkolmangut.near", rpcs: ["https://rpc.mainnet.fastnear.com", "https://free.rpc.fastnear.com"], tx: (h) => `https://nearblocks.io/txns/${h}`, account: (a) => `https://nearblocks.io/address/${a}`, attest: "https://api.outlayer.ai/attestations/by-tx/", register: "worker.outlayer.near", what: "real NEAR on mainnet" },
+  mainnet: { label: "Mainnet · real NEAR", contract: "laurel.ikantongkolmangut.near", rpcs: ["https://rpc.mainnet.fastnear.com", "https://free.rpc.fastnear.com"], tx: (h) => `https://nearblocks.io/txns/${h}`, account: (a) => `https://nearblocks.io/address/${a}`, attest: "https://api.outlayer.ai/attestations/by-tx/", register: "worker.outlayer.near", what: "NEAR mainnet, with real NEAR" },
   testnet: { label: "Testnet", contract: null, rpcs: null, tx: EXPLORER_TX, account: EXPLORER_ACCOUNT, attest: "https://testnet-api.outlayer.ai/attestations/by-tx/", register: "worker.outlayer.testnet", what: "NEAR testnet" },
 };
 
@@ -163,7 +163,7 @@ export async function wireAsk(root, champ, champModel) {
     const c = cur();
     order = ds().rows.map((_, i) => i).sort(() => Math.random() - 0.5); at = 0;
     tabs.querySelectorAll("button").forEach((b) => { const on = b.dataset.net === n; b.classList.toggle("on", on); b.setAttribute("aria-selected", on); });
-    $("#ask-intro").innerHTML = `One press sends a real transaction on <b>${NETS[n].what}</b>. Model #${c.champ.winner} answers inside the contract <code>${esc(n === "mainnet" ? NETS.mainnet.contract : contractId())}</code> and its owner is paid ${yoctoToNear(c.champ.fee_per_call, 3)} NEAR. Our guest account pays, so you need no wallet. ${speak().intro(pad2(c.champ.task_id))}`;
+    $("#ask-intro").innerHTML = `One press sends a real transaction on <b>${NETS[n].what}</b>. Model #${c.champ.winner} answers inside the contract <code>${esc(n === "mainnet" ? NETS.mainnet.contract : contractId())}</code> and its owner is paid ${yoctoToNear(c.champ.fee_per_call, 3)} NEAR. ${n === "mainnet" ? "Our guest account pays, so you need no wallet, or pay from your own wallet below." : "Our guest account pays, so you need no wallet."} ${speak().intro(pad2(c.champ.task_id))}`;
     next.textContent = speak().next;
     $("#ask-own").hidden = n !== "mainnet";
     setLedger();
