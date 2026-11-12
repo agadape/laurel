@@ -383,6 +383,44 @@ if (!flag("--no-sweep")) check("all", "Every transaction hash in CLAIMS.md exist
   return `${all.length} of ${all.length} found` + (failed.length ? `; ${failed.length} ended in a failure (${failed.map(short).join(", ")}), which CLAIMS cites as a rejected path` : "; all of them succeeded");
 });
 
+section("Also on NEAR mainnet (same code, small funds, a demo)");
+const MAINNET_CONTRACT = opt("--mainnet-contract") ?? "laurel.ikantongkolmangut.near";
+const MAINNET_RPCS = ["https://rpc.mainnet.fastnear.com", "https://rpc.mainnet.near.org"];
+const mview = async (method, args = {}) => {
+  const r = await rpc(MAINNET_RPCS, "query", { request_type: "call_function", finality: "final", account_id: MAINNET_CONTRACT, method_name: method, args_base64: Buffer.from(JSON.stringify(args)).toString("base64") });
+  if (r.error) throw new Mismatch(`mainnet view ${method} failed: ${r.cause}`);
+  return JSON.parse(Buffer.from(r.result.result).toString());
+};
+check("mainnet", "The mainnet contract runs the same wasm and pins the same evaluator on outlayer.near", async () => {
+  const r = await rpc(MAINNET_RPCS, "query", { request_type: "view_account", finality: "final", account_id: MAINNET_CONTRACT });
+  if (r.error) throw new Mismatch(`mainnet account ${MAINNET_CONTRACT}: ${r.cause}`);
+  const acc = r.result;
+  const local = base58(sha256(read("wasm/bursa.wasm")));
+  expect(acc.code_hash === local, `mainnet code hash ${acc.code_hash}, sha256(wasm/bursa.wasm) ${local}`);
+  const [, pinned] = await mview("get_evaluator");
+  const ev = sha256(read("wasm/evaluator.wasm")).toString("hex");
+  expect(pinned === ev, `mainnet pins ${pinned}, sha256(wasm/evaluator.wasm) ${ev}`);
+  const c = await mview("get_config");
+  expect(c.outlayer === "outlayer.near", `mainnet contract uses ${c.outlayer}`);
+  return `${MAINNET_CONTRACT}: code ${short(local)} = testnet's, evaluator ${pinned.slice(0, 12)}…, ${c.task_count} task(s), ${c.submission_count} model(s)`;
+});
+check("mainnet", "Every mainnet score came from the pinned evaluator, and each closed mainnet task's champion is its best sealed score", async () => {
+  const [, pinned] = await mview("get_evaluator");
+  const tasks = await mview("list_tasks", { from: 0, limit: 50 });
+  let scored = 0, closed = 0;
+  for (const t of tasks) {
+    const subs = await mview("list_submissions", { task_id: t.task_id });
+    for (const s of subs.filter((s) => s.status === "Scored")) { expect(s.scored_by === pinned, `#${s.submission_id} scored by ${s.scored_by}`); scored++; }
+    if (t.closed) {
+      const board = (await mview("leaderboard", { task_id: t.task_id })).filter((r) => r.score_b_bps != null);
+      const best = board.sort((a, b) => b.score_b_bps - a.score_b_bps || a.submission_id - b.submission_id)[0];
+      expect(!best || best.submission_id === t.winner, `task ${t.task_id}: champion #${t.winner}, best sealed #${best?.submission_id}`);
+      closed++;
+    }
+  }
+  return `${scored} scored model(s) on mainnet, all by ${pinned.slice(0, 12)}…; ${closed} closed task(s), champion = best split B`;
+});
+
 section("Live endpoints (not on-chain)");
 const http = async (url, init) => { try { return await fetch(url, { ...init, signal: AbortSignal.timeout(25000) }); } catch (e) { throw new Unreachable(`${new URL(url).host}: ${String(e?.message ?? e).slice(0, 80)}`); } };
 check("16", "The site answers", async () => {
