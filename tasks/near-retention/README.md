@@ -21,7 +21,7 @@ contract's leaderboard until the deadline, **12 Nov 2026 12:00 UTC**, when `clos
 Honest footnote (6 Nov): the split-B *score* is readable on-chain before close in the OutLayer receipt's result (and, until
 the v1.1 upgrade that afternoon, through `get_submission` too); the *rows* are what is sealed. The team has read those values while checking an audit finding
 and commits to make **no further team entries on task 5** (`p1`, `p2`, `laurel-team`, `maker`) so that knowledge cannot be
-used; see the README's Security model.
+used; see the README's Security model. Disclosure (12 Nov): one team member entered after that commitment: #14 (`dexseu0.testnet`, 10 Nov) is Dex, the team's designer, testing the one-command quickstart with its default settings. Its bytes are identical to #16 (`chenn19i.testnet`, outside the team), the default quickstart model, so it uses no knowledge of split B; it is still a team entry.
 
 | Submission | Model | Bytes | Public holdout (150 rows) | Split A, TEE | Split B, TEE | Local evaluator (wasmtime, same wasm) |
 |---|---|---|---|---|---|---|
