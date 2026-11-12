@@ -4,6 +4,7 @@
 import { LEAF } from "../model.js";
 import { EXPLORER_TX, EXPLORER_ACCOUNT } from "../rpc.js";
 import { yoctoToNear, pad2 } from "./data.js";
+import { verifyPanel } from "./verify.js";
 
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 const n = (x) => Number(x).toLocaleString("en-US");
@@ -139,6 +140,7 @@ export async function wireAsk(root, champ, champModel) {
             <div><dt>Transaction</dt><dd><a href="${EXPLORER_TX(esc(j.tx))}" target="_blank" rel="noreferrer">${esc(j.tx.slice(0, 8))}…${esc(j.tx.slice(-6))} ↗</a></dd></div>
             <div><dt>Computed</dt><dd>inside the contract, ${esc(j.gas_tgas)} Tgas</dd></div>
             <div><dt>Paid</dt><dd>${yoctoToNear(j.fee_yocto, 3)} NEAR to ${j.owner ? `<a href="${EXPLORER_ACCOUNT(esc(j.owner))}" target="_blank" rel="noreferrer">${esc(shortId(j.owner))}</a>` : "the model's owner"}</dd></div>`);
+          verifyPanel(out, { ...j, features });
           label.textContent = "Answered on-chain"; next.disabled = false; busy = false;
           return;
         }

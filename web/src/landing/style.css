@@ -302,3 +302,17 @@ a.brow:hover { background: linear-gradient(90deg, rgba(0, 191, 255, .09), transp
   .ask-out { min-height: 0; }
   .ask-bill div { grid-template-columns: 96px minmax(0, 1fr); }
 }
+
+/* Check it yourself: the browser re-verifies an on-chain answer */
+.ask-check { margin-top: 22px; }
+.ask-check-head { color: var(--mut); font-size: 16px; }
+.ask-check ol { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 10px; }
+.ask-check li { display: grid; grid-template-columns: 22px minmax(0, 1fr); column-gap: 10px; font-size: 15px; line-height: 1.4; }
+.ask-check li::before { content: "·"; grid-row: span 2; color: var(--mut); font: 500 17px/1.3 var(--f-ui); }
+.ask-check li.ok::before { content: "✓"; color: var(--blue); }
+.ask-check li.bad::before { content: "✗"; color: var(--orange); }
+.ask-check li b { font-weight: 500; }
+.ask-check li span { color: var(--mut); overflow-wrap: anywhere; }
+.ask-check li.bad span { color: var(--orange); }
+.ask-check code { font-family: var(--f-mono); font-size: .92em; color: var(--paper); }
+.ask-check-foot { margin-top: 14px; font-size: 15px; color: var(--paper); }
