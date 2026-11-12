@@ -13,6 +13,10 @@
 
 What is proven and what is still trusted: [Security model and trust boundaries](#security-model-and-trust-boundaries).
 
+[![Ask the champion on NEAR mainnet (12 Nov): one press pays 0.001 NEAR to the model's owner, the champion answers inside laurel.ikantongkolmangut.near, and the visitor's browser re-checks the answer against mainnet in 10 steps, ending with the Intel TDX quote of the champion's scoring run](docs/img/mainnet-ask.gif)](https://laurel-near.vercel.app)
+
+*One press of **Ask the champion → Mainnet** on the live site, recorded 12 Nov: a real NEAR payment, the answer, and the browser's own 10-step check (transaction, key limits, champion, model bytes, the same raw score recomputed locally, evaluator, Intel TDX quote, fee).*
+
 **The problem.** Between 8 June and 2 August 2026, 4,407 new `.near` accounts did something in their first week on NEAR mainnet. Only 12.4 % of them acted again between day 30 and day 90 ([our query of NEAR's public BigQuery dataset](tasks/near-retention/README.md)). Wallets, relayers and quest programs pay to bring every one of those accounts in, so a model that says after week one *which* accounts will stay is worth money to them. Today whoever sells such a model also reports its accuracy, on a test set they chose and may have tuned on; the buyer cannot check it, and a smart contract cannot use the model at all without trusting someone's server and API key.
 
 **What Laurel does.** An open competition contract on NEAR. Anyone posts a task with a private test set; anyone enters a small model **as data**. OutLayer scores each model inside a TEE, on rows that only the evaluator whose hash the contract pins can read. A second split, withheld from the leaderboard and every contract view until the deadline (its rows never leave the enclave), alone picks the winner. The winner then lives in the contract: any agent or contract calls `predict_task(task_id, features)`, the contract runs the model inside NEAR consensus, and every call pays the model's owner.
