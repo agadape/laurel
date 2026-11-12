@@ -3,6 +3,7 @@
 import { treeLayout, LEAF } from "../model.js";
 import { yoctoToNear, pad2, bpsText, titleOf } from "./data.js";
 import { contractId, EXPLORER_ACCOUNT } from "../rpc.js";
+import { askSection } from "./ask.js";
 
 const APP = "";
 const REPO = "https://github.com/agadape/laurel";
@@ -33,11 +34,12 @@ export function renderPage(root, data) {
   const fee = yoctoToNear(champ?.fee_per_call || "0", 3);
   const earned = data.earned ? yoctoToNear(data.earned.yocto, 3) : "—";
   const words = [
-    ["n", data.config.task_count], "exhibits,", ["n", data.config.submission_count], "models judged in a TEE.", "The", "champion", "has", "served", ["n", winRow?.calls], "predictions", "and", "earned", "its", "owner", ["n", earned], "NEAR", "on-chain,", "at", ["n", "4.3"], "Tgas", "a", "call.",
+    ["n", data.config.task_count], "exhibits,", ["n", data.config.submission_count], "models judged in a TEE.", "The", "champion", "has", "served", ["n", winRow?.calls, "calls"], "predictions", "and", "earned", "its", "owner", ["n", earned, "earned"], "NEAR", "on-chain,", "at", ["n", "4.3"], "Tgas", "a", "call.",
   ];
 
   root.innerHTML = `
   <main id="exhibits" class="page">
+    ${askSection(champ, winRow, earned)}
     ${open ? `<section class="l-sec board-sec"><i class="aura a1"></i><div class="l-wrap">
       <div class="board-head">
         <h2 class="rise">Exhibit ${pad2(open.task_id)}: ${titleOf(open)}</h2>
@@ -64,7 +66,7 @@ export function renderPage(root, data) {
         <div class="how-view v1"><div class="hex" id="hex" aria-hidden="true"></div><div class="hero-num"><b>${winRow?.bytes.toLocaleString("en-US")}</b><span>bytes, stored by the contract itself. This is model #${champ?.winner}.</span></div></div>
         <div class="how-view v2"><img src="${ASET}latar-balok.webp" alt="" /><div class="hero-num"><span>Evaluator hash pinned by the contract</span><code>${data.evaluator[1]}</code></div></div>
         <div class="how-view v3"><div class="two"><div><span>Split A, public while open</span><i class="line a"></i></div><div><span>Split B, withheld until close</span><i class="line b"></i></div></div></div>
-        <div class="how-view v4"><div class="ledger"><div><b>${fee}</b><span>NEAR per prediction</span></div><div><b>${winRow?.calls}</b><span>predictions served</span></div><div><b>${earned}</b><span>NEAR earned by its owner</span></div></div></div>
+        <div class="how-view v4"><div class="ledger"><div><b>${fee}</b><span>NEAR per prediction</span></div><div><b data-live="calls">${winRow?.calls}</b><span>predictions served</span></div><div><b data-live="earned">${earned}</b><span>NEAR earned by its owner</span></div></div></div>
       </div>
     </div></section>
 
@@ -74,7 +76,7 @@ export function renderPage(root, data) {
       <p class="body rise">Exhibit ${pad2(champ.task_id)}, read live. Split B is the reading taken on rows no entrant has ever seen, so it decides.</p>
     </div></section>` : ""}
 
-    <section class="l-sec sum-sec"><div class="l-wrap"><p class="sum" id="sum">${words.map((w) => Array.isArray(w) ? `<span class="w num">${w[1]}</span>` : w.split(" ").map((x) => `<span class="w">${x}</span>`).join(" ")).join(" ")}</p></div></section>
+    <section class="l-sec sum-sec"><div class="l-wrap"><p class="sum" id="sum">${words.map((w) => Array.isArray(w) ? `<span class="w num"${w[2] ? ` data-live="${w[2]}"` : ""}>${w[1]}</span>` : w.split(" ").map((x) => `<span class="w">${x}</span>`).join(" ")).join(" ")}</p></div></section>
 
     <section class="l-sec who-sec"><div class="l-wrap who">
       <div class="side">

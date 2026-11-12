@@ -4,6 +4,7 @@ import "./style.css";
 import { loadData } from "./data.js";
 import { createWorld, PLATE } from "./world.js";
 import { renderPage, wreath, startLoops } from "./sections.js";
+import { wireAsk } from "./ask.js";
 
 const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
 const lerp = (a, b, t) => a + (b - a) * t;
@@ -255,6 +256,7 @@ function afterRender(info) {
   closeEl = $("#close");
   if (info.champModel) wreathDraw = wreath($("#wreath"), info.champModel.model);
   startLoops(lenis);
+  wireAsk($("#rest"), info.champ, info.champModel);
   $("#see").addEventListener("click", (e) => { e.preventDefault(); lenis.scrollTo("#proof", { duration: 2, offset: -40 }); });
 }
 
