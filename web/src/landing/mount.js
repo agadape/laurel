@@ -46,7 +46,7 @@ const $ = (q) => root.querySelector(q);
 root.classList.add("ld-root");
 root.innerHTML = `<a class="skip" href="#exhibits">Skip to exhibits</a>
   <a class="logo" href="#/" id="logo">LAUREL</a>
-  <span class="status" id="status"><i></i>Live on NEAR testnet</span>
+  <span class="status" id="status"><i></i>Live on NEAR mainnet and testnet</span>
   <nav class="nav" id="nav" aria-label="primary"><a class="src" href="https://github.com/agadape/laurel" target="_blank" rel="noreferrer">Source</a><a class="btn" href="#/tasks" data-signin><span>Connect wallet</span><i aria-hidden="true">↗</i></a></nav>
   <i class="topbar" id="bar"></i>
   <div id="boot" aria-hidden="true">
