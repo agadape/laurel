@@ -156,7 +156,19 @@ async function stepModels() {
   for (const [name, expectA] of MODELS) {
     const bytes = fs.readFileSync(path.join(DS, "out", name, "model.bin"));
     const have = mine.find((s) => s.bytes === bytes.length);
-    if (have) { console.log(`  ${name}: #${have.submission_id} ${json(have.status)} A ${have.score_a_bps}`); continue; }
+    if (have && have.status === "Scored") { console.log(`  ${name}: #${have.submission_id} ${json(have.status)} A ${have.score_a_bps}`); continue; }
+    if (have) {
+      // submitted earlier but not scored yet (for example a request_score that ran out of balance): score it now
+      add("models", `p1 request_score ${name} #${have.submission_id} (submitted, status ${json(have.status)}): 0.1 to OutLayer, unused part refunded; split A must be ${expectA}`, "0.1", "0.01");
+      if (SEND && run("models")) {
+        const p1 = subAcc("p1"); if (!p1) throw new Error("MAINNET_P1_* missing");
+        await send(`${name}: request_score #${have.submission_id}`, () => callFn(p1, C, "request_score", { submission_id: have.submission_id }, { deposit: "0.1", gas: "300" }));
+        const got = await view(C, "get_submission", { submission_id: have.submission_id });
+        console.log(`  ${name} #${have.submission_id}: ${json(got.status)} split A ${got.score_a_bps} ${got.score_a_bps === expectA ? "= testnet" : "≠ testnet: STOP and check the secret and the evaluator"}`);
+        if (got.score_a_bps !== expectA) throw new Error("split A differs from testnet");
+      }
+      continue;
+    }
     const storage = (bytes.length + 400) / 1e5;
     add("models", `p1 submit_model ${name} (${bytes.length.toLocaleString("en-US")} B): storage ≈ ${storage.toFixed(3)} + submission fee 0.1 (to the task creator, i.e. back to us) + 0.02 margin refunded`, (storage + 0.12).toFixed(3), storage.toFixed(3));
     add("models", `p1 request_score ${name}: 0.1 to OutLayer for the TEE run, unused part refunded; split A must be ${expectA} bps as on testnet`, "0.1", "0.01");
