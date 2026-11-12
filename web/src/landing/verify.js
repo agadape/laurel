@@ -50,7 +50,7 @@ function rawScore(model, x) {
 /** The checks, in order. Each returns a line of what was seen, or throws with what was wrong. */
 function checks(ans) {
   const C = contractId();
-  let tx, sub, task, evaluator, bytes;
+  let tx, sub, task, evaluator, bytes, att, quote, td;
   return [
     ["The transaction is on NEAR testnet and succeeded", async () => {
       const r = await rpc("EXPERIMENTAL_tx_status", { tx_hash: ans.tx, sender_account_id: ans.paid_by, wait_until: "NONE" });
@@ -102,6 +102,46 @@ function checks(ans) {
       if (h !== evaluator[1]) throw new Error(`sha256 ${h} ≠ ${evaluator[1]}`);
       return `downloaded ${wasm.length.toLocaleString("en-US")} bytes from <code>${esc(new URL(evaluator[0]).host)}</code>: sha256 matches; its source is <code>evaluator/</code> in the repository`;
     }],
+    ["Its score was computed in an Intel TDX enclave that OutLayer's contract approves", async () => {
+      const map = await (await fetch(`${import.meta.env.BASE_URL}aset/attested.json`)).json();
+      const scoreTx = map.runs[ans.submission_id];
+      if (!scoreTx) throw new Error(`no scoring transaction on file for #${ans.submission_id}`);
+      att = await (await fetch(`https://testnet-api.outlayer.ai/attestations/by-tx/${scoreTx}`)).json();
+      const { getCollateralAndVerify, PHALA_PCCS_URL } = await import("@phala/dcap-qvl");
+      quote = Uint8Array.from(atob(att.tdx_quote), (c) => c.charCodeAt(0));
+      const v = await getCollateralAndVerify(quote, PHALA_PCCS_URL);
+      td = v.report.data;
+      if (v.status !== "UpToDate") throw new Error(`TCB status ${v.status}`);
+      const m = { mrtd: hex(td.mrTd), rtmr0: hex(td.rtMr0), rtmr1: hex(td.rtMr1), rtmr2: hex(td.rtMr2), rtmr3: hex(td.rtMr3) };
+      const r = await rpc("query", { request_type: "call_function", finality: "final", account_id: "worker.outlayer.testnet", method_name: "get_approved_measurements", args_base64: btoa("{}") });
+      const approved = JSON.parse(new TextDecoder().decode(new Uint8Array(r.result)));
+      if (!approved.some((x) => Object.keys(m).every((k) => x[k] === m[k]))) throw new Error(`measurements MRTD ${m.mrtd.slice(0, 12)}… not approved`);
+      return `scoring tx <code>${esc(short(scoreTx))}</code>: OutLayer's TDX quote for that run verifies to Intel's root certificate in your browser (TCB UpToDate), and its five measurements are on the approved list of <code>worker.outlayer.testnet</code>`;
+    }],
+    ["That enclave ran the pinned evaluator on the task's secret and returned the recorded score", async () => {
+      const enc = new TextEncoder(), parts = [];
+      const le64 = (n) => { const b = new Uint8Array(8); new DataView(b.buffer).setBigInt64(0, BigInt(n), true); return b; };
+      parts.push(enc.encode(att.task_type), le64(att.task_id));
+      for (const k of ["repo", "commit", "build_target", "wasm_hash", "input_hash"]) if (att[k] != null) parts.push(enc.encode(att[k]));
+      parts.push(enc.encode(att.output_hash));
+      if (att.block_height != null) parts.push(le64(att.block_height));
+      for (const k of ["caller_account_id", "project_id", "secrets_ref"]) if (att[k] != null) parts.push(enc.encode(att[k]));
+      parts.push(le64(att.timestamp));
+      if (att.attached_usd != null) parts.push(enc.encode(att.attached_usd));
+      const all = new Uint8Array(parts.reduce((a, p) => a + p.length, 0));
+      parts.reduce((o, p) => (all.set(p, o), o + p.length), 0);
+      if (hex(await sha256(all)) !== hex(td.reportData).slice(0, 64)) throw new Error("the quote's report_data is not the hash of this run's record");
+      if (att.wasm_hash !== evaluator[1] || att.executed_wasm_sha256 !== evaluator[1]) throw new Error(`ran wasm ${att.wasm_hash}`);
+      if (att.secrets_ref !== `${task.secrets_account}/${task.secrets_profile}`) throw new Error(`secret ${att.secrets_ref}`);
+      const st = await rpc("EXPERIMENTAL_tx_status", { tx_hash: att.transaction_hash, sender_account_id: att.caller_account_id, wait_until: "NONE" });
+      const recs = Object.fromEntries((st.receipts || []).map((x) => [x.receipt_id, x]));
+      const o = st.receipts_outcome.find((x) => recs[x.id]?.receipt?.Action?.actions?.some((a) => a.FunctionCall?.method_name === "on_execution_response"));
+      const out = fromB64(o.outcome.status.SuccessValue);
+      if (hex(await sha256(out)) !== att.output_hash) throw new Error("the output on chain is not the attested output");
+      let res = JSON.parse(new TextDecoder().decode(out)); if (typeof res === "string") res = JSON.parse(res);
+      if (res.a.bal_acc_bps !== sub.score_a_bps || (sub.score_b_bps != null && res.b.bal_acc_bps !== sub.score_b_bps)) throw new Error("the recorded scores differ from the attested output");
+      return `the quote commits to this run's record: wasm <code>${esc(short(att.wasm_hash, 10, 4))}</code>, secret <code>${esc(att.secrets_ref)}</code>, and an output whose sha256 matches what OutLayer returned on-chain, holding split A ${(res.a.bal_acc_bps / 100).toFixed(2)} % and split B ${(res.b.bal_acc_bps / 100).toFixed(2)} %, the scores the contract recorded`;
+    }],
     ["The fee went to the model's owner", async () => {
       let ev = null;
       for (const r of tx.receipts_outcome) for (const l of r.outcome.logs || []) { if (l.startsWith("EVENT_JSON:")) { const j = JSON.parse(l.slice(11)); if (j.event === "prediction") ev = j.data[0]; } }
@@ -128,7 +168,7 @@ export function verifyPanel(host, ans) {
       catch (e) { li.querySelector("span").textContent = String(e.message || e).slice(0, 200); li.classList.add("bad"); }
       dispatchEvent(new Event("resize"));
     }
-    box.insertAdjacentHTML("beforeend", `<p class="ask-check-foot">${ok === list.length ? `Verified: ${ok} of ${list.length} checks passed.` : `${ok} of ${list.length} checks passed.`} Not checked here: that OutLayer's worker really ran inside a TEE (see the README's trust boundaries).</p>`);
+    box.insertAdjacentHTML("beforeend", `<p class="ask-check-foot">${ok === list.length ? `Verified: ${ok} of ${list.length} checks passed.` : `${ok} of ${list.length} checks passed.`} Not checked here: that the code behind OutLayer's approved measurements is honest, which rests on OutLayer's owner (see the README's trust boundaries). Every score on the contract: <code>node tools/verify_tee.mjs</code>.</p>`);
     dispatchEvent(new Event("resize"));
   });
 }

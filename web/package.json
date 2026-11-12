@@ -16,6 +16,7 @@
     "@near-wallet-selector/meteor-wallet": "^10.1.4",
     "@near-wallet-selector/modal-ui": "^10.1.4",
     "@near-wallet-selector/nightly": "^10.1.4",
+    "@phala/dcap-qvl": "0.7.1",
     "buffer": "^6.0.3",
     "lenis": "1.1.20",
     "react": "^18.3.1",

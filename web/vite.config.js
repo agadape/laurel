@@ -28,5 +28,7 @@ export default defineConfig({
   plugins: [react(), devAsk()],
   // wallet-selector and its wallet SDKs expect Node globals; Buffer is provided in main.jsx
   define: { global: "globalThis", "process.env": {} },
+  // @phala/dcap-qvl (Intel TDX quote verification in the browser) requires Node's crypto only to detect Node
+  resolve: { alias: { crypto: new URL("./src/shims/crypto.js", import.meta.url).pathname.replace(/^\/([A-Z]:)/, "$1") } },
   build: { outDir: "dist", sourcemap: false },
 });

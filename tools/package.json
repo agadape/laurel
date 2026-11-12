@@ -4,6 +4,7 @@
   "type": "module",
   "description": "Deploy, submit, score, agent and e2e scripts for the Laurel contract (codename bursa, testnet).",
   "dependencies": {
+    "@phala/dcap-qvl": "0.7.1",
     "dotenv": "^18.0.9",
     "near-api-js": "^7.4.0"
   }
