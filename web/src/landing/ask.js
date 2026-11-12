@@ -35,7 +35,7 @@ const SPEAK = {
   },
   "german-credit": {
     next: "Another applicant",
-    intro: (id) => `A loan application from a 1994 textbook dataset, used here as a simulation. The champion of exhibit ${id} has never seen it.`,
+    intro: (id) => `A loan application from the German Credit dataset (collected in 1973–75, published by UCI in 1994), used here as a simulation. The champion of exhibit ${id} has never seen it.`,
     title: (f) => `${n(f.credit_amount_dm)} DM over ${f.duration_months} months`,
     link: () => "",
     facts: (f, acc, codes) => [

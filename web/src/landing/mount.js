@@ -74,7 +74,7 @@ root.innerHTML = `<a class="skip" href="#exhibits">Skip to exhibits</a>
       <div class="say scene-a" id="a">
         <h2><span class="ln"><span>Small models,</span></span><span class="ln"><span>judged in the dark,</span></span><span class="ln"><span>paid in the open.</span></span></h2>
         <p class="lede">Laurel is a registry on NEAR for small decision models. You submit a model as data, a TEE scores it on a test set nobody can read, and the best one becomes a contract method that agents and other contracts pay to call.</p>
-        <div class="cta"><a class="btn" href="#proof" id="see"><span>See who won</span><i aria-hidden="true">↗</i></a><a class="btn solid" href="#/tasks" data-signin><span>Connect wallet to enter</span><i aria-hidden="true">↗</i></a></div>
+        <div class="cta"><a class="btn solid" href="#ask" id="see"><span>Ask the champion, no wallet</span><i aria-hidden="true">↓</i></a><a class="btn" href="#/tasks" data-signin><span>Connect wallet to enter</span><i aria-hidden="true">↗</i></a></div>
       </div>
     </div>
   </div>
@@ -257,7 +257,7 @@ function afterRender(info) {
   if (info.champModel) wreathDraw = wreath($("#wreath"), info.champModel.model);
   startLoops(lenis);
   wireAsk($("#rest"), info.champ, info.champModel);
-  $("#see").addEventListener("click", (e) => { e.preventDefault(); lenis.scrollTo("#proof", { duration: 2, offset: -40 }); });
+  $("#see").addEventListener("click", (e) => { e.preventDefault(); lenis.scrollTo(document.querySelector("#ask") ? "#ask" : "#proof", { duration: 2, offset: -40 }); });
 }
 
 const onResize = () => { measure(); if (world) buildKeys(); };
