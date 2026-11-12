@@ -331,3 +331,14 @@ a.brow:hover { background: linear-gradient(90deg, rgba(0, 191, 255, .09), transp
 .ask-own[hidden] { display: none; }
 .ask-own p { color: var(--mut); font-size: 15px; max-width: 34em; }
 .ask-own code { font-family: var(--f-mono); font-size: .9em; }
+
+/* Wallet picker (wallet-selector modal-ui), in the site's dark palette and fully opaque over the page */
+#near-wallet-selector-modal {
+  --backdrop-bg: rgba(5, 6, 8, .78); --content-bg: #14151A; --heading-color: #F4F2EC; --text-color: #C9C7C1;
+  --sidebar-border-color: #2A2B31; --wallet-option-border-color: #2A2B31; --wallet-option-bg-hover: rgba(0, 191, 255, .12);
+  --selected-wallet-bg: rgba(0, 191, 255, .18); --selected-wallet-bg-hover: rgba(0, 191, 255, .24); --wallet-option-outline-color: #00BFFF;
+  --home-button-bg: #22232A; --change-path-bg: #22232A; --confirm-button-bg: #00BFFF; --confirm-button-bg-hover: #3FD0FF;
+}
+#near-wallet-selector-modal .nws-modal-wrapper { z-index: 1000; }
+#near-wallet-selector-modal .nws-modal-overlay { background: var(--backdrop-bg); backdrop-filter: blur(6px); }
+#near-wallet-selector-modal .nws-modal { background: #14151A; border: 1px solid rgba(255, 255, 255, .12); border-radius: 16px; }
