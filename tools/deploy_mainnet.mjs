@@ -51,7 +51,12 @@ const provider = new JsonRpcProvider({ url: RPC });
 const out = { when: new Date().toISOString(), network: "mainnet", root: ROOT, send: SEND, step: STEP, txs: [] };
 const outFile = path.join(here, "out", "deploy_mainnet.json");
 const prev = fs.existsSync(outFile) ? JSON.parse(fs.readFileSync(outFile, "utf8")) : null;
-const save = () => { if (SEND) { out.txs = [...(prev?.txs || []), ...out.txs]; fs.writeFileSync(outFile, json(out) + "\n"); } };
+const save = () => {
+  if (!SEND) return;
+  const seen = new Set(), txs = [];
+  for (const t of [...(prev?.txs || []), ...out.txs]) { const k = t.hash || t.label; if (!seen.has(k)) { seen.add(k); txs.push(t); } }
+  fs.writeFileSync(outFile, json({ ...out, txs }) + "\n");
+};
 
 // ---------- read-only helpers ----------
 async function rpcQuery(params) {
