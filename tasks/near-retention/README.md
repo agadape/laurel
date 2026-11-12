@@ -13,7 +13,25 @@ the storage. Quest platforms, airdrops and onboarding programs pay again to attr
 week, "this account will still be here in a month" is worth money to all of them, and on Laurel it is callable by any
 agent or contract: `predict_task(5, features)`.
 
-## Results
+## Final standings (closed 12 Nov 2026, 11:59:58 UTC)
+
+`close_task` ran after the deadline ([`eQyPNfRM…`](https://testnet.nearblocks.io/txns/eQyPNfRMYKZXtX59ow6uS1eWTTfMvKs2BiCnvGQ15b8)) and revealed split B. Five entries were tied at 8350 bps on the public split; the sealed split separated them.
+
+| Rank | Entry | Owner | Model | Split A | **Split B** |
+|---|---|---|---|---|---|
+| 1 (champion) | #10 | `maker` (team sub-account; the autonomous agent trained and entered it, see docs/AGENTS.md) | 20 trees, 3,059 B | 8350 | **8600** |
+| 2 | #15 | `stevbeq.testnet` (outside the team) | 60 trees × depth 2, 9,511 B | 8350 | **8500** |
+| 3 (tie, earliest first) | #7 | `p1` (team baseline) | 10 trees × depth 2, 1,611 B | 8350 | 8400 |
+| | #12 | `maker` (the agent's re-run) | 40 trees, 6,307 B | 8300 | 8400 |
+| | #14 | `dexseu0.testnet` (Dex, the team's designer) | quickstart default, 3,191 B | 8350 | 8400 |
+| | #16 | `chenn19i.testnet` (outside the team) | quickstart default, the same bytes as #14 | 8350 | 8400 |
+| 7 | #8 | `p2` (team baseline) | 30 trees × depth 3, 10,051 B | 8200 | 8250 |
+| | #11 | `p2` | 15 trees, 5,041 B | 8300 | 8250 |
+| 9 | #9 | `laurel-team` (team baseline) | 50 trees × depth 4, 32,087 B | 8250 | 8050 |
+
+The biggest model, #9, had the best score on the public holdout of the three baselines (8638 bps) and finished last on the sealed split: the result the sealed split exists to catch. The champion now answers `predict_task(5, features)`.
+
+## Results (before the close)
 
 Three baseline models, trained on `public_train.csv` only, exported with `tools/export.py`, scored by the pinned evaluator
 (`8b80010f…`) inside OutLayer's TEE on 5 Nov 2026. Split A is public while the task is open; split B is withheld from the
@@ -25,9 +43,9 @@ used; see the README's Security model. Disclosure (12 Nov): one team member ente
 
 | Submission | Model | Bytes | Public holdout (150 rows) | Split A, TEE | Split B, TEE | Local evaluator (wasmtime, same wasm) |
 |---|---|---|---|---|---|---|
-| #7 (`p1`) | 10 trees × depth 2 (`train.py --trees 10 --depth 2`) | 1,611 | 8222 bps | **8350 bps** | sealed | A 8350 · B 8400 |
-| #9 (team) | 50 trees × depth 4 (`train.py`) | 32,087 | 8638 bps | 8250 bps | sealed | A 8250 · B 8050 |
-| #8 (`p2`) | 30 trees × depth 3 | 10,051 | 8388 bps | 8200 bps | sealed | A 8200 · B 8250 |
+| #7 (`p1`) | 10 trees × depth 2 (`train.py --trees 10 --depth 2`) | 1,611 | 8222 bps | **8350 bps** | 8400 bps (revealed at close) | A 8350 · B 8400 |
+| #9 (team) | 50 trees × depth 4 (`train.py`) | 32,087 | 8638 bps | 8250 bps | 8050 bps (revealed at close) | A 8250 · B 8050 |
+| #8 (`p2`) | 30 trees × depth 3 | 10,051 | 8388 bps | 8200 bps | 8250 bps (revealed at close) | A 8200 · B 8250 |
 
 Balanced accuracy in basis points, rounded to 50 (the evaluator's output also carries the exact confusion counts per split, so the exact value can be recomputed; the rounding is cosmetic). The TEE's split-A readings equal the local evaluator's to the point,
 and the integer model agrees with sklearn on every holdout row (`report.json`, `label agreement … 1.0000`). Note the

@@ -31,6 +31,7 @@ export function renderPage(root, data) {
   const winRow = champ?.board.find((r) => r.submission_id === champ.winner);
   const rows = open ? open.board.filter((r) => r.score_a_bps != null) : [];
   const leadA = champ ? champ.board.slice().sort((a, b) => b.score_a_bps - a.score_a_bps)[0] : null;
+  const tiedA = champ ? champ.board.filter((r) => r.score_a_bps === leadA.score_a_bps).length : 0;
   const fee = yoctoToNear(champ?.fee_per_call || "0", 3);
   const earned = data.earned ? yoctoToNear(data.earned.yocto, 3) : "—";
   const words = [
@@ -71,7 +72,7 @@ export function renderPage(root, data) {
     </div></section>
 
     ${champ ? `<section class="l-sec proof-sec" id="proof"><i class="aura a3"></i><div class="l-wrap">
-      <h2 class="rise">${leadA.submission_id === champ.winner ? `#${champ.winner} led the public split and held the sealed one.` : `#${leadA.submission_id} led the public split. #${champ.winner} won the sealed one.`}</h2>
+      <h2 class="rise">${tiedA > 1 ? `${tiedA} entries tied on the public split. #${champ.winner} won the sealed one.` : leadA.submission_id === champ.winner ? `#${champ.winner} led the public split and held the sealed one.` : `#${leadA.submission_id} led the public split. #${champ.winner} won the sealed one.`}</h2>
       ${race(champ)}
       <p class="body rise">Exhibit ${pad2(champ.task_id)}, read live. Split B is the reading taken on rows no entrant has ever seen, so it decides.</p>
     </div></section>` : ""}
@@ -151,8 +152,11 @@ function runRace() {
   if (!el) return;
   const rows = JSON.parse(el.dataset.rows), win = +el.dataset.win, lanes = [...el.querySelectorAll(".lane")];
   const seal = el.querySelector("#seal"), title = el.querySelector("#race-title"), note = el.querySelector("#race-note");
-  const lo = 5500, hi = 8000, X = (v) => clamp((v - lo) / (hi - lo));
-  const leadA = rows[0], winner = rows.find((x) => x.id === win);
+  // the scale follows the readings, so close scores stay apart whatever the task's range
+  const vals = rows.flatMap((r) => [r.a, r.b]).filter((v) => v != null);
+  const lo = Math.floor((Math.min(...vals) - 400) / 500) * 500, hi = Math.ceil((Math.max(...vals) + 150) / 100) * 100, X = (v) => clamp((v - lo) / (hi - lo));
+  const topA = Math.max(...rows.map((r) => r.a)), leaders = rows.filter((r) => r.a === topA);
+  const leadA = leaders[0], winner = rows.find((x) => x.id === win);
   const LOOP = 11;
   let visible = false, t0 = 0, raf = 0, lastPhase = -1;
   const scene = (t) => {
@@ -166,10 +170,10 @@ function runRace() {
       const isWin = r.id === win;
       ln.querySelector(".fill").style.transform = `scaleX(${X(v)})`;
       ln.querySelector(".val").textContent = (v / 100).toFixed(2);
-      ln.classList.toggle("lit", drop > 0.72 ? isWin : r.id === leadA.id && up > 0.92);
+      ln.classList.toggle("lit", drop > 0.72 ? isWin : r.a === topA && up > 0.92);
       ln.classList.toggle("fell", drop > 0.72 && !isWin);
       const crown = ln.querySelector(".crown");
-      const has = drop > 0.72 ? isWin : r.id === leadA.id && up > 0.92;
+      const has = drop > 0.72 ? isWin : r.a === topA && up > 0.92;
       crown.style.opacity = has ? 1 : 0;
       crown.style.left = `${X(v) * 100}%`;
     });
@@ -179,7 +183,7 @@ function runRace() {
     if (phase !== lastPhase) {
       lastPhase = phase;
       title.textContent = ["Public split", "Sealed split", "Sealed split, final"][phase];
-      note.textContent = phase < 2 ? "" : leadA.id === winner.id ? `#${winner.id} kept the laurel.` : `#${leadA.id} fell ${((leadA.a - leadA.b) / 100).toFixed(2)} points. #${winner.id} fell ${((winner.a - winner.b) / 100).toFixed(2)} and took the laurel.`;
+      note.textContent = phase < 2 ? "" : leaders.length > 1 ? `${leaders.length} were tied at ${(topA / 100).toFixed(2)}. #${winner.id} reads ${(winner.b / 100).toFixed(2)} on the sealed split and takes the laurel.` : leadA.id === winner.id ? `#${winner.id} kept the laurel.` : `#${leadA.id} fell ${((leadA.a - leadA.b) / 100).toFixed(2)} points. #${winner.id} fell ${((winner.a - winner.b) / 100).toFixed(2)} and took the laurel.`;
     }
   };
   const tick = (now) => { if (!visible) return; scene(((now - t0) / 1000) % LOOP); raf = requestAnimationFrame(tick); };
