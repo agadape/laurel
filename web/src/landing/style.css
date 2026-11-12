@@ -316,3 +316,12 @@ a.brow:hover { background: linear-gradient(90deg, rgba(0, 191, 255, .09), transp
 .ask-check li.bad span { color: var(--orange); }
 .ask-check code { font-family: var(--f-mono); font-size: .92em; color: var(--paper); }
 .ask-check-foot { margin-top: 14px; font-size: 15px; color: var(--paper); }
+
+/* Ask the champion: which network pays */
+.ask-net { display: inline-flex; gap: 4px; margin-top: 22px; padding: 4px; border: 1px solid var(--line); border-radius: 999px; background: var(--glass); }
+.ask-net[hidden] { display: none; }
+.ask-net button { padding: 8px 16px; border: 0; border-radius: 999px; background: none; color: var(--mut); font: 500 15px/1.2 var(--f-ui); cursor: pointer; transition: background .25s, color .25s; }
+.ask-net button.on { background: var(--paper); color: var(--ink); }
+.ask-net button:not(.on):hover { color: var(--paper); }
+.ask-net.busy button { pointer-events: none; opacity: .6; }
+.ask #ask-intro code { font-family: var(--f-mono); font-size: .86em; overflow-wrap: anywhere; }

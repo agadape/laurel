@@ -14,6 +14,8 @@ const devAsk = () => ({
         const env = Object.fromEntries(lines.filter((l) => /^[A-Z_]+=/.test(l)).map((l) => [l.slice(0, l.indexOf("=")), l.slice(l.indexOf("=") + 1).trim()]));
         process.env.LAUREL_GUEST_ID ||= env.GUEST_ACCOUNT_ID || "";
         process.env.LAUREL_GUEST_KEY ||= env.GUEST_FC_PRIVATE_KEY || "";
+        process.env.LAUREL_MAINNET_GUEST_ID ||= env.MAINNET_GUEST_ID || "";
+        process.env.LAUREL_MAINNET_GUEST_KEY ||= env.MAINNET_GUEST_FC_PRIVATE_KEY || "";
       } catch {}
       let raw = "";
       for await (const chunk of req) raw += chunk;

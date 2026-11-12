@@ -3,13 +3,14 @@
 import { LEAF } from "../model.js";
 import { contractId } from "../rpc.js";
 
-const RPCS = ["https://rpc.testnet.fastnear.com", "https://archival-rpc.testnet.fastnear.com", "https://test.rpc.fastnear.com"];
+const TESTNET = { network: "testnet", rpcs: ["https://rpc.testnet.fastnear.com", "https://archival-rpc.testnet.fastnear.com", "https://test.rpc.fastnear.com"], attest: "https://testnet-api.outlayer.ai/attestations/by-tx/", register: "worker.outlayer.testnet" };
+let NET = TESTNET;   // set by verifyPanel for the network that answered
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 const short = (s, a = 8, b = 6) => (s && s.length > a + b + 1 ? `${s.slice(0, a)}…${s.slice(-b)}` : s);
 
 async function rpc(method, params) {
   let last;
-  for (const url of RPCS) {
+  for (const url of NET.rpcs) {
     try {
       const r = await fetch(url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: "laurel-check", method, params }) });
       const j = await r.json();
@@ -20,7 +21,7 @@ async function rpc(method, params) {
   throw last;
 }
 const view = async (method, args = {}) => {
-  const r = await rpc("query", { request_type: "call_function", finality: "final", account_id: contractId(), method_name: method, args_base64: btoa(JSON.stringify(args)) });
+  const r = await rpc("query", { request_type: "call_function", finality: "final", account_id: NET.contract || contractId(), method_name: method, args_base64: btoa(JSON.stringify(args)) });
   if (r.error) throw new Error(r.error);
   return JSON.parse(new TextDecoder().decode(new Uint8Array(r.result)));
 };
@@ -49,10 +50,10 @@ function rawScore(model, x) {
 
 /** The checks, in order. Each returns a line of what was seen, or throws with what was wrong. */
 function checks(ans) {
-  const C = contractId();
+  const C = NET.contract || contractId();
   let tx, sub, task, evaluator, bytes, att, quote, td;
   return [
-    ["The transaction is on NEAR testnet and succeeded", async () => {
+    [`The transaction is on NEAR ${NET.network} and succeeded`, async () => {
       const r = await rpc("EXPERIMENTAL_tx_status", { tx_hash: ans.tx, sender_account_id: ans.paid_by, wait_until: "NONE" });
       tx = r;
       const t = r.transaction, a = t.actions?.[0]?.FunctionCall;
@@ -104,19 +105,19 @@ function checks(ans) {
     }],
     ["Its score was computed in an Intel TDX enclave that OutLayer's contract approves", async () => {
       const map = await (await fetch(`${import.meta.env.BASE_URL}aset/attested.json`)).json();
-      const scoreTx = map.runs[ans.submission_id];
+      const scoreTx = (NET.network === "mainnet" ? map.mainnet?.runs : map.runs)?.[ans.submission_id];
       if (!scoreTx) throw new Error(`no scoring transaction on file for #${ans.submission_id}`);
-      att = await (await fetch(`https://testnet-api.outlayer.ai/attestations/by-tx/${scoreTx}`)).json();
+      att = await (await fetch(`${NET.attest}${scoreTx}`)).json();
       const { getCollateralAndVerify, PHALA_PCCS_URL } = await import("@phala/dcap-qvl");
       quote = Uint8Array.from(atob(att.tdx_quote), (c) => c.charCodeAt(0));
       const v = await getCollateralAndVerify(quote, PHALA_PCCS_URL);
       td = v.report.data;
       if (v.status !== "UpToDate") throw new Error(`TCB status ${v.status}`);
       const m = { mrtd: hex(td.mrTd), rtmr0: hex(td.rtMr0), rtmr1: hex(td.rtMr1), rtmr2: hex(td.rtMr2), rtmr3: hex(td.rtMr3) };
-      const r = await rpc("query", { request_type: "call_function", finality: "final", account_id: "worker.outlayer.testnet", method_name: "get_approved_measurements", args_base64: btoa("{}") });
+      const r = await rpc("query", { request_type: "call_function", finality: "final", account_id: NET.register, method_name: "get_approved_measurements", args_base64: btoa("{}") });
       const approved = JSON.parse(new TextDecoder().decode(new Uint8Array(r.result)));
       if (!approved.some((x) => Object.keys(m).every((k) => x[k] === m[k]))) throw new Error(`measurements MRTD ${m.mrtd.slice(0, 12)}… not approved`);
-      return `scoring tx <code>${esc(short(scoreTx))}</code>: OutLayer's TDX quote for that run verifies to Intel's root certificate in your browser (TCB UpToDate), and its five measurements are on the approved list of <code>worker.outlayer.testnet</code>`;
+      return `scoring tx <code>${esc(short(scoreTx))}</code>: OutLayer's TDX quote for that run verifies to Intel's root certificate in your browser (TCB UpToDate), and its five measurements are on the approved list of <code>${esc(NET.register)}</code>`;
     }],
     ["That enclave ran the pinned evaluator on the task's secret and returned the recorded score", async () => {
       const enc = new TextEncoder(), parts = [];
@@ -152,14 +153,15 @@ function checks(ans) {
   ];
 }
 
-export function verifyPanel(host, ans) {
+export function verifyPanel(host, ans, net = {}) {
   const box = document.createElement("div");
   box.className = "ask-check";
   box.innerHTML = `<button class="ask-next" type="button">Check it yourself ↓</button>`;
   host.appendChild(box);
   box.querySelector("button").addEventListener("click", async () => {
+    NET = { ...TESTNET, ...net, rpcs: net.rpcs ? [...net.rpcs, "https://archival-rpc.mainnet.fastnear.com"] : TESTNET.rpcs };
     const list = checks(ans);
-    box.innerHTML = `<p class="ask-check-head">Your browser is checking this answer against NEAR testnet, not against our server.</p><ol>${list.map(([t]) => `<li><b>${t}</b><span>…</span></li>`).join("")}</ol>`;
+    box.innerHTML = `<p class="ask-check-head">Your browser is checking this answer against NEAR ${NET.network}, not against our server.</p><ol>${list.map(([t]) => `<li><b>${t}</b><span>…</span></li>`).join("")}</ol>`;
     const items = box.querySelectorAll("li");
     let ok = 0;
     for (let i = 0; i < list.length; i++) {
@@ -168,7 +170,7 @@ export function verifyPanel(host, ans) {
       catch (e) { li.querySelector("span").textContent = String(e.message || e).slice(0, 200); li.classList.add("bad"); }
       dispatchEvent(new Event("resize"));
     }
-    box.insertAdjacentHTML("beforeend", `<p class="ask-check-foot">${ok === list.length ? `Verified: ${ok} of ${list.length} checks passed.` : `${ok} of ${list.length} checks passed.`} Not checked here: that the code behind OutLayer's approved measurements is honest, which rests on OutLayer's owner (see the README's trust boundaries). Every score on the contract: <code>node tools/verify_tee.mjs</code>.</p>`);
+    box.insertAdjacentHTML("beforeend", `<p class="ask-check-foot">${ok === list.length ? `Verified: ${ok} of ${list.length} checks passed.` : `${ok} of ${list.length} checks passed.`} Not checked here: that the code behind OutLayer's approved measurements is honest, which rests on OutLayer's owner (see the README's trust boundaries). Every score on the contract: <code>node tools/verify_tee.mjs${NET.network === "mainnet" ? " --network mainnet --contract " + esc(NET.contract) : ""}</code>.</p>`);
     dispatchEvent(new Event("resize"));
   });
 }

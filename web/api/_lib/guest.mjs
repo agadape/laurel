@@ -1,5 +1,7 @@
-// The site's guest account: one real predict_task on NEAR testnet per call, used by /api/ask (the landing page's
-// "Ask the champion") and by the remote MCP tool laurel_ask_champion.
+// The site's guest accounts: one real predict_task per call, on NEAR testnet (default) or mainnet, used by /api/ask
+// (the landing page's "Ask the champion") and, on testnet, by the remote MCP tool laurel_ask_champion.
+// Mainnet uses LAUREL_MAINNET_GUEST_ID / LAUREL_MAINNET_GUEST_KEY: the same kind of key, limited to
+// predict_task/predict on laurel.ikantongkolmangut.near, with a small prepaid credit (real NEAR, a demo).
 // The only secret here is LAUREL_GUEST_KEY: a FUNCTION-CALL key of LAUREL_GUEST_ID that the protocol limits to
 // predict_task/predict on the Laurel contract (made by tools/site_demo.mjs). It can spend the guest's prepaid credit
 // on predictions and nothing else, so the worst a leak or a flood can do is use that credit up; the page then
@@ -7,9 +9,12 @@
 // No dependency: the transaction is borsh-encoded and signed here with node:crypto.
 import crypto from "node:crypto";
 
-const CONTRACT = process.env.LAUREL_CONTRACT || "laurel.laurel-team-mw0x0c8g.testnet";
-const RPCS = ["https://rpc.testnet.fastnear.com", "https://test.rpc.fastnear.com", "https://near-testnet.drpc.org"];
-const EXPLORER = "https://testnet.nearblocks.io/txns/";
+const NETS = {
+  testnet: { contract: process.env.LAUREL_CONTRACT || "laurel.laurel-team-mw0x0c8g.testnet", rpcs: ["https://rpc.testnet.fastnear.com", "https://test.rpc.fastnear.com", "https://near-testnet.drpc.org"], explorer: "https://testnet.nearblocks.io/txns/", idVar: "LAUREL_GUEST_ID", keyVar: "LAUREL_GUEST_KEY", perIp: 8, total: 40 },
+  mainnet: { contract: process.env.LAUREL_MAINNET_CONTRACT || "laurel.ikantongkolmangut.near", rpcs: ["https://rpc.mainnet.fastnear.com", "https://free.rpc.fastnear.com", "https://rpc.mainnet.near.org"], explorer: "https://nearblocks.io/txns/", idVar: "LAUREL_MAINNET_GUEST_ID", keyVar: "LAUREL_MAINNET_GUEST_KEY", perIp: 4, total: 20 },
+};
+const netName = (n) => (n === "mainnet" ? "mainnet" : "testnet");
+const netOf = (n) => NETS[netName(n)];
 const GAS = 30_000_000_000_000n;
 
 // ---------- base58, borsh, ed25519 ----------
@@ -34,8 +39,9 @@ const u64 = (v) => { const b = Buffer.alloc(8); b.writeBigUInt64LE(BigInt(v)); r
 const u128 = (v) => { const b = Buffer.alloc(16); b.writeBigUInt64LE(BigInt(v) & 0xffffffffffffffffn, 0); b.writeBigUInt64LE(BigInt(v) >> 64n, 8); return b; };
 const str = (s) => { const b = Buffer.from(s, "utf8"); return Buffer.concat([u32(b.length), b]); };
 
-export function signer() {
-  const id = process.env.LAUREL_GUEST_ID, key = process.env.LAUREL_GUEST_KEY;
+export function signer(net = "testnet") {
+  const N = netOf(net);
+  const id = process.env[N.idVar], key = process.env[N.keyVar];
   if (!id || !key) return null;
   const raw = b58decode(key.replace(/^ed25519:/, ""));
   const seed = raw.subarray(0, 32);
@@ -45,17 +51,17 @@ export function signer() {
 }
 
 /** One FunctionCall action, signed: the SignedTransaction as base64 and the transaction hash. */
-function signedCall(s, nonce, blockHash, method, args) {
+function signedCall(s, nonce, blockHash, method, args, contract) {
   const action = Buffer.concat([Buffer.from([2]), str(method), (() => { const a = Buffer.from(JSON.stringify(args)); return Buffer.concat([u32(a.length), a]); })(), u64(GAS), u128(0n)]);
-  const tx = Buffer.concat([str(s.id), Buffer.from([0]), s.pub, u64(nonce), str(CONTRACT), blockHash, u32(1), action]);
+  const tx = Buffer.concat([str(s.id), Buffer.from([0]), s.pub, u64(nonce), str(contract), blockHash, u32(1), action]);
   const hash = crypto.createHash("sha256").update(tx).digest();
   return { base64: Buffer.concat([tx, Buffer.from([0]), s.sign(hash)]).toString("base64"), hash: b58encode(hash) };
 }
 
 // ---------- RPC ----------
-async function rpc(method, params, timeoutMs = 20000) {
+async function rpc(method, params, timeoutMs = 20000, net = "testnet") {
   let last;
-  for (const url of RPCS) {
+  for (const url of netOf(net).rpcs) {
     try {
       const r = await fetch(url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: "laurel-ask", method, params }), signal: AbortSignal.timeout(timeoutMs) });
       const j = await r.json();
@@ -65,32 +71,32 @@ async function rpc(method, params, timeoutMs = 20000) {
   }
   throw last;
 }
-export async function view(method, args = {}) {
-  const r = await rpc("query", { request_type: "call_function", finality: "optimistic", account_id: CONTRACT, method_name: method, args_base64: Buffer.from(JSON.stringify(args)).toString("base64") });
+export async function view(method, args = {}, net = "testnet") {
+  const r = await rpc("query", { request_type: "call_function", finality: "optimistic", account_id: netOf(net).contract, method_name: method, args_base64: Buffer.from(JSON.stringify(args)).toString("base64") }, 20000, net);
   if (r.error) throw new Error(r.error);
   return JSON.parse(Buffer.from(r.result).toString());
 }
 
 // ---------- a little restraint: per address and per server instance ----------
 const seen = new Map();
-let recent = [];
-export function allow(ip) {
-  const now = Date.now();
-  recent = recent.filter((t) => now - t < 60000);
-  const mine = (seen.get(ip) || []).filter((t) => now - t < 60000);
-  if (mine.length >= 8 || recent.length >= 40) return false;
-  mine.push(now); seen.set(ip, mine); recent.push(now);
+const recent = { testnet: [], mainnet: [] };
+export function allow(ip, net = "testnet") {
+  const now = Date.now(), k = netName(net), N = NETS[k];
+  recent[k] = recent[k].filter((t) => now - t < 60000);
+  const mine = (seen.get(k + ip) || []).filter((t) => now - t < 60000);
+  if (mine.length >= N.perIp || recent[k].length >= N.total) return false;
+  mine.push(now); seen.set(k + ip, mine); recent[k].push(now);
   if (seen.size > 2000) seen.clear();
   return true;
 }
-let queue = Promise.resolve();   // one transaction at a time per instance, so nonces never race here
+const queue = { testnet: Promise.resolve(), mainnet: Promise.resolve() };   // one transaction at a time per network and instance, so nonces never race here
 
-async function predictOnChain(s, task_id, features) {
+async function predictOnChain(s, task_id, features, net) {
   for (let attempt = 0; ; attempt++) {
-    const key = await rpc("query", { request_type: "view_access_key", finality: "optimistic", account_id: s.id, public_key: s.pubStr });
-    const { base64, hash } = signedCall(s, BigInt(key.nonce) + 1n + BigInt(attempt), b58decode(key.block_hash), "predict_task", { task_id, features });
+    const key = await rpc("query", { request_type: "view_access_key", finality: "optimistic", account_id: s.id, public_key: s.pubStr }, 20000, net);
+    const { base64, hash } = signedCall(s, BigInt(key.nonce) + 1n + BigInt(attempt), b58decode(key.block_hash), "predict_task", { task_id, features }, netOf(net).contract);
     try {
-      const res = await rpc("send_tx", { signed_tx_base64: base64, wait_until: "EXECUTED_OPTIMISTIC" }, 25000);
+      const res = await rpc("send_tx", { signed_tx_base64: base64, wait_until: "EXECUTED_OPTIMISTIC" }, 25000, net);
       return { res, hash };
     } catch (e) {
       if (attempt < 2 && /InvalidNonce|nonce/i.test(e.message)) continue;
@@ -101,24 +107,26 @@ async function predictOnChain(s, task_id, features) {
 
 
 /** One paid prediction from the champion of a closed task. Returns { code, body } (HTTP-style status and JSON body). */
-export async function askChampion(task_id, features, ip) {
-  const s = (() => { try { return signer(); } catch { return null; } })();
+export async function askChampion(task_id, features, ip, net = "testnet") {
+  net = netName(net);
+  const EXPLORER = NETS[net].explorer, v = (m, a) => view(m, a, net);
+  const s = (() => { try { return signer(net); } catch { return null; } })();
   if (!s) return { code: 503, body: { error: "the site's guest key is not configured", fallback: "local" } };
   if (!Number.isInteger(task_id) || task_id < 1 || !Array.isArray(features) || features.length > 256 || !features.every((v) => Number.isInteger(v) && Math.abs(v) <= 2_000_000_000))
     return { code: 400, body: { error: "task_id must be a positive integer and features an array of integers" } };
-  if (!allow(ip)) return { code: 429, body: { error: "too many questions in a minute; try again shortly", fallback: "local" } };
+  if (!allow(ip, net)) return { code: 429, body: { error: "too many questions in a minute; try again shortly", fallback: "local" } };
   try {
-    const task = await view("get_task", { task_id });
+    const task = await v("get_task", { task_id });
     if (!task) return { code: 404, body: { error: `no task ${task_id}` } };
     if (!task.closed || task.winner == null) return { code: 409, body: { error: `task ${task_id} is still open: it has no champion to ask yet` } };
     if (features.length !== task.n_features) return { code: 400, body: { error: `task ${task_id} takes ${task.n_features} features, got ${features.length}` } };
-    const credit = BigInt(await view("get_credit", { account_id: s.id }));
+    const credit = BigInt(await v("get_credit", { account_id: s.id }));
     if (credit < BigInt(task.fee_per_call)) return { code: 402, body: { error: "the guest account's prepaid credit is used up", fallback: "local", paid_by: s.id } };
 
     // earnings are read BEFORE the call: a view right after send can still lag one block behind
-    const earnedBefore = await view("get_earnings", { submission_id: task.winner }).catch(() => null);
-    const run = queue.then(() => predictOnChain(s, task_id, features));
-    queue = run.catch(() => {});
+    const earnedBefore = await v("get_earnings", { submission_id: task.winner }).catch(() => null);
+    const run = queue[net].then(() => predictOnChain(s, task_id, features, net));
+    queue[net] = run.catch(() => {});
     const { res: out, hash } = await run;
     const failure = out.status?.Failure;
     if (failure) return { code: 502, body: { error: JSON.stringify(failure).slice(0, 400), tx: hash, explorer: EXPLORER + hash } };
@@ -131,9 +139,9 @@ export async function askChampion(task_id, features, ip) {
       try { const j = JSON.parse(l.slice(11)); if (j.event === "prediction") ev = j.data?.[0] ?? j.data; } catch {}
     }
     const submission_id = ev?.submission_id ?? task.winner;
-    const earned = earnedBefore != null && submission_id === task.winner ? BigInt(earnedBefore) + BigInt(task.fee_per_call) : await view("get_earnings", { submission_id }).catch(() => null);
+    const earned = earnedBefore != null && submission_id === task.winner ? BigInt(earnedBefore) + BigInt(task.fee_per_call) : await v("get_earnings", { submission_id }).catch(() => null);
     return { code: 200, body: {
-      task_id, submission_id, raw_score: raw, label: BigInt(raw) > 0n ? 1 : 0,
+      network: net, contract: NETS[net].contract, task_id, submission_id, raw_score: raw, label: BigInt(raw) > 0n ? 1 : 0,
       tx: hash, explorer: EXPLORER + hash, gas_tgas: Number(gas.toFixed(2)),
       fee_yocto: String(task.fee_per_call), calls: ev?.calls ?? null, owner: ev?.owner ?? null,
       earned_yocto: earned != null ? String(earned) : null, paid_by: s.id, credit_left_yocto: String(credit - BigInt(task.fee_per_call)),
@@ -144,9 +152,10 @@ export async function askChampion(task_id, features, ip) {
 }
 
 /** Guest status for GET /api/ask. */
-export async function guestStatus() {
-  const s = (() => { try { return signer(); } catch { return null; } })();
-  if (!s) return { ready: false };
-  try { return { ready: true, paid_by: s.id, credit_yocto: String(await view("get_credit", { account_id: s.id })) }; }
+export async function guestStatus(net = "testnet") {
+  net = netName(net);
+  const s = (() => { try { return signer(net); } catch { return null; } })();
+  if (!s) return { ready: false, network: net };
+  try { return { ready: true, network: net, contract: NETS[net].contract, paid_by: s.id, credit_yocto: String(await view("get_credit", { account_id: s.id }, net)) }; }
   catch { return { ready: false, paid_by: s.id }; }
 }
