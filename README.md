@@ -21,6 +21,8 @@ What is proven and what is still trusted: [Security model and trust boundaries](
 
 **What Laurel does.** An open competition contract on NEAR. Anyone posts a task with a private test set; anyone enters a small model **as data**. OutLayer scores each model inside a TEE, on rows that only the evaluator whose hash the contract pins can read. A second split, withheld from the leaderboard and every contract view until the deadline (its rows never leave the enclave), alone picks the winner. The winner then lives in the contract: any agent or contract calls `predict_task(task_id, features)`, the contract runs the model inside NEAR consensus, and every call pays the model's owner.
 
+**The score is not the product; the winning model is.** A private benchmark ends with a number. Laurel ends with the winner running inside a NEAR contract as a paid, composable method: agents call it with a key that can only buy predictions, other contracts call it through a promise, and every answer can be checked back to the sealed-split result and the TEE run that produced it.
+
 | Who | Pays | Gets |
 |---|---|---|
 | An AI agent or a contract that needs a decision | the task's fee per prediction (0.001 NEAR), from prepaid credit | an answer computed in consensus by a model with a public, sealed-split record; no API key, no server to trust |
